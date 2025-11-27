@@ -2,7 +2,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-tickets.php';
+wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
 $ticket_id = isset( $_GET['ticket_id'] ) ? sanitize_text_field( $_GET['ticket_id'] ) : '';
 $ticket_model = new KAB_Tickets();
 $ticket = $ticket_id ? $ticket_model->get_ticket_by_id( $ticket_id ) : null;

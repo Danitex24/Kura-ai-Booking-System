@@ -1,14 +1,8 @@
 <?php
-/**
- * Customer Dashboard Template
- *
- * Shows user's bookings, tickets, and cancel option.
- *
- * @package Kura-ai-Booking-Free
- */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
 if ( ! is_user_logged_in() ) {
 	echo '<p>' . esc_html__( 'You must be logged in to view your bookings.', 'kura-ai-booking-free' ) . '</p>';
 	return;
