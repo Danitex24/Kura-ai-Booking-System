@@ -147,9 +147,8 @@ function kab_free_setup_wizard_menu() {
  * @return void
  */
 function kab_free_setup_wizard_page() {
-	echo '<div class="wrap"><h1>' . esc_html__( 'Welcome to Kura-ai Booking System Setup', 'kura-ai-booking-free' ) . '</h1>';
-	echo '<p>' . esc_html__( 'Let\'s get started with your booking system setup.', 'kura-ai-booking-free' ) . '</p>';
-	echo '</div>';
+	$setup_wizard = new KAB_Setup_Wizard();
+	$setup_wizard->render();
 }
 
 // Load plugin includes.
@@ -173,6 +172,7 @@ function kab_free_load_includes() {
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-services.php';
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-qr-generator.php';
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-tickets.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-setup-wizard.php';
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/rest/class-kab-rest-controller.php';
 
 	// Initialize plugin components.
