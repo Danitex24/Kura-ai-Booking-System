@@ -57,26 +57,9 @@ class KAB_Tickets {
 	}
 
 	public static function generate_ticket_pdf( $booking_id, $ticket_id, $data, $qr_code_path ) {
-		$upload_dir = wp_upload_dir();
-		$pdf_dir    = trailingslashit( $upload_dir['basedir'] ) . 'kab_ticket_pdfs/';
-		if ( ! file_exists( $pdf_dir ) ) {
-			wp_mkdir_p( $pdf_dir );
-		}
-		$pdf_file = $pdf_dir . $ticket_id . '.pdf';
-
-		// Simple PDF generation using HTML (fallback if no library)
-		$html  = '<h2>Kura-ai Ticket</h2>';
-		$html .= '<p><strong>Event/Service:</strong> ' . esc_html( $data['event_name'] ?? $data['service_name'] ?? '' ) . '</p>';
-		$html .= '<p><strong>Customer:</strong> ' . esc_html( $data['customer_name'] ) . '</p>';
-		$html .= '<p><strong>Booking ID:</strong> ' . esc_html( $booking_id ) . '</p>';
-		$html .= '<p><strong>Ticket ID:</strong> ' . esc_html( $ticket_id ) . '</p>';
-		$html .= '<p><strong>Date/Time:</strong> ' . esc_html( $data['booking_date'] ?? $data['event_date'] ) . ' ' . esc_html( $data['booking_time'] ?? $data['event_time'] ) . '</p>';
-		$html .= '<img src="' . esc_url( $qr_code_path ) . '" alt="QR Code" style="max-width:180px;" />';
-
-		// Use WP HTML2PDF library if available, else save HTML as .pdf
-		file_put_contents( $pdf_file, $html );
-		$pdf_url = trailingslashit( $upload_dir['baseurl'] ) . 'kab_ticket_pdfs/' . $ticket_id . '.pdf';
-		return $pdf_url;
+		// Use the new PDF generator class
+		require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-pdf-generator.php';
+		return KAB_PDF_Generator::generate_ticket_pdf( $booking_id, $ticket_id, $data, $qr_code_path );
 	}
 
 	public static function send_ticket_email( $email, $ticket_id, $qr_code_path, $pdf_path ) {
