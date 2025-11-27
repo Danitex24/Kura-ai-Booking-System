@@ -63,17 +63,13 @@ class KAB_Tickets {
 	}
 
 	public static function send_ticket_email( $email, $ticket_id, $qr_code_path, $pdf_path, $booking_data = array() ) {
-		$subject = __( 'Your Kura-ai Booking Ticket', 'kura-ai-booking-free' );
-		
-		// Use the email template
-		ob_start();
-		
-		// Extract variables for the template
+		// Extract variables for the email
 		$customer_name = isset( $booking_data['customer_name'] ) ? $booking_data['customer_name'] : '';
 		$customer_email = isset( $booking_data['customer_email'] ) ? $booking_data['customer_email'] : '';
 		$booking_date = isset( $booking_data['booking_date'] ) ? $booking_data['booking_date'] : '';
 		$booking_time = isset( $booking_data['booking_time'] ) ? $booking_data['booking_time'] : '';
 		$booking_id = isset( $booking_data['booking_id'] ) ? $booking_data['booking_id'] : '';
+		$booking_type = isset( $booking_data['booking_type'] ) ? $booking_data['booking_type'] : '';
 		
 		// Determine event/service name
 		$event_name = '';
@@ -95,17 +91,35 @@ class KAB_Tickets {
 				}
 			}
 		}
-		$booking_item_name = ! empty( $event_name ) ? $event_name : $service_name;
+		$item_name = ! empty( $event_name ) ? $event_name : $service_name;
+
+		// Use the new email system
+		require_once plugin_dir_path( __FILE__ ) . 'class-kab-emails.php';
 		
-		include KAB_FREE_PLUGIN_DIR . 'templates/email-ticket-template.php';
-		$message = ob_get_clean();
-		
-		$headers     = array( 'Content-Type: text/html; charset=UTF-8' );
-		$attachments = array();
-		if ( $pdf_path && strpos( $pdf_path, 'http' ) === false ) {
-			$attachments[] = $pdf_path;
-		}
-		wp_mail( sanitize_email( $email ), $subject, $message, $headers, $attachments );
+		// Send booking confirmation email
+		KAB_Emails::send_booking_confirmation(
+			$booking_id,
+			$customer_email,
+			$customer_name,
+			$booking_type,
+			$booking_date,
+			$booking_time,
+			$item_name,
+			$ticket_id,
+			$qr_code_path,
+			$pdf_path
+		);
+
+		// Send admin notification
+		KAB_Emails::send_admin_notification(
+			$booking_id,
+			$customer_name,
+			$customer_email,
+			$booking_type,
+			$booking_date,
+			$booking_time,
+			$item_name
+		);
 	}
 
 	public function get_ticket_by_id( $ticket_id ) {
