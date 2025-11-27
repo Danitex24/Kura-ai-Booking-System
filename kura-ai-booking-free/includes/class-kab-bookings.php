@@ -38,6 +38,13 @@ class KAB_Bookings {
 			return false; // Already booked
 		}
 
+		// Check service availability for service bookings
+		if ( $booking_type === 'service' && $service_id ) {
+			if ( ! self::is_service_available( $service_id, $booking_date, $booking_time ) ) {
+				return false; // Service not available at requested time
+			}
+		}
+
 		// Check event capacity
 		if ( $booking_type === 'event' && $event_id ) {
 			$event  = $wpdb->get_row( $wpdb->prepare( "SELECT capacity FROM {$wpdb->prefix}kab_events WHERE id = %d", $event_id ), ARRAY_A );
@@ -85,5 +92,93 @@ class KAB_Bookings {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Check if a service is available at the requested date and time
+	 *
+	 * @param int    $service_id Service ID
+	 * @param string $booking_date Booking date (YYYY-MM-DD)
+	 * @param string $booking_time Booking time (HH:MM)
+	 * @return bool True if available, false otherwise
+	 */
+	public static function is_service_available( $service_id, $booking_date, $booking_time ) {
+		global $wpdb;
+
+		// Check if the service exists and is active
+		$service = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}kab_services WHERE id = %d AND status = %s",
+				$service_id,
+				'active'
+			),
+			ARRAY_A
+		);
+
+		if ( ! $service ) {
+			return false; // Service not found or inactive
+		}
+
+		// Check if the requested date is in the past
+		if ( strtotime( $booking_date . ' ' . $booking_time ) < current_time( 'timestamp' ) ) {
+			return false; // Cannot book in the past
+		}
+
+		// Check for overlapping bookings for the same service at the same time
+		$overlapping_bookings = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}kab_bookings 
+				WHERE service_id = %d 
+				AND booking_date = %s 
+				AND booking_time = %s 
+				AND status NOT IN ('cancelled', 'completed')",
+				$service_id,
+				$booking_date,
+				$booking_time
+			)
+		);
+
+		// For services, we typically allow only one booking per time slot
+		if ( $overlapping_bookings > 0 ) {
+			return false; // Time slot already booked
+		}
+
+		// Additional validation: check business hours and day of week
+		return self::validate_business_hours( $booking_date, $booking_time ) &&
+		       self::validate_day_of_week( $booking_date );
+	}
+
+	/**
+	 * Validate booking against business hours
+	 *
+	 * @param string $booking_date Booking date (YYYY-MM-DD)
+	 * @param string $booking_time Booking time (HH:MM)
+	 * @return bool True if within business hours, false otherwise
+	 */
+	private static function validate_business_hours( $booking_date, $booking_time ) {
+		// Default business hours: 9 AM to 5 PM
+		$business_hours_start = '09:00';
+		$business_hours_end   = '17:00';
+
+		// Check if booking time is within business hours
+		$booking_timestamp = strtotime( $booking_date . ' ' . $booking_time );
+		$start_timestamp   = strtotime( $booking_date . ' ' . $business_hours_start );
+		$end_timestamp     = strtotime( $booking_date . ' ' . $business_hours_end );
+
+		return $booking_timestamp >= $start_timestamp && $booking_timestamp <= $end_timestamp;
+	}
+
+	/**
+	 * Validate booking day of week
+	 *
+	 * @param string $booking_date Booking date (YYYY-MM-DD)
+	 * @return bool True if valid day of week, false otherwise
+	 */
+	private static function validate_day_of_week( $booking_date ) {
+		// Default: allow bookings Monday to Friday only
+		$day_of_week = date( 'N', strtotime( $booking_date ) );
+		
+		// 1 = Monday, 7 = Sunday
+		return $day_of_week >= 1 && $day_of_week <= 5; // Monday to Friday
 	}
 }
