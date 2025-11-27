@@ -30,7 +30,7 @@ class KAB_Tickets {
 			),
 			array( '%d', '%s', '%s', '%s', '%s', '%s' )
 		);
-		self::send_ticket_email( $data['customer_email'], $ticket_id, $qr_code_path, $pdf_path );
+		self::send_ticket_email( $data['customer_email'], $ticket_id, $qr_code_path, $pdf_path, $data );
 	}
 
 	public static function generate_qr_code_png( $ticket_id ) {
@@ -62,9 +62,44 @@ class KAB_Tickets {
 		return KAB_PDF_Generator::generate_ticket_pdf( $booking_id, $ticket_id, $data, $qr_code_path );
 	}
 
-	public static function send_ticket_email( $email, $ticket_id, $qr_code_path, $pdf_path ) {
-		$subject     = __( 'Your Kura-ai Booking Ticket', 'kura-ai-booking-free' );
-		$message     = __( 'Thank you for your booking. Your ticket ID is: ', 'kura-ai-booking-free' ) . esc_html( $ticket_id ) . '<br><img src="' . esc_url( $qr_code_path ) . '" alt="QR Code" style="max-width:180px;" />';
+	public static function send_ticket_email( $email, $ticket_id, $qr_code_path, $pdf_path, $booking_data = array() ) {
+		$subject = __( 'Your Kura-ai Booking Ticket', 'kura-ai-booking-free' );
+		
+		// Use the email template
+		ob_start();
+		
+		// Extract variables for the template
+		$customer_name = isset( $booking_data['customer_name'] ) ? $booking_data['customer_name'] : '';
+		$customer_email = isset( $booking_data['customer_email'] ) ? $booking_data['customer_email'] : '';
+		$booking_date = isset( $booking_data['booking_date'] ) ? $booking_data['booking_date'] : '';
+		$booking_time = isset( $booking_data['booking_time'] ) ? $booking_data['booking_time'] : '';
+		$booking_id = isset( $booking_data['booking_id'] ) ? $booking_data['booking_id'] : '';
+		
+		// Determine event/service name
+		$event_name = '';
+		$service_name = '';
+		if ( isset( $booking_data['booking_type'] ) ) {
+			if ( $booking_data['booking_type'] === 'event' && isset( $booking_data['event_id'] ) ) {
+				// Get event name from database
+				global $wpdb;
+				$event = $wpdb->get_row( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}kab_events WHERE id = %d", $booking_data['event_id'] ) );
+				if ( $event ) {
+					$event_name = $event->name;
+				}
+			} elseif ( $booking_data['booking_type'] === 'service' && isset( $booking_data['service_id'] ) ) {
+				// Get service name from database
+				global $wpdb;
+				$service = $wpdb->get_row( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}kab_services WHERE id = %d", $booking_data['service_id'] ) );
+				if ( $service ) {
+					$service_name = $service->name;
+				}
+			}
+		}
+		$booking_item_name = ! empty( $event_name ) ? $event_name : $service_name;
+		
+		include KAB_FREE_PLUGIN_DIR . 'templates/email-ticket-template.php';
+		$message = ob_get_clean();
+		
 		$headers     = array( 'Content-Type: text/html; charset=UTF-8' );
 		$attachments = array();
 		if ( $pdf_path && strpos( $pdf_path, 'http' ) === false ) {
