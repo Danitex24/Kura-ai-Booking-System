@@ -99,6 +99,25 @@ body .kab-customer-dashboard {
   max-width: 180px;
 }
 
+.kab-notice {
+  padding: 1em;
+  margin-bottom: 1em;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.kab-notice-success {
+  background: linear-gradient(90deg, var(--kab-light-green) 0%, var(--kab-dark-green) 100%);
+  color: #fff;
+  border-left: 4px solid var(--kab-dark-green);
+}
+
+.kab-notice-error {
+  background: linear-gradient(90deg, #ff6b6b 0%, #e74c3c 100%);
+  color: #fff;
+  border-left: 4px solid #c0392b;
+}
+
 .kab-events-list .kab-event-card {
   background: linear-gradient(135deg, var(--kab-beige) 0%, var(--kab-orange) 100%);
   border-radius: 10px;
