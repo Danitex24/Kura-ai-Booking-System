@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<ruleset name="Kura-ai Booking System">
+	<description>PHP_CodeSniffer rules for Kura-ai Booking System WordPress plugin</description>
+	
+	<!-- Show progress -->
+	<arg value="p"/>
+	
+	<!-- Check all files in this directory and subdirectories -->
+	<file>.</file>
+	
+	<!-- Exclude patterns -->
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/assets/*</exclude-pattern>
+	
+	<!-- WordPress Coding Standards -->
+	<rule ref="WordPress">
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals"/>
+	</rule>
+	
+	<!-- WordPress-Extra standards -->
+	<rule ref="WordPress-Extra"/>
+	
+	<!-- WordPress-Docs standards -->
+	<rule ref="WordPress-Docs"/>
+	
+	<!-- PHP version compatibility -->
+	<config name="testVersion" value="7.4-"/>
+	
+	<!-- Report warnings -->
+	<arg name="warning-severity" value="5"/>
+	<arg name="error-severity" value="5"/>
+</ruleset>

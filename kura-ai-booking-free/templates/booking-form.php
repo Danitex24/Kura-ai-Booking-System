@@ -1,24 +1,35 @@
 <?php
+/**
+ * Booking form template for Kura-ai Booking System
+ *
+ * @package Kura-ai-Booking-Free
+ * @since 1.0.0
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
+
+wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), KAB_VERSION );
 require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-events.php';
 require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-services.php';
 require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-bookings.php';
-$events_model = new KAB_Events();
+
+$events_model   = new KAB_Events();
 $services_model = new KAB_Services();
-$events = $events_model->get_events();
-$services = $services_model->get_services();
-if ( isset( $_POST['kab_booking_nonce'] ) && wp_verify_nonce( $_POST['kab_booking_nonce'], 'kab_booking_form' ) ) {
-	$name = sanitize_text_field( $_POST['customer_name'] );
-	$email = sanitize_email( $_POST['customer_email'] );
-	$type = sanitize_text_field( $_POST['booking_type'] );
-	$date = sanitize_text_field( $_POST['booking_date'] );
-	$time = sanitize_text_field( $_POST['booking_time'] );
-	$service_id = isset( $_POST['service_id'] ) ? intval( $_POST['service_id'] ) : null;
-	$event_id = isset( $_POST['event_id'] ) ? intval( $_POST['event_id'] ) : null;
-	// $booking_id = KAB_Bookings::create_booking(...);
+$events         = $events_model->get_events();
+$services       = $services_model->get_services();
+
+if ( isset( $_POST['kab_booking_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kab_booking_nonce'] ) ), 'kab_booking_form' ) ) {
+	$name         = isset( $_POST['customer_name'] ) ? sanitize_text_field( wp_unslash( $_POST['customer_name'] ) ) : '';
+	$email        = isset( $_POST['customer_email'] ) ? sanitize_email( wp_unslash( $_POST['customer_email'] ) ) : '';
+	$booking_type = isset( $_POST['booking_type'] ) ? sanitize_text_field( wp_unslash( $_POST['booking_type'] ) ) : '';
+	$date         = isset( $_POST['booking_date'] ) ? sanitize_text_field( wp_unslash( $_POST['booking_date'] ) ) : '';
+	$time         = isset( $_POST['booking_time'] ) ? sanitize_text_field( wp_unslash( $_POST['booking_time'] ) ) : '';
+	$service_id   = isset( $_POST['service_id'] ) ? intval( $_POST['service_id'] ) : null;
+	$event_id     = isset( $_POST['event_id'] ) ? intval( $_POST['event_id'] ) : null;
+
+	// TODO: Implement booking creation logic here.
 	echo '<div class="kab-booking-success">' . esc_html__( 'Booking submitted! You will receive a confirmation email.', 'kura-ai-booking-free' ) . '</div>';
 }
 ?>

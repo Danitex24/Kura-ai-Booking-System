@@ -16,7 +16,7 @@ class KAB_Database {
 		global $wpdb;
 		$charset_collate = $wpdb->get_charset_collate();
 
-		$tables = [];
+		$tables = array();
 
 		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_services (
 			id INT NOT NULL AUTO_INCREMENT,
@@ -68,7 +68,7 @@ class KAB_Database {
 			UNIQUE KEY ticket_id (ticket_id)
 		) $charset_collate;";
 
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		foreach ( $tables as $sql ) {
 			dbDelta( $sql );
 		}

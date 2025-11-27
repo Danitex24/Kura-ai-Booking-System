@@ -3,9 +3,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
-$ticket_id = isset( $_GET['ticket_id'] ) ? sanitize_text_field( $_GET['ticket_id'] ) : '';
+$ticket_id    = isset( $_GET['ticket_id'] ) ? sanitize_text_field( $_GET['ticket_id'] ) : '';
 $ticket_model = new KAB_Tickets();
-$ticket = $ticket_id ? $ticket_model->get_ticket_by_id( $ticket_id ) : null;
+$ticket       = $ticket_id ? $ticket_model->get_ticket_by_id( $ticket_id ) : null;
 ?>
 <div class="kab-ticket-viewer">
 	<?php if ( $ticket ) : ?>

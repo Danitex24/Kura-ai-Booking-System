@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
 require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-events.php';
 $events_model = new KAB_Events();
-$events = $events_model->get_events();
+$events       = $events_model->get_events();
 ?>
 <div class="kab-events-list">
 	<h2><?php esc_html_e( 'Upcoming Events', 'kura-ai-booking-free' ); ?></h2>

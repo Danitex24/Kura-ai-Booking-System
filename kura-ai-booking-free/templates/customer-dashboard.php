@@ -7,13 +7,13 @@ wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __F
 // Handle booking cancellation
 if ( isset( $_POST['kab_cancel_booking_id'] ) && isset( $_POST['kab_cancel_booking_nonce'] ) ) {
 	$booking_id = intval( $_POST['kab_cancel_booking_id'] );
-	$nonce = sanitize_text_field( $_POST['kab_cancel_booking_nonce'] );
-	
+	$nonce      = sanitize_text_field( $_POST['kab_cancel_booking_nonce'] );
+
 	if ( wp_verify_nonce( $nonce, 'kab_cancel_booking_' . $booking_id ) ) {
 		$user_id = get_current_user_id();
 		require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-bookings.php';
 		$result = KAB_Bookings::cancel_booking( $booking_id, $user_id );
-		
+
 		if ( $result ) {
 			echo '<div class="kab-notice kab-notice-success">' . esc_html__( 'Booking cancelled successfully.', 'kura-ai-booking-free' ) . '</div>';
 		} else {
