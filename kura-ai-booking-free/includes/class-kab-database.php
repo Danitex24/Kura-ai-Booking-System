@@ -13,8 +13,67 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class KAB_Database {
 	public static function create_tables() {
-		// Table creation logic here
+		global $wpdb;
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$tables = [];
+
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_services (
+			id INT NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255) NOT NULL,
+			description TEXT,
+			duration INT NOT NULL,
+			price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			status VARCHAR(20) NOT NULL DEFAULT 'active',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id)
+		) $charset_collate;";
+
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_events (
+			id INT NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255) NOT NULL,
+			description TEXT,
+			event_date DATE NOT NULL,
+			event_time TIME NOT NULL,
+			location VARCHAR(255),
+			price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			capacity INT NOT NULL DEFAULT 1,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id)
+		) $charset_collate;";
+
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_bookings (
+			id INT NOT NULL AUTO_INCREMENT,
+			user_id BIGINT UNSIGNED NOT NULL,
+			service_id INT,
+			event_id INT,
+			booking_type VARCHAR(20) NOT NULL,
+			booking_date DATE NOT NULL,
+			booking_time TIME NOT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'pending',
+			ticket_id VARCHAR(64),
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id)
+		) $charset_collate;";
+
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_tickets (
+			id INT NOT NULL AUTO_INCREMENT,
+			booking_id INT NOT NULL,
+			ticket_id VARCHAR(64) NOT NULL,
+			qr_code_path VARCHAR(255),
+			pdf_path VARCHAR(255),
+			status VARCHAR(20) NOT NULL DEFAULT 'valid',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY ticket_id (ticket_id)
+		) $charset_collate;";
+
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		foreach ( $tables as $sql ) {
+			dbDelta( $sql );
+		}
 	}
+
 	public static function upgrade() {
 		// Upgrade logic here
 	}
