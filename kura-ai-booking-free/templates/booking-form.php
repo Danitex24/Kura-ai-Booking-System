@@ -4,10 +4,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
 require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-events.php';
+require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-services.php';
 require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-bookings.php';
 $events_model = new KAB_Events();
+$services_model = new KAB_Services();
 $events = $events_model->get_events();
-$services = array(); // Placeholder for services
+$services = $services_model->get_services();
 if ( isset( $_POST['kab_booking_nonce'] ) && wp_verify_nonce( $_POST['kab_booking_nonce'], 'kab_booking_form' ) ) {
 	$name = sanitize_text_field( $_POST['customer_name'] );
 	$email = sanitize_email( $_POST['customer_email'] );

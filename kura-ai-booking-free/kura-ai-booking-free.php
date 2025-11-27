@@ -88,3 +88,30 @@ function kab_free_setup_wizard_page() {
 	echo '<p>' . esc_html__( 'Let’s get started with your booking system setup.', 'kura-ai-booking-free' ) . '</p>';
 	echo '</div>';
 }
+
+// Load plugin includes
+add_action( 'plugins_loaded', 'kab_free_load_includes' );
+function kab_free_load_includes() {
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-loader.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-activator.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-deactivator.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-admin.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-frontend.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-database.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-bookings.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-events.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-services.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-qr-generator.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-tickets.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/rest/class-kab-rest-controller.php';
+	
+	// Initialize plugin components
+	$loader = new KAB_Loader();
+	$loader->run();
+	
+	// Initialize REST API
+	add_action( 'rest_api_init', function() {
+		$rest_controller = new KAB_REST_Controller();
+		$rest_controller->register_routes();
+	});
+}
