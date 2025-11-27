@@ -35,12 +35,16 @@ register_activation_hook( __FILE__, 'kab_free_activate_plugin' );
 /**
  * Plugin activation callback.
  *
- * Sets up the setup wizard transient on plugin activation.
+ * Sets up the setup wizard transient and runs activation tasks.
  *
  * @since 1.0.0
  * @return void
  */
 function kab_free_activate_plugin() {
+	// Run activation tasks
+	KAB_Activator::activate();
+	
+	// Show setup wizard
 	set_transient( 'kab_free_show_setup_wizard', true, 60 );
 }
 
@@ -50,12 +54,16 @@ register_deactivation_hook( __FILE__, 'kab_free_deactivate_plugin' );
 /**
  * Plugin deactivation callback.
  *
- * Sets up the deactivation modal transient on plugin deactivation.
+ * Sets up the deactivation modal transient and runs deactivation tasks.
  *
  * @since 1.0.0
  * @return void
  */
 function kab_free_deactivate_plugin() {
+	// Run deactivation tasks
+	KAB_Deactivator::deactivate();
+	
+	// Show deactivation modal
 	set_transient( 'kab_free_show_deactivation_modal', true, 60 );
 }
 

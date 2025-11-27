@@ -29,8 +29,25 @@ if ( isset( $_POST['kab_booking_nonce'] ) && wp_verify_nonce( sanitize_text_fiel
 	$service_id   = isset( $_POST['service_id'] ) ? intval( $_POST['service_id'] ) : null;
 	$event_id     = isset( $_POST['event_id'] ) ? intval( $_POST['event_id'] ) : null;
 
-	// TODO: Implement booking creation logic here.
-	echo '<div class="kab-booking-success">' . esc_html__( 'Booking submitted! You will receive a confirmation email.', 'kura-ai-booking-free' ) . '</div>';
+	// Create booking data
+	$booking_data = array(
+		'booking_type' => $booking_type,
+		'service_id' => $service_id,
+		'event_id' => $event_id,
+		'booking_date' => $date,
+		'booking_time' => $time,
+		'customer_name' => $name,
+		'customer_email' => $email
+	);
+	
+	// Create booking
+	$booking_id = KAB_Bookings::create_booking( $booking_data );
+	
+	if ( $booking_id ) {
+		echo '<div class="kab-booking-success">' . esc_html__( 'Booking submitted! You will receive a confirmation email with your ticket.', 'kura-ai-booking-free' ) . '</div>';
+	} else {
+		echo '<div class="kab-booking-error">' . esc_html__( 'Sorry, the selected time is not available. Please choose another time.', 'kura-ai-booking-free' ) . '</div>';
+	}
 }
 ?>
 <form method="post" class="kab-booking-form">
