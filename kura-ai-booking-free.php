@@ -29,6 +29,11 @@ if ( ! defined( 'KAB_VERSION' ) ) {
 	define( 'KAB_VERSION', '1.0.0' );
 }
 
+// Load plugin includes immediately for activation/deactivation hooks.
+require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-database.php';
+require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-activator.php';
+require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-deactivator.php';
+
 // Activation hook.
 register_activation_hook( __FILE__, 'kab_free_activate_plugin' );
 
@@ -43,7 +48,7 @@ register_activation_hook( __FILE__, 'kab_free_activate_plugin' );
 function kab_free_activate_plugin() {
 	// Run activation tasks
 	KAB_Activator::activate();
-	
+
 	// Show setup wizard
 	set_transient( 'kab_free_show_setup_wizard', true, 60 );
 }
@@ -62,7 +67,7 @@ register_deactivation_hook( __FILE__, 'kab_free_deactivate_plugin' );
 function kab_free_deactivate_plugin() {
 	// Run deactivation tasks
 	KAB_Deactivator::deactivate();
-	
+
 	// Show deactivation modal
 	set_transient( 'kab_free_show_deactivation_modal', true, 60 );
 }
@@ -156,7 +161,7 @@ function kab_free_setup_wizard_menu() {
  */
 function kab_free_setup_wizard_page() {
 	$setup_wizard = new KAB_Setup_Wizard();
-	$setup_wizard->render();
+	$setup_wizard->render_setup_page();
 }
 
 // Load plugin includes.

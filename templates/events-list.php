@@ -1,8 +1,17 @@
 <?php
+/**
+ * Events List Template
+ *
+ * Displays a list of upcoming events for booking.
+ *
+ * @package Kura-ai-Booking-Free
+ * @since 1.0.0
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
+wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), KAB_VERSION );
 require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-events.php';
 $events_model = new KAB_Events();
 $events       = $events_model->get_events();

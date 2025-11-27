@@ -72,6 +72,16 @@ class KAB_Admin {
 			'kab-settings',
 			array( $this, 'render_settings_page' )
 		);
+
+		// Add validation panel as a submenu page
+		add_submenu_page(
+			'kab-dashboard',
+			__( 'Ticket Validation', 'kura-ai-booking-free' ),
+			__( 'Ticket Validation', 'kura-ai-booking-free' ),
+			'manage_options',
+			'kab-validation',
+			array( $this, 'render_validation_page' )
+		);
 	}
 
 	/**
@@ -107,7 +117,7 @@ class KAB_Admin {
 				'duration'    => intval( $_POST['duration'] ),
 				'price'       => floatval( $_POST['price'] ),
 			);
-			$service_id = $services_model->create_service( $service_data );
+			$service_id   = $services_model->create_service( $service_data );
 			if ( $service_id ) {
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Service added successfully.', 'kura-ai-booking-free' ) . '</p></div>';
 			} else {
@@ -116,14 +126,14 @@ class KAB_Admin {
 		}
 
 		if ( isset( $_POST['kab_edit_service_nonce'] ) && wp_verify_nonce( $_POST['kab_edit_service_nonce'], 'kab_edit_service' ) ) {
-			$service_id = intval( $_POST['service_id'] );
+			$service_id   = intval( $_POST['service_id'] );
 			$service_data = array(
 				'name'        => sanitize_text_field( $_POST['name'] ),
 				'description' => sanitize_textarea_field( $_POST['description'] ),
 				'duration'    => intval( $_POST['duration'] ),
 				'price'       => floatval( $_POST['price'] ),
 			);
-			$result = $services_model->update_service( $service_id, $service_data );
+			$result       = $services_model->update_service( $service_id, $service_data );
 			if ( $result ) {
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Service updated successfully.', 'kura-ai-booking-free' ) . '</p></div>';
 			} else {
@@ -235,7 +245,7 @@ class KAB_Admin {
 				'price'       => floatval( $_POST['price'] ),
 				'capacity'    => intval( $_POST['capacity'] ),
 			);
-			$event_id = $events_model->add_event( $event_data );
+			$event_id   = $events_model->add_event( $event_data );
 			if ( $event_id ) {
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Event added successfully.', 'kura-ai-booking-free' ) . '</p></div>';
 			} else {
@@ -244,7 +254,7 @@ class KAB_Admin {
 		}
 
 		if ( isset( $_POST['kab_edit_event_nonce'] ) && wp_verify_nonce( $_POST['kab_edit_event_nonce'], 'kab_edit_event' ) ) {
-			$event_id = intval( $_POST['event_id'] );
+			$event_id   = intval( $_POST['event_id'] );
 			$event_data = array(
 				'name'        => sanitize_text_field( $_POST['name'] ),
 				'description' => sanitize_textarea_field( $_POST['description'] ),
@@ -254,7 +264,7 @@ class KAB_Admin {
 				'price'       => floatval( $_POST['price'] ),
 				'capacity'    => intval( $_POST['capacity'] ),
 			);
-			$result = $events_model->update_event( $event_id, $event_data );
+			$result     = $events_model->update_event( $event_id, $event_data );
 			if ( false !== $result ) {
 				echo '<div class="notice notice-success"><p>' . esc_html__( 'Event updated successfully.', 'kura-ai-booking-free' ) . '</p></div>';
 			} else {
@@ -421,5 +431,65 @@ class KAB_Admin {
 
 		echo '<p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="' . esc_attr__( 'Save Settings', 'kura-ai-booking-free' ) . '"></p>';
 		echo '</form></div>';
+	}
+
+	/**
+	 * Render ticket validation page
+	 */
+	public function render_validation_page() {
+		echo '<div class="wrap"><h1>' . esc_html__( 'Ticket Validation Panel', 'kura-ai-booking-free' ) . '</h1>';
+
+		// Handle ticket validation form submission
+		if ( isset( $_POST['kab_validate_ticket_nonce'] ) && wp_verify_nonce( $_POST['kab_validate_ticket_nonce'], 'kab_validate_ticket' ) ) {
+			$ticket_id = sanitize_text_field( $_POST['ticket_id'] );
+
+			// Validate ticket using REST API endpoint
+			$validation_result = $this->validate_ticket( $ticket_id );
+
+			if ( $validation_result['valid'] ) {
+				echo '<div class="notice notice-success"><p>' . esc_html__( 'VALID TICKET', 'kura-ai-booking-free' ) . '</p></div>';
+				echo '<div class="ticket-details">';
+				echo '<h3>' . esc_html__( 'Ticket Details', 'kura-ai-booking-free' ) . '</h3>';
+				echo '<p><strong>' . esc_html__( 'Ticket ID:', 'kura-ai-booking-free' ) . '</strong> ' . esc_html( $ticket_id ) . '</p>';
+				echo '<p><strong>' . esc_html__( 'Booking ID:', 'kura-ai-booking-free' ) . '</strong> ' . esc_html( $validation_result['booking_id'] ) . '</p>';
+				echo '<p><strong>' . esc_html__( 'Customer:', 'kura-ai-booking-free' ) . '</strong> ' . esc_html( $validation_result['customer_name'] ) . '</p>';
+				echo '<p><strong>' . esc_html__( 'Event/Service:', 'kura-ai-booking-free' ) . '</strong> ' . esc_html( $validation_result['item_name'] ) . '</p>';
+				echo '<p><strong>' . esc_html__( 'Date/Time:', 'kura-ai-booking-free' ) . '</strong> ' . esc_html( $validation_result['booking_date'] ) . ' ' . esc_html( $validation_result['booking_time'] ) . '</p>';
+				echo '</div>';
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html__( 'INVALID TICKET', 'kura-ai-booking-free' ) . '</p></div>';
+			}
+		}
+
+		// Display validation form
+		echo '<form method="post" style="margin: 20px 0;">';
+		wp_nonce_field( 'kab_validate_ticket', 'kab_validate_ticket_nonce' );
+		echo '<h3>' . esc_html__( 'Validate Ticket', 'kura-ai-booking-free' ) . '</h3>';
+		echo '<p><input type="text" name="ticket_id" placeholder="' . esc_attr__( 'Enter Ticket ID', 'kura-ai-booking-free' ) . '" style="width: 300px; padding: 8px;" required></p>';
+		echo '<p><input type="submit" class="button button-primary" value="' . esc_attr__( 'Validate Ticket', 'kura-ai-booking-free' ) . '"></p>';
+		echo '</form>';
+
+		echo '</div>';
+	}
+
+	/**
+	 * Validate ticket using internal REST API call
+	 *
+	 * @param string $ticket_id Ticket ID to validate
+	 * @return array Validation result with ticket details
+	 */
+	private function validate_ticket( $ticket_id ) {
+		// Use the REST API endpoint internally
+		require_once KAB_FREE_PLUGIN_DIR . 'includes/rest/class-kab-rest-controller.php';
+		$rest_controller = new KAB_REST_Controller();
+
+		// Call the validation method directly
+		$result = $rest_controller->validate_ticket( array( 'ticket_id' => $ticket_id ) );
+
+		if ( is_wp_error( $result ) ) {
+			return array( 'valid' => false );
+		}
+
+		return $result;
 	}
 }

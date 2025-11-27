@@ -54,7 +54,7 @@
 		
 		<div class="footer">
 			<p><?php echo esc_html__( 'If you have any questions, please contact our support team at', 'kura-ai-booking-free' ); ?> <?php echo esc_html( get_option( 'admin_email' ) ); ?></p>
-			<p>&copy; <?php echo esc_html( date( 'Y' ) ); ?> <?php echo esc_html( get_bloginfo( 'name' ) ); ?>. <?php echo esc_html__( 'All rights reserved.', 'kura-ai-booking-free' ); ?></p>
+			<p>&copy; <?php echo esc_html( gmdate( 'Y' ) ); ?> <?php echo esc_html( get_bloginfo( 'name' ) ); ?>. <?php echo esc_html__( 'All rights reserved.', 'kura-ai-booking-free' ); ?></p>
 		</div>
 	</div>
 </body>

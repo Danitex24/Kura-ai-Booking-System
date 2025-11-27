@@ -145,7 +145,7 @@ class KAB_Bookings {
 
 		// Additional validation: check business hours and day of week
 		return self::validate_business_hours( $booking_date, $booking_time ) &&
-		       self::validate_day_of_week( $booking_date );
+				self::validate_day_of_week( $booking_date );
 	}
 
 	/**
@@ -177,7 +177,7 @@ class KAB_Bookings {
 	private static function validate_day_of_week( $booking_date ) {
 		// Default: allow bookings Monday to Friday only
 		$day_of_week = date( 'N', strtotime( $booking_date ) );
-		
+
 		// 1 = Monday, 7 = Sunday
 		return $day_of_week >= 1 && $day_of_week <= 5; // Monday to Friday
 	}

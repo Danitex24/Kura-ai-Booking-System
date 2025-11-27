@@ -20,7 +20,7 @@ class KAB_Emails {
 	/**
 	 * Send booking confirmation email with ticket
 	 *
-	 * @param int $booking_id Booking ID
+	 * @param int    $booking_id Booking ID
 	 * @param string $customer_email Customer email address
 	 * @param string $customer_name Customer name
 	 * @param string $booking_type Booking type (service/event)
@@ -33,6 +33,15 @@ class KAB_Emails {
 	 * @return bool True if email sent successfully, false otherwise
 	 */
 	public static function send_booking_confirmation( $booking_id, $customer_email, $customer_name, $booking_type, $booking_date, $booking_time, $item_name, $ticket_id, $qr_code_path = null, $pdf_path = null ) {
+		// Get email settings from plugin configuration
+		$settings = get_option(
+			'kab_settings',
+			array(
+				'email_from_name'  => get_bloginfo( 'name' ),
+				'email_from_email' => get_option( 'admin_email' ),
+			)
+		);
+
 		$subject = sprintf(
 			__( 'Booking Confirmation - %s', 'kura-ai-booking-free' ),
 			$item_name
@@ -40,7 +49,7 @@ class KAB_Emails {
 
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			'From: ' . get_bloginfo( 'name' ) . ' <' . get_option( 'admin_email' ) . '>',
+			'From: ' . $settings['email_from_name'] . ' <' . $settings['email_from_email'] . '>',
 		);
 
 		$message = self::get_email_template( $booking_id, $customer_name, $booking_type, $booking_date, $booking_time, $item_name, $ticket_id, $qr_code_path );
@@ -56,7 +65,7 @@ class KAB_Emails {
 	/**
 	 * Get email HTML template
 	 *
-	 * @param int $booking_id Booking ID
+	 * @param int    $booking_id Booking ID
 	 * @param string $customer_name Customer name
 	 * @param string $booking_type Booking type
 	 * @param string $booking_date Booking date
@@ -84,6 +93,15 @@ class KAB_Emails {
 	 * @return bool True if email sent successfully
 	 */
 	public static function send_cancellation_notification( $customer_email, $customer_name, $booking_type, $booking_date, $booking_time, $item_name ) {
+		// Get email settings from plugin configuration
+		$settings = get_option(
+			'kab_settings',
+			array(
+				'email_from_name'  => get_bloginfo( 'name' ),
+				'email_from_email' => get_option( 'admin_email' ),
+			)
+		);
+
 		$subject = sprintf(
 			__( 'Booking Cancelled - %s', 'kura-ai-booking-free' ),
 			$item_name
@@ -91,7 +109,7 @@ class KAB_Emails {
 
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			'From: ' . get_bloginfo( 'name' ) . ' <' . get_option( 'admin_email' ) . '>',
+			'From: ' . $settings['email_from_name'] . ' <' . $settings['email_from_email'] . '>',
 		);
 
 		$message = sprintf(
@@ -121,7 +139,7 @@ class KAB_Emails {
 	/**
 	 * Send admin notification for new booking
 	 *
-	 * @param int $booking_id Booking ID
+	 * @param int    $booking_id Booking ID
 	 * @param string $customer_name Customer name
 	 * @param string $customer_email Customer email
 	 * @param string $booking_type Booking type
@@ -132,7 +150,7 @@ class KAB_Emails {
 	 */
 	public static function send_admin_notification( $booking_id, $customer_name, $customer_email, $booking_type, $booking_date, $booking_time, $item_name ) {
 		$admin_email = get_option( 'admin_email' );
-		$subject = sprintf(
+		$subject     = sprintf(
 			__( 'New Booking Received - #%d', 'kura-ai-booking-free' ),
 			$booking_id
 		);

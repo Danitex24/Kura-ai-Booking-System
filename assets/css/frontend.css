@@ -1,154 +1,154 @@
 :root {
-  --kab-orange: #E67E22;
-  --kab-dark-green: #628141;
-  --kab-light-green: #8BAE66;
-  --kab-beige: #EBD5AB;
+	--kab-orange: #E67E22;
+	--kab-dark-green: #628141;
+	--kab-light-green: #8BAE66;
+	--kab-beige: #EBD5AB;
 }
 
 body .kab-booking-form,
 body .kab-events-list,
 body .kab-ticket-viewer,
 body .kab-customer-dashboard {
-  font-family: 'Segoe UI', 'Arial', sans-serif;
-  background: linear-gradient(135deg, var(--kab-beige) 0%, var(--kab-light-green) 100%);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(98, 129, 65, 0.08);
-  padding: 2em;
-  margin: 2em auto;
-  max-width: 600px;
+	font-family: 'Segoe UI', 'Arial', sans-serif;
+	background: linear-gradient(135deg, var(--kab-beige) 0%, var(--kab-light-green) 100%);
+	border-radius: 12px;
+	box-shadow: 0 2px 12px rgba(98, 129, 65, 0.08);
+	padding: 2em;
+	margin: 2em auto;
+	max-width: 600px;
 }
 
 .kab-booking-form h2,
 .kab-events-list h2,
 .kab-ticket-viewer h2,
 .kab-customer-dashboard h2 {
-  color: var(--kab-dark-green);
-  margin-bottom: 1em;
+	color: var(--kab-dark-green);
+	margin-bottom: 1em;
 }
 
 .kab-booking-form label,
 .kab-events-list label {
-  color: var(--kab-dark-green);
-  font-weight: 500;
+	color: var(--kab-dark-green);
+	font-weight: 500;
 }
 
 .kab-booking-form input,
 .kab-booking-form select,
 .kab-booking-form textarea {
-  border: 1px solid var(--kab-light-green);
-  border-radius: 6px;
-  padding: 0.5em;
-  margin-bottom: 1em;
-  width: 100%;
-  background: var(--kab-beige);
-  color: var(--kab-dark-green);
+	border: 1px solid var(--kab-light-green);
+	border-radius: 6px;
+	padding: 0.5em;
+	margin-bottom: 1em;
+	width: 100%;
+	background: var(--kab-beige);
+	color: var(--kab-dark-green);
 }
 
 .kab-booking-form button,
 .kab-booking-form input[type="submit"],
 .kab-events-list button,
 .kab-customer-dashboard .kab-cancel-booking-btn {
-  background: linear-gradient(90deg, var(--kab-orange) 0%, var(--kab-dark-green) 100%);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.75em 2em;
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 1px 4px rgba(230, 103, 34, 0.12);
-  transition: background 0.2s;
+	background: linear-gradient(90deg, var(--kab-orange) 0%, var(--kab-dark-green) 100%);
+	color: #fff;
+	border: none;
+	border-radius: 6px;
+	padding: 0.75em 2em;
+	font-size: 1em;
+	font-weight: 600;
+	cursor: pointer;
+	box-shadow: 0 1px 4px rgba(230, 103, 34, 0.12);
+	transition: background 0.2s;
 }
 
 .kab-booking-form button:hover,
 .kab-booking-form input[type="submit"]:hover,
 .kab-events-list button:hover,
 .kab-customer-dashboard .kab-cancel-booking-btn:hover {
-  background: linear-gradient(90deg, var(--kab-dark-green) 0%, var(--kab-orange) 100%);
+	background: linear-gradient(90deg, var(--kab-dark-green) 0%, var(--kab-orange) 100%);
 }
 
 .kab-bookings-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1em;
-  background: var(--kab-beige);
-  border-radius: 8px;
-  overflow: hidden;
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 1em;
+	background: var(--kab-beige);
+	border-radius: 8px;
+	overflow: hidden;
 }
 
 .kab-bookings-table th,
 .kab-bookings-table td {
-  padding: 0.75em;
-  text-align: left;
-  border-bottom: 1px solid var(--kab-light-green);
+	padding: 0.75em;
+	text-align: left;
+	border-bottom: 1px solid var(--kab-light-green);
 }
 
 .kab-bookings-table th {
-  background: var(--kab-light-green);
-  color: #fff;
+	background: var(--kab-light-green);
+	color: #fff;
 }
 
 .kab-bookings-table tr:last-child td {
-  border-bottom: none;
+	border-bottom: none;
 }
 
 .kab-ticket-viewer img {
-  border: 2px solid var(--kab-orange);
-  border-radius: 8px;
-  margin-top: 1em;
-  max-width: 180px;
+	border: 2px solid var(--kab-orange);
+	border-radius: 8px;
+	margin-top: 1em;
+	max-width: 180px;
 }
 
 .kab-notice {
-  padding: 1em;
-  margin-bottom: 1em;
-  border-radius: 6px;
-  font-weight: 500;
+	padding: 1em;
+	margin-bottom: 1em;
+	border-radius: 6px;
+	font-weight: 500;
 }
 
 .kab-notice-success {
-  background: linear-gradient(90deg, var(--kab-light-green) 0%, var(--kab-dark-green) 100%);
-  color: #fff;
-  border-left: 4px solid var(--kab-dark-green);
+	background: linear-gradient(90deg, var(--kab-light-green) 0%, var(--kab-dark-green) 100%);
+	color: #fff;
+	border-left: 4px solid var(--kab-dark-green);
 }
 
 .kab-notice-error {
-  background: linear-gradient(90deg, #ff6b6b 0%, #e74c3c 100%);
-  color: #fff;
-  border-left: 4px solid #c0392b;
+	background: linear-gradient(90deg, #ff6b6b 0%, #e74c3c 100%);
+	color: #fff;
+	border-left: 4px solid #c0392b;
 }
 
 .kab-events-list .kab-event-card {
-  background: linear-gradient(135deg, var(--kab-beige) 0%, var(--kab-orange) 100%);
-  border-radius: 10px;
-  box-shadow: 0 1px 6px rgba(98, 129, 65, 0.10);
-  padding: 1.5em;
-  margin-bottom: 1.5em;
+	background: linear-gradient(135deg, var(--kab-beige) 0%, var(--kab-orange) 100%);
+	border-radius: 10px;
+	box-shadow: 0 1px 6px rgba(98, 129, 65, 0.10);
+	padding: 1.5em;
+	margin-bottom: 1.5em;
 }
 
 .kab-events-list .kab-event-card h3 {
-  color: var(--kab-dark-green);
-  margin-bottom: 0.5em;
+	color: var(--kab-dark-green);
+	margin-bottom: 0.5em;
 }
 
 .kab-events-list .kab-event-card .kab-event-meta {
-  color: var(--kab-dark-green);
-  font-size: 0.95em;
-  margin-bottom: 0.5em;
+	color: var(--kab-dark-green);
+	font-size: 0.95em;
+	margin-bottom: 0.5em;
 }
 
 .kab-events-list .kab-event-card .kab-event-book-btn {
-  background: linear-gradient(90deg, var(--kab-orange) 0%, var(--kab-dark-green) 100%);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5em 1.5em;
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 1em;
+	background: linear-gradient(90deg, var(--kab-orange) 0%, var(--kab-dark-green) 100%);
+	color: #fff;
+	border: none;
+	border-radius: 6px;
+	padding: 0.5em 1.5em;
+	font-size: 1em;
+	font-weight: 600;
+	cursor: pointer;
+	margin-top: 1em;
 }
 
 .kab-events-list .kab-event-card .kab-event-book-btn:hover {
-  background: linear-gradient(90deg, var(--kab-dark-green) 0%, var(--kab-orange) 100%);
+	background: linear-gradient(90deg, var(--kab-dark-green) 0%, var(--kab-orange) 100%);
 }

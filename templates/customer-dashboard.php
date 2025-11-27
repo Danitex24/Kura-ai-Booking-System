@@ -1,13 +1,22 @@
 <?php
+/**
+ * Customer Dashboard Template
+ *
+ * Displays the customer's booking history and allows cancellation.
+ *
+ * @package Kura-ai-Booking-Free
+ * @since 1.0.0
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
+wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), KAB_VERSION );
 
 // Handle booking cancellation
 if ( isset( $_POST['kab_cancel_booking_id'] ) && isset( $_POST['kab_cancel_booking_nonce'] ) ) {
-	$booking_id = intval( $_POST['kab_cancel_booking_id'] );
-	$nonce      = sanitize_text_field( $_POST['kab_cancel_booking_nonce'] );
+	$booking_id = intval( wp_unslash( $_POST['kab_cancel_booking_id'] ) );
+	$nonce      = sanitize_text_field( wp_unslash( $_POST['kab_cancel_booking_nonce'] ) );
 
 	if ( wp_verify_nonce( $nonce, 'kab_cancel_booking_' . $booking_id ) ) {
 		$user_id = get_current_user_id();
@@ -50,7 +59,7 @@ if ( $bookings ) {
 		echo '<td>' . esc_html( $booking['booking_time'] ) . '</td>';
 		echo '<td>' . esc_html( $booking['status'] ) . '</td>';
 		echo '<td><a href="' . esc_url( $ticket_url ) . '" target="_blank">' . esc_html__( 'View Ticket', 'kura-ai-booking-free' ) . '</a></td>';
-		if ( $booking['status'] === 'pending' ) {
+		if ( 'pending' === $booking['status'] ) {
 			$nonce = wp_create_nonce( 'kab_cancel_booking_' . $booking['id'] );
 			echo '<td><form method="post"><input type="hidden" name="kab_cancel_booking_id" value="' . esc_attr( $booking['id'] ) . '" />';
 			echo '<input type="hidden" name="kab_cancel_booking_nonce" value="' . esc_attr( $nonce ) . '" />';

@@ -1,329 +1,329 @@
 /* Kura-ai Booking System Setup Wizard Styles */
 .kab-setup-wizard {
-    max-width: 800px;
-    margin: 20px auto;
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	max-width: 800px;
+	margin: 20px auto;
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
 .kab-setup-header {
-    background: #EBD5AB; /* Light cream background */
-    border-bottom: 1px solid #8BAE66; /* Light green border */
-    padding: 30px;
-    text-align: center;
+	background: #EBD5AB; /* Light cream background */
+	border-bottom: 1px solid #8BAE66; /* Light green border */
+	padding: 30px;
+	text-align: center;
 }
 
 .kab-setup-header h1 {
-    margin: 0 0 10px 0;
-    color: #628141; /* Dark green text */
-    font-size: 28px;
-    font-weight: 600;
+	margin: 0 0 10px 0;
+	color: #628141; /* Dark green text */
+	font-size: 28px;
+	font-weight: 600;
 }
 
 .kab-setup-header p {
-    margin: 0;
-    color: #628141; /* Dark green text */
-    font-size: 16px;
+	margin: 0;
+	color: #628141; /* Dark green text */
+	font-size: 16px;
 }
 
 .kab-setup-progress {
-    background: #EBD5AB; /* Light cream background */
-    border-bottom: 1px solid #8BAE66; /* Light green border */
-    padding: 20px 30px;
+	background: #EBD5AB; /* Light cream background */
+	border-bottom: 1px solid #8BAE66; /* Light green border */
+	padding: 20px 30px;
 }
 
 .kab-setup-progress ul {
-    display: flex;
-    justify-content: space-between;
-    list-style: none;
-    margin: 0;
-    padding: 0;
+	display: flex;
+	justify-content: space-between;
+	list-style: none;
+	margin: 0;
+	padding: 0;
 }
 
 .kab-setup-progress li {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	position: relative;
+	flex: 1;
 }
 
 .kab-setup-progress li:not(:last-child):after {
-    content: '';
-    position: absolute;
-    top: 20px;
-    right: -50%;
-    width: 100%;
-    height: 2px;
-    background: #8BAE66; /* Light green */
-    z-index: 1;
+	content: '';
+	position: absolute;
+	top: 20px;
+	right: -50%;
+	width: 100%;
+	height: 2px;
+	background: #8BAE66; /* Light green */
+	z-index: 1;
 }
 
 .kab-setup-progress li.completed:not(:last-child):after {
-    background: #628141; /* Dark green */
+	background: #628141; /* Dark green */
 }
 
 .kab-setup-progress li.active:not(:last-child):after {
-    background: #E67E22; /* Orange accent */
+	background: #E67E22; /* Orange accent */
 }
 
 .step-number {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #8BAE66; /* Light green */
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    margin-bottom: 10px;
-    position: relative;
-    z-index: 2;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: #8BAE66; /* Light green */
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	margin-bottom: 10px;
+	position: relative;
+	z-index: 2;
 }
 
 .kab-setup-progress li.active .step-number {
-    background: #E67E22; /* Orange accent */
+	background: #E67E22; /* Orange accent */
 }
 
 .kab-setup-progress li.completed .step-number {
-    background: #628141; /* Dark green */
+	background: #628141; /* Dark green */
 }
 
 .step-name {
-    font-size: 12px;
-    color: #628141; /* Dark green */
-    text-align: center;
-    font-weight: 500;
+	font-size: 12px;
+	color: #628141; /* Dark green */
+	text-align: center;
+	font-weight: 500;
 }
 
 .kab-setup-progress li.active .step-name {
-    color: #E67E22; /* Orange accent */
-    font-weight: 600;
+	color: #E67E22; /* Orange accent */
+	font-weight: 600;
 }
 
 .kab-setup-progress li.completed .step-name {
-    color: #628141; /* Dark green */
+	color: #628141; /* Dark green */
 }
 
 .kab-setup-content {
-    padding: 30px;
+	padding: 30px;
 }
 
 .kab-setup-form {
-    margin: 0;
+	margin: 0;
 }
 
 .kab-setup-actions {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #8BAE66; /* Light green border */
-    text-align: right;
+	margin-top: 30px;
+	padding-top: 20px;
+	border-top: 1px solid #8BAE66; /* Light green border */
+	text-align: right;
 }
 
 .kab-setup-actions .button {
-    margin-left: 10px;
+	margin-left: 10px;
 }
 
 /* Primary button styling */
 .kab-setup-actions .button-primary {
-    background: #E67E22; /* Orange */
-    border-color: #E67E22;
+	background: #E67E22; /* Orange */
+	border-color: #E67E22;
 }
 
 .kab-setup-actions .button-primary:hover,
 .kab-setup-actions .button-primary:focus {
-    background: #D35400; /* Darker orange */
-    border-color: #D35400;
+	background: #D35400; /* Darker orange */
+	border-color: #D35400;
 }
 
 /* Secondary button styling */
 .kab-setup-actions .button-secondary {
-    background: #628141; /* Dark green */
-    border-color: #628141;
-    color: #fff;
+	background: #628141; /* Dark green */
+	border-color: #628141;
+	color: #fff;
 }
 
 .kab-setup-actions .button-secondary:hover,
 .kab-setup-actions .button-secondary:focus {
-    background: #4A6B2F; /* Darker green */
-    border-color: #4A6B2F;
+	background: #4A6B2F; /* Darker green */
+	border-color: #4A6B2F;
 }
 
 /* Welcome Step */
 .kab-welcome-step .welcome-hero {
-    text-align: center;
-    margin-bottom: 30px;
+	text-align: center;
+	margin-bottom: 30px;
 }
 
 .kab-welcome-step .welcome-hero h2 {
-    color: #1d2327;
-    font-size: 24px;
-    margin-bottom: 15px;
+	color: #1d2327;
+	font-size: 24px;
+	margin-bottom: 15px;
 }
 
 .kab-welcome-step .welcome-features {
-    background: #f6f7f7;
-    border: 1px solid #dcdcde;
-    border-radius: 4px;
-    padding: 20px;
-    margin: 20px 0;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 20px;
+	margin: 20px 0;
 }
 
 .kab-welcome-step .welcome-features h3 {
-    margin: 0 0 15px 0;
-    color: #1d2327;
+	margin: 0 0 15px 0;
+	color: #1d2327;
 }
 
 .kab-welcome-step .welcome-features ul {
-    margin: 0;
-    padding-left: 20px;
+	margin: 0;
+	padding-left: 20px;
 }
 
 .kab-welcome-step .welcome-features li {
-    margin-bottom: 8px;
-    color: #646970;
+	margin-bottom: 8px;
+	color: #646970;
 }
 
 /* Business Step */
 .kab-business-step h3 {
-    color: #1d2327;
-    margin: 0 0 10px 0;
+	color: #1d2327;
+	margin: 0 0 10px 0;
 }
 
 .kab-business-step p {
-    color: #646970;
-    margin: 0 0 20px 0;
+	color: #646970;
+	margin: 0 0 20px 0;
 }
 
 /* Services Step */
 .kab-services-step h3 {
-    color: #1d2327;
-    margin: 0 0 10px 0;
+	color: #1d2327;
+	margin: 0 0 10px 0;
 }
 
 .kab-services-step p {
-    color: #646970;
-    margin: 0 0 20px 0;
+	color: #646970;
+	margin: 0 0 20px 0;
 }
 
 .kab-service-item {
-    background: #f9f9f9;
-    border: 1px solid #e2e4e7;
-    border-radius: 4px;
-    padding: 20px;
-    margin-bottom: 20px;
+	background: #f9f9f9;
+	border: 1px solid #e2e4e7;
+	border-radius: 4px;
+	padding: 20px;
+	margin-bottom: 20px;
 }
 
 .kab-service-item h4 {
-    margin: 0 0 15px 0;
-    color: #1d2327;
+	margin: 0 0 15px 0;
+	color: #1d2327;
 }
 
 /* Emails Step */
 .kab-emails-step h3 {
-    color: #1d2327;
-    margin: 0 0 10px 0;
+	color: #1d2327;
+	margin: 0 0 10px 0;
 }
 
 .kab-emails-step p {
-    color: #646970;
-    margin: 0 0 20px 0;
+	color: #646970;
+	margin: 0 0 20px 0;
 }
 
 /* Finish Step */
 .kab-finish-step .finish-hero {
-    text-align: center;
-    margin-bottom: 30px;
+	text-align: center;
+	margin-bottom: 30px;
 }
 
 .kab-finish-step .finish-hero h2 {
-    color: #46b450;
-    font-size: 28px;
-    margin: 20px 0 10px 0;
+	color: #46b450;
+	font-size: 28px;
+	margin: 20px 0 10px 0;
 }
 
 .kab-finish-step .finish-hero p {
-    color: #646970;
-    font-size: 16px;
-    margin: 0;
+	color: #646970;
+	font-size: 16px;
+	margin: 0;
 }
 
 .kab-finish-step .next-steps {
-    background: #f6f7f7;
-    border: 1px solid #dcdcde;
-    border-radius: 4px;
-    padding: 20px;
-    margin: 20px 0;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 20px;
+	margin: 20px 0;
 }
 
 .kab-finish-step .next-steps h3 {
-    margin: 0 0 15px 0;
-    color: #1d2327;
+	margin: 0 0 15px 0;
+	color: #1d2327;
 }
 
 .kab-finish-step .next-steps ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
 .kab-finish-step .next-steps li {
-    margin-bottom: 15px;
-    padding: 15px;
-    background: #fff;
-    border: 1px solid #dcdcde;
-    border-radius: 4px;
+	margin-bottom: 15px;
+	padding: 15px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
 }
 
 .kab-finish-step .next-steps li:last-child {
-    margin-bottom: 0;
+	margin-bottom: 0;
 }
 
 .kab-finish-step .setup-actions {
-    text-align: center;
-    margin-top: 30px;
+	text-align: center;
+	margin-top: 30px;
 }
 
 .kab-finish-step .setup-actions .button {
-    margin: 0 5px 5px 5px;
+	margin: 0 5px 5px 5px;
 }
 
 /* Responsive Design */
 @media (max-width: 782px) {
-    .kab-setup-progress ul {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .kab-setup-progress li {
-        flex-direction: row;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .kab-setup-progress li:not(:last-child):after {
-        display: none;
-    }
-    
-    .step-name {
-        text-align: left;
-    }
-    
-    .kab-setup-actions {
-        text-align: center;
-    }
-    
-    .kab-setup-actions .button {
-        margin: 5px;
-        display: block;
-        width: 100%;
-    }
-    
-    .kab-finish-step .setup-actions .button {
-        display: inline-block;
-        width: auto;
-    }
+	.kab-setup-progress ul {
+		flex-direction: column;
+		gap: 15px;
+	}
+
+	.kab-setup-progress li {
+		flex-direction: row;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.kab-setup-progress li:not(:last-child):after {
+		display: none;
+	}
+
+	.step-name {
+		text-align: left;
+	}
+
+	.kab-setup-actions {
+		text-align: center;
+	}
+
+	.kab-setup-actions .button {
+		margin: 5px;
+		display: block;
+		width: 100%;
+	}
+
+	.kab-finish-step .setup-actions .button {
+		display: inline-block;
+		width: auto;
+	}
 }

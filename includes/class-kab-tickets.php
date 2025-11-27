@@ -64,15 +64,15 @@ class KAB_Tickets {
 
 	public static function send_ticket_email( $email, $ticket_id, $qr_code_path, $pdf_path, $booking_data = array() ) {
 		// Extract variables for the email
-		$customer_name = isset( $booking_data['customer_name'] ) ? $booking_data['customer_name'] : '';
+		$customer_name  = isset( $booking_data['customer_name'] ) ? $booking_data['customer_name'] : '';
 		$customer_email = isset( $booking_data['customer_email'] ) ? $booking_data['customer_email'] : '';
-		$booking_date = isset( $booking_data['booking_date'] ) ? $booking_data['booking_date'] : '';
-		$booking_time = isset( $booking_data['booking_time'] ) ? $booking_data['booking_time'] : '';
-		$booking_id = isset( $booking_data['booking_id'] ) ? $booking_data['booking_id'] : '';
-		$booking_type = isset( $booking_data['booking_type'] ) ? $booking_data['booking_type'] : '';
-		
+		$booking_date   = isset( $booking_data['booking_date'] ) ? $booking_data['booking_date'] : '';
+		$booking_time   = isset( $booking_data['booking_time'] ) ? $booking_data['booking_time'] : '';
+		$booking_id     = isset( $booking_data['booking_id'] ) ? $booking_data['booking_id'] : '';
+		$booking_type   = isset( $booking_data['booking_type'] ) ? $booking_data['booking_type'] : '';
+
 		// Determine event/service name
-		$event_name = '';
+		$event_name   = '';
 		$service_name = '';
 		if ( isset( $booking_data['booking_type'] ) ) {
 			if ( $booking_data['booking_type'] === 'event' && isset( $booking_data['event_id'] ) ) {
@@ -95,7 +95,7 @@ class KAB_Tickets {
 
 		// Use the new email system
 		require_once plugin_dir_path( __FILE__ ) . 'class-kab-emails.php';
-		
+
 		// Send booking confirmation email
 		KAB_Emails::send_booking_confirmation(
 			$booking_id,
