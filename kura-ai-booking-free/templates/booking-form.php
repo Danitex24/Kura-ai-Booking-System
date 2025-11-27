@@ -2,17 +2,12 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
-// Fetch available services and events
+wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
 require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-events.php';
 require_once plugin_dir_path( __FILE__ ) . '../includes/class-kab-bookings.php';
 $events_model = new KAB_Events();
 $events = $events_model->get_events();
-
-// Service fetching would be similar (class-kab-services.php)
 $services = array(); // Placeholder for services
-
-// Handle booking submission
 if ( isset( $_POST['kab_booking_nonce'] ) && wp_verify_nonce( $_POST['kab_booking_nonce'], 'kab_booking_form' ) ) {
 	$name = sanitize_text_field( $_POST['customer_name'] );
 	$email = sanitize_email( $_POST['customer_email'] );
@@ -21,14 +16,12 @@ if ( isset( $_POST['kab_booking_nonce'] ) && wp_verify_nonce( $_POST['kab_bookin
 	$time = sanitize_text_field( $_POST['booking_time'] );
 	$service_id = isset( $_POST['service_id'] ) ? intval( $_POST['service_id'] ) : null;
 	$event_id = isset( $_POST['event_id'] ) ? intval( $_POST['event_id'] ) : null;
-
-	// Booking logic placeholder
 	// $booking_id = KAB_Bookings::create_booking(...);
-	// Show success message
 	echo '<div class="kab-booking-success">' . esc_html__( 'Booking submitted! You will receive a confirmation email.', 'kura-ai-booking-free' ) . '</div>';
 }
 ?>
 <form method="post" class="kab-booking-form">
+	<h2><?php esc_html_e( 'Book an Appointment or Event', 'kura-ai-booking-free' ); ?></h2>
 	<input type="hidden" name="kab_booking_nonce" value="<?php echo esc_attr( wp_create_nonce( 'kab_booking_form' ) ); ?>" />
 	<p>
 		<label><?php esc_html_e( 'Name', 'kura-ai-booking-free' ); ?></label><br>
@@ -59,7 +52,9 @@ if ( isset( $_POST['kab_booking_nonce'] ) && wp_verify_nonce( $_POST['kab_bookin
 		<select name="event_id">
 			<option value="">--</option>
 			<?php foreach ( $events as $event ) : ?>
-				<option value="<?php echo esc_attr( $event['id'] ); ?>"><?php echo esc_html( $event['name'] ); ?> (<?php echo esc_html( $event['event_date'] ); ?>)</option>
+				<option value="<?php echo esc_attr( $event['id'] ); ?>">
+					<?php echo esc_html( $event['name'] ); ?> (<?php echo esc_html( $event['event_date'] ); ?> <?php echo esc_html( $event['event_time'] ); ?>)
+				</option>
 			<?php endforeach; ?>
 		</select>
 	</p>
