@@ -48,8 +48,8 @@ class KAB_Setup_Wizard {
 	 */
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_setup_page' ) );
+		add_action( 'admin_post_kab_dismiss_setup', array( $this, 'handle_dismiss' ) );
 		add_action( 'admin_init', array( $this, 'handle_setup' ) );
-		add_action( 'admin_post_kab_complete_setup', array( $this, 'complete_setup' ) );
 	}
 
 	/**
@@ -85,16 +85,26 @@ class KAB_Setup_Wizard {
 		}
 	}
 
+
 	/**
 	 * Handle setup form submissions
 	 */
 	public function handle_setup() {
-		if ( ! isset( $_POST['kab_setup_nonce'] ) || ! wp_verify_nonce( $_POST['kab_setup_nonce'], 'kab_setup_step_' . $this->current_step ) ) {
+		if ( ! isset( $_POST['kab_setup_nonce'] ) || ! isset( $_POST['step'] ) ) {
+			return;
+		}
+
+		$submitted_step = intval( $_POST['step'] );
+		
+		if ( ! wp_verify_nonce( $_POST['kab_setup_nonce'], 'kab_setup_step_' . $submitted_step ) ) {
 			return;
 		}
 
 		// Handle step-specific data processing
-		switch ( $this->current_step ) {
+		switch ( $submitted_step ) {
+			case 1:
+				// No data to save, just proceed to next step.
+				break;
 			case 2:
 				$this->save_company_info();
 				break;
@@ -107,9 +117,13 @@ class KAB_Setup_Wizard {
 		}
 
 		// Move to next step
-		++$this->current_step;
-		if ( $this->current_step > count( $this->setup_steps() ) ) {
+		$next_step = $submitted_step + 1;
+		if ( $next_step > count( $this->setup_steps() ) ) {
 			$this->complete_setup();
+		} else {
+			// Redirect to next step
+			wp_redirect( admin_url( 'admin.php?page=kab-setup&step=' . $next_step ) );
+			exit;
 		}
 	}
 
@@ -147,6 +161,32 @@ class KAB_Setup_Wizard {
 		$settings['enable_tickets'] = isset( $_POST['enable_tickets'] ) ? 'yes' : 'no';
 
 		update_option( 'kab_settings', $settings );
+	}
+
+	/**
+	 * Handle dismiss/skip setup action
+	 */
+	public function handle_dismiss() {
+		error_log( 'KAB: handle_dismiss called' );
+		
+		if ( ! current_user_can( 'manage_options' ) ) {
+			error_log( 'KAB: User lacks manage_options capability' );
+			wp_die( __( 'You do not have sufficient permissions to access this page.', 'kura-ai-booking-free' ) );
+		}
+		
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'kab_dismiss_setup' ) ) {
+			error_log( 'KAB: Invalid nonce in handle_dismiss' );
+			wp_die( __( 'Invalid nonce specified', 'kura-ai-booking-free' ), __( 'Error', 'kura-ai-booking-free' ), array( 'response' => 403 ) );
+		}
+		
+		error_log( 'KAB: Dismissing setup - setting option' );
+		update_option( 'kab_setup_completed', true );
+		
+		$redirect_url = admin_url( 'admin.php?page=kab-dashboard' );
+		error_log( 'KAB: Redirecting to ' . $redirect_url );
+		
+		wp_safe_redirect( $redirect_url );
+		exit;
 	}
 
 	/**
@@ -195,6 +235,30 @@ class KAB_Setup_Wizard {
 					border-radius: 8px;
 					box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 					overflow: hidden;
+				}
+				
+				.kab-loading {
+					opacity: 0.7;
+					pointer-events: none;
+					position: relative;
+				}
+				
+				.kab-loading:after {
+					content: '';
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 0;
+					bottom: 0;
+					background: rgba(255, 255, 255, 0.8);
+					display: flex;
+					align-items: center;
+					justify-content: center;
+				}
+				
+				.kab-loading:after {
+					content: '⏳';
+					font-size: 24px;
 				}
 				
 				.kab-header {
@@ -355,8 +419,47 @@ class KAB_Setup_Wizard {
 				}
 				
 				<?php echo $this->get_step_styles(); ?>
-			</style>
-		</head>
+		</style>
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				var form = document.querySelector('.kab-content form');
+				var nextButton = document.getElementById('kab-next-button');
+				var completeButton = document.getElementById('kab-complete-button');
+				var wizard = document.querySelector('.kab-setup-wizard');
+				
+				if (form) {
+					form.addEventListener('submit', function(e) {
+						// Add loading state
+						if (wizard) {
+							wizard.classList.add('kab-loading');
+						}
+						
+						// Disable buttons to prevent double submission
+						if (nextButton) nextButton.disabled = true;
+						if (completeButton) completeButton.disabled = true;
+						
+						// Show loading text
+						if (nextButton) nextButton.textContent = 'Loading...';
+						if (completeButton) completeButton.textContent = 'Completing...';
+					});
+				}
+				
+				// Handle any validation errors or form issues
+				if (nextButton) {
+					nextButton.addEventListener('click', function(e) {
+						// Basic form validation could be added here if needed
+						console.log('Next button clicked - proceeding to next step');
+					});
+				}
+				
+				if (completeButton) {
+					completeButton.addEventListener('click', function(e) {
+						console.log('Complete button clicked - finishing setup');
+					});
+				}
+			});
+		</script>
+	</head>
 		<body>
 			<div class="kab-setup-wizard">
 				<div class="kab-header">
@@ -380,13 +483,13 @@ class KAB_Setup_Wizard {
 				</div>
 				
 				<div class="kab-content">
-					<form method="post">
-						<?php wp_nonce_field( 'kab_setup_step_' . $this->current_step, 'kab_setup_nonce' ); ?>
-						<input type="hidden" name="step" value="<?php echo $this->current_step; ?>">
-						
-						<?php $this->render_step_content(); ?>
-					</form>
-				</div>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=kab-setup' ) ); ?>">
+					<?php wp_nonce_field( 'kab_setup_step_' . $this->current_step, 'kab_setup_nonce' ); ?>
+					<input type="hidden" name="step" value="<?php echo $this->current_step; ?>">
+					
+					<?php $this->render_step_content(); ?>
+				</form>
+			</div>
 				
 				<div class="kab-footer">
 					<?php $this->render_footer_buttons(); ?>
@@ -464,16 +567,29 @@ class KAB_Setup_Wizard {
 	 * Render footer buttons
 	 */
 	private function render_footer_buttons() {
+		// Dismiss/skip button (always shown except on last step)
+	if ( $this->current_step < count( $this->setup_steps() ) ) {
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display: inline;">';
+		echo '<input type="hidden" name="action" value="kab_dismiss_setup">';
+		wp_nonce_field( 'kab_dismiss_setup' );
+		echo '<button type="submit" class="kab-button kab-button-secondary">' . esc_html__( 'Skip Setup', 'kura-ai-booking-free' ) . '</button>';
+		echo '</form>';
+	} else {
+		echo '<span></span>'; // Empty span for flex spacing
+	}
+
+		// Previous button
 		if ( $this->current_step > 1 ) {
 			echo '<a href="' . esc_url( add_query_arg( 'step', $this->current_step - 1 ) ) . '" class="kab-button kab-button-secondary">' . esc_html__( 'Previous', 'kura-ai-booking-free' ) . '</a>';
 		} else {
 			echo '<span></span>'; // Empty span for flex spacing
 		}
 
+		// Next/Complete button
 		if ( $this->current_step < count( $this->setup_steps() ) ) {
-			echo '<button type="submit" class="kab-button kab-button-primary">' . esc_html__( 'Next', 'kura-ai-booking-free' ) . '</button>';
+			echo '<button type="submit" class="kab-button kab-button-primary" id="kab-next-button">' . esc_html__( 'Next', 'kura-ai-booking-free' ) . '</button>';
 		} else {
-			echo '<button type="submit" class="kab-button kab-button-primary" name="complete_setup">' . esc_html__( 'Complete Setup', 'kura-ai-booking-free' ) . '</button>';
+			echo '<button type="submit" class="kab-button kab-button-primary" name="complete_setup" id="kab-complete-button">' . esc_html__( 'Complete Setup', 'kura-ai-booking-free' ) . '</button>';
 		}
 	}
 

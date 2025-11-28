@@ -149,30 +149,6 @@ function kab_free_maybe_show_deactivation_modal() {
 	}
 }
 
-// Setup wizard page - moved to run after text domain is loaded.
-add_action( 'admin_menu', 'kab_free_setup_wizard_menu', 20 );
-
-/**
- * Add setup wizard menu page.
- *
- * @since 1.0.0
- * @return void
- */
-function kab_free_setup_wizard_menu() {
-	add_menu_page( __( 'Kura-ai Setup Wizard', 'kura-ai-booking-free' ), __( 'Kura-ai Setup', 'kura-ai-booking-free' ), 'manage_options', 'kab-setup-wizard', 'kab_free_setup_wizard_page', 'dashicons-calendar-alt', 2 );
-}
-
-/**
- * Render setup wizard page.
- *
- * @since 1.0.0
- * @return void
- */
-function kab_free_setup_wizard_page() {
-	$setup_wizard = new KAB_Setup_Wizard();
-	$setup_wizard->render_setup_page();
-}
-
 // Load plugin text domain for translations.
 add_action( 'plugins_loaded', 'kab_free_load_textdomain' );
 
@@ -190,15 +166,72 @@ function kab_free_load_textdomain() {
 	);
 }
 
-// Load plugin includes.
-add_action( 'plugins_loaded', 'kab_free_load_includes' );
+// Global instance of the setup wizard.
+$kab_setup_wizard_instance = null;
+
+// Load plugin includes and initialize components.
+add_action( 'plugins_loaded', 'kab_free_init_plugin' );
 
 /**
- * Load plugin includes and initialize components.
+ * Initialize the plugin, load includes, and set up hooks.
  *
  * @since 1.0.0
  * @return void
  */
+function kab_free_init_plugin() {
+	global $kab_setup_wizard_instance;
+
+	// Load core plugin classes.
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-loader.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-admin.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-frontend.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-bookings.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-events.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-qr-generator.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-tickets.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/rest/class-kab-rest-controller.php';
+
+	// Instantiate the admin class to register menus.
+	new KAB_Admin();
+
+	// Load and instantiate the setup wizard.
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-setup-wizard.php';
+	$kab_setup_wizard_instance = new KAB_Setup_Wizard();
+
+	// Add the menu page.
+	add_action( 'admin_menu', 'kab_free_setup_wizard_menu' );
+}
+
+/**
+ * Add setup wizard menu page.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function kab_free_setup_wizard_menu() {
+	add_menu_page(
+		__( 'Kura-ai Setup Wizard', 'kura-ai-booking-free' ),
+		__( 'Kura-ai Setup', 'kura-ai-booking-free' ),
+		'manage_options',
+		'kab-setup-wizard',
+		'kab_free_render_setup_wizard_page',
+		'dashicons-calendar-alt',
+		2
+	);
+}
+
+/**
+ * Render the setup wizard page by calling the method on the global instance.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function kab_free_render_setup_wizard_page() {
+	global $kab_setup_wizard_instance;
+	if ( $kab_setup_wizard_instance ) {
+		$kab_setup_wizard_instance->render_setup_page();
+	}
+}
 function kab_free_load_includes() {
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-loader.php';
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-activator.php';
