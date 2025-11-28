@@ -5,9 +5,24 @@ document.addEventListener('DOMContentLoaded', function () {
         link.addEventListener('click', function (e) {
             e.preventDefault();
             const serviceName = this.getAttribute('data-service-name');
-            if (confirm(`Are you sure you want to delete the service "${serviceName}"?`)) {
-                window.location.href = this.href;
-            }
+            
+            Swal.fire({
+                title: 'Delete Service',
+                html: `Are you sure you want to delete the service <strong>${serviceName}</strong>?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    confirmButton: 'kab-btn kab-btn-danger',
+                    cancelButton: 'kab-btn kab-btn-outline'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = this.href;
+                }
+            });
         });
     });
 
@@ -17,9 +32,24 @@ document.addEventListener('DOMContentLoaded', function () {
         link.addEventListener('click', function (e) {
             e.preventDefault();
             const eventName = this.getAttribute('data-event-name');
-            if (confirm(`Are you sure you want to delete the event \"${eventName}\"?`)) {
-                window.location.href = this.href;
-            }
+            
+            Swal.fire({
+                title: 'Delete Event',
+                html: `Are you sure you want to delete the event <strong>${eventName}</strong>?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    confirmButton: 'kab-btn kab-btn-danger',
+                    cancelButton: 'kab-btn kab-btn-outline'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = this.href;
+                }
+            });
         });
     });
 
