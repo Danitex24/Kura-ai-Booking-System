@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), KAB_VERSION );
 
-// Handle booking cancellation
+// Handle booking cancellation.
 if ( isset( $_POST['kab_cancel_booking_id'] ) && isset( $_POST['kab_cancel_booking_nonce'] ) ) {
 	$booking_id = intval( wp_unslash( $_POST['kab_cancel_booking_id'] ) );
 	$nonce      = sanitize_text_field( wp_unslash( $_POST['kab_cancel_booking_nonce'] ) );

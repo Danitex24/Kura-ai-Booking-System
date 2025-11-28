@@ -1,9 +1,19 @@
 <?php
+/**
+ * Single Ticket Template
+ *
+ * Displays a single ticket with QR code for validation.
+ *
+ * @package Kura-ai-Booking-Free
+ * @since 1.0.0
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), null );
-$ticket_id    = isset( $_GET['ticket_id'] ) ? sanitize_text_field( $_GET['ticket_id'] ) : '';
+
+wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), KAB_VERSION );
+$ticket_id    = isset( $_GET['ticket_id'] ) ? sanitize_text_field( wp_unslash( $_GET['ticket_id'] ) ) : '';
 $ticket_model = new KAB_Tickets();
 $ticket       = $ticket_id ? $ticket_model->get_ticket_by_id( $ticket_id ) : null;
 ?>

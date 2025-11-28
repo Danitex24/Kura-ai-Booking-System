@@ -1,3 +1,14 @@
+<?php
+/**
+ * Email Ticket Template
+ *
+ * HTML template for email ticket notifications.
+ *
+ * @package Kura-ai-Booking-Free
+ * @since 1.0.0
+ */
+
+?>
 <!DOCTYPE html>
 <html>
 <head>

@@ -50,21 +50,22 @@ class KAB_Setup_Wizard {
 		add_action( 'admin_menu', array( $this, 'add_setup_page' ) );
 		add_action( 'admin_init', array( $this, 'handle_setup' ) );
 		add_action( 'admin_post_kab_complete_setup', array( $this, 'complete_setup' ) );
-
-		$this->setup_steps();
 	}
 
 	/**
 	 * Setup wizard steps
 	 */
 	private function setup_steps() {
-		$this->steps = array(
-			1 => __( 'Welcome', 'kura-ai-booking-free' ),
-			2 => __( 'Company Information', 'kura-ai-booking-free' ),
-			3 => __( 'Email Settings', 'kura-ai-booking-free' ),
-			4 => __( 'Features', 'kura-ai-booking-free' ),
-			5 => __( 'Complete', 'kura-ai-booking-free' ),
-		);
+		if ( empty( $this->steps ) ) {
+			$this->steps = array(
+				1 => __( 'Welcome', 'kura-ai-booking-free' ),
+				2 => __( 'Company Information', 'kura-ai-booking-free' ),
+				3 => __( 'Email Settings', 'kura-ai-booking-free' ),
+				4 => __( 'Features', 'kura-ai-booking-free' ),
+				5 => __( 'Complete', 'kura-ai-booking-free' ),
+			);
+		}
+		return $this->steps;
 	}
 
 	/**
@@ -107,7 +108,7 @@ class KAB_Setup_Wizard {
 
 		// Move to next step
 		++$this->current_step;
-		if ( $this->current_step > count( $this->steps ) ) {
+		if ( $this->current_step > count( $this->setup_steps() ) ) {
 			$this->complete_setup();
 		}
 	}
@@ -364,7 +365,7 @@ class KAB_Setup_Wizard {
 				</div>
 				
 				<div class="kab-progress">
-					<?php foreach ( $this->steps as $step_number => $step_label ) : ?>
+					<?php foreach ( $this->setup_steps() as $step_number => $step_label ) : ?>
 						<div class="kab-step <?php echo $step_number === $this->current_step ? 'active' : ''; ?> <?php echo $step_number < $this->current_step ? 'completed' : ''; ?>">
 							<div class="kab-step-number">
 								<?php if ( $step_number < $this->current_step ) : ?>
@@ -469,7 +470,7 @@ class KAB_Setup_Wizard {
 			echo '<span></span>'; // Empty span for flex spacing
 		}
 
-		if ( $this->current_step < count( $this->steps ) ) {
+		if ( $this->current_step < count( $this->setup_steps() ) ) {
 			echo '<button type="submit" class="kab-button kab-button-primary">' . esc_html__( 'Next', 'kura-ai-booking-free' ) . '</button>';
 		} else {
 			echo '<button type="submit" class="kab-button kab-button-primary" name="complete_setup">' . esc_html__( 'Complete Setup', 'kura-ai-booking-free' ) . '</button>';
@@ -589,6 +590,3 @@ class KAB_Setup_Wizard {
 		<?php
 	}
 }
-
-// Initialize the setup wizard
-new KAB_Setup_Wizard();

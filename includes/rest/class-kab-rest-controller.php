@@ -5,6 +5,7 @@
  * Handles REST API endpoints for ticket validation and booking.
  *
  * @package Kura-ai-Booking-Free
+ * @since 1.0.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
