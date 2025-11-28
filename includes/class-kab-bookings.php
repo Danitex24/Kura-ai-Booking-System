@@ -74,6 +74,9 @@ class KAB_Bookings {
 		if ( $booking_id ) {
 			require_once plugin_dir_path( __FILE__ ) . 'class-kab-tickets.php';
 			KAB_Tickets::generate_and_send_ticket( $booking_id, $ticket_id, $data );
+			
+			// Generate invoice for the booking
+			do_action( 'kab_booking_completed', $booking_id, $data );
 		}
 		return $booking_id;
 	}

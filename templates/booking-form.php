@@ -19,37 +19,9 @@ $events_model   = new KAB_Events();
 $services_model = new KAB_Services();
 $events         = $events_model->get_events();
 $services       = $services_model->get_services();
-
-if ( isset( $_POST['kab_booking_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kab_booking_nonce'] ) ), 'kab_booking_form' ) ) {
-	$name         = isset( $_POST['customer_name'] ) ? sanitize_text_field( wp_unslash( $_POST['customer_name'] ) ) : '';
-	$email        = isset( $_POST['customer_email'] ) ? sanitize_email( wp_unslash( $_POST['customer_email'] ) ) : '';
-	$booking_type = isset( $_POST['booking_type'] ) ? sanitize_text_field( wp_unslash( $_POST['booking_type'] ) ) : '';
-	$date         = isset( $_POST['booking_date'] ) ? sanitize_text_field( wp_unslash( $_POST['booking_date'] ) ) : '';
-	$time         = isset( $_POST['booking_time'] ) ? sanitize_text_field( wp_unslash( $_POST['booking_time'] ) ) : '';
-	$service_id   = isset( $_POST['service_id'] ) ? intval( $_POST['service_id'] ) : null;
-	$event_id     = isset( $_POST['event_id'] ) ? intval( $_POST['event_id'] ) : null;
-
-	// Create booking. data.
-	$booking_data = array(
-		'booking_type'   => $booking_type,
-		'service_id'     => $service_id,
-		'event_id'       => $event_id,
-		'booking_date'   => $date,
-		'booking_time'   => $time,
-		'customer_name'  => $name,
-		'customer_email' => $email,
-	);
-
-	// Create booking.
-	$booking_id = KAB_Bookings::create_booking( $booking_data );
-
-	if ( $booking_id ) {
-		echo '<div class="kab-booking-success">' . esc_html__( 'Booking submitted! You will receive a confirmation email with your ticket.', 'kura-ai-booking-free' ) . '</div>';
-	} else {
-		echo '<div class="kab-booking-error">' . esc_html__( 'Sorry, the selected time is not available. Please choose another time.', 'kura-ai-booking-free' ) . '</div>';
-	}
-}
 ?>
+
+<div id="kab-booking-messages"></div>
 <form method="post" class="kab-booking-form">
 	<h2><?php esc_html_e( 'Book an Appointment or Event', 'kura-ai-booking-free' ); ?></h2>
 	<input type="hidden" name="kab_booking_nonce" value="<?php echo esc_attr( wp_create_nonce( 'kab_booking_form' ) ); ?>" />

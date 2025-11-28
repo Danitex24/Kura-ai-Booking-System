@@ -37,7 +37,7 @@ class KAB_Admin {
 	 *
 	 * @param string $active_page The active page slug
 	 */
-	private function render_static_header( $active_page = 'dashboard' ) {
+	protected function render_static_header( $active_page = 'dashboard' ) {
 		?>
 		<div class="kab-admin-header">
 			<div class="kab-admin-header-inner">

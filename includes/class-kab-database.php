@@ -69,6 +69,28 @@ class KAB_Database {
 			UNIQUE KEY ticket_id (ticket_id)
 		) $charset_collate;";
 
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_invoices (
+			id INT NOT NULL AUTO_INCREMENT,
+			invoice_number VARCHAR(20) NOT NULL,
+			booking_id INT NOT NULL,
+			user_id BIGINT UNSIGNED NOT NULL,
+			customer_name TEXT NOT NULL,
+			customer_email TEXT NOT NULL,
+			item_name TEXT NOT NULL,
+			invoice_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			tax_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			payment_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+			payment_method VARCHAR(50),
+			pdf_path TEXT,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY invoice_number (invoice_number),
+			KEY booking_id (booking_id),
+			KEY user_id (user_id)
+		) $charset_collate;";
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		foreach ( $tables as $sql ) {
 			dbDelta( $sql );

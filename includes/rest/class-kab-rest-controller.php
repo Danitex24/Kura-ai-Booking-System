@@ -40,7 +40,7 @@ class KAB_REST_Controller {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'book_event' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'check_booking_permissions' ),
 			)
 		);
 
@@ -50,7 +50,7 @@ class KAB_REST_Controller {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'book_service' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'check_booking_permissions' ),
 			)
 		);
 	}
@@ -65,6 +65,17 @@ class KAB_REST_Controller {
 	 */
 	public function validate_ticket_id( $param, $request, $key ) {
 		return preg_match( '/^kab_[a-zA-Z0-9]+$/', $param ) === 1;
+	}
+
+	/**
+	 * Check booking permissions
+	 *
+	 * @param WP_REST_Request $request Request object
+	 * @return bool True if user has permission, false otherwise
+	 */
+	public function check_booking_permissions( $request ) {
+		// Allow all users to book appointments (frontend booking)
+		return true;
 	}
 
 	/**

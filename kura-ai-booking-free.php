@@ -190,9 +190,14 @@ function kab_free_init_plugin() {
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-qr-generator.php';
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-tickets.php';
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/rest/class-kab-rest-controller.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoices.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoice-pdf.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoice-admin.php';
 
 	// Instantiate the admin class to register menus.
 	new KAB_Admin();
+	new KAB_Invoices();
+	new KAB_Invoice_Admin();
 
 	// Load and instantiate the setup wizard.
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-setup-wizard.php';
