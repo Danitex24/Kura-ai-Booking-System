@@ -49,7 +49,13 @@ class KAB_Events {
 		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_events WHERE id = %d", $id ), ARRAY_A );
 	}
 
-	public function add_event( $data ) {
+	/**
+	 * Create a new event
+	 *
+	 * @param array $data Event data
+	 * @return int|false Event ID on success, false on failure
+	 */
+	public function create_event( $data ) {
 		global $wpdb;
 		$wpdb->insert(
 			$wpdb->prefix . 'kab_events',
