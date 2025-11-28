@@ -158,23 +158,23 @@ class KAB_Invoices {
 		$subtotal       = floatval( $amount );
 		$tax_amount     = 0.00;
 		$total_amount   = $subtotal + $tax_amount;
-		$wpdb->insert(
-			$wpdb->prefix . 'kab_invoices',
-			array(
-				'invoice_number' => $invoice_number,
-				'booking_id'     => 0,
-				'user_id'        => intval( $user_id ),
-				'customer_name'  => sanitize_text_field( $customer_name ),
-				'customer_email' => sanitize_email( $customer_email ),
-				'item_name'      => sanitize_text_field( $item_name ),
-				'subtotal'       => $subtotal,
-				'tax_amount'     => $tax_amount,
-				'total_amount'   => $total_amount,
-				'payment_status' => 'pending',
-				'created_at'     => current_time( 'mysql' ),
-			),
-			array( '%s', '%d', '%d', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%s' )
-		);
+        $wpdb->insert(
+            $wpdb->prefix . 'kab_invoices',
+            array(
+                'invoice_number' => $invoice_number,
+                'booking_id'     => 0,
+                'user_id'        => intval( $user_id ),
+                'customer_name'  => sanitize_text_field( $customer_name ),
+                'customer_email' => sanitize_email( $customer_email ),
+                'item_name'      => $item_name,
+                'subtotal'       => $subtotal,
+                'tax_amount'     => $tax_amount,
+                'total_amount'   => $total_amount,
+                'payment_status' => 'pending',
+                'created_at'     => current_time( 'mysql' ),
+            ),
+            array( '%s', '%d', '%d', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%s' )
+        );
 		$invoice_id = $wpdb->insert_id;
 		if ( ! $invoice_id ) {
 			return false;

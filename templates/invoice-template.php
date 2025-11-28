@@ -89,19 +89,52 @@ $support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
 				</tr>
 			</thead>
 			<tbody>
-				<tr>
-					<td><?php echo esc_html( $invoice['item_name'] ); ?></td>
-					<td>
-						<?php if ( $booking ) : ?>
-							<?php echo esc_html( $booking['booking_date'] ); ?> <?php echo esc_html( $booking['booking_time'] ); ?>
-						<?php else : ?>
-							N/A
-						<?php endif; ?>
-					</td>
-					<td>1</td>
-					<td><?php echo esc_html( number_format( $invoice['subtotal'], 2 ) ); ?></td>
-					<td><?php echo esc_html( number_format( $invoice['subtotal'], 2 ) ); ?></td>
-				</tr>
+                <?php
+                $rendered = false;
+                $items = array();
+                if ( ! empty( $invoice['item_name'] ) ) {
+                    $decoded = json_decode( $invoice['item_name'], true );
+                    if ( is_array( $decoded ) ) {
+                        $items = $decoded;
+                    }
+                }
+                if ( ! empty( $items ) ) {
+                    foreach ( $items as $li ) {
+                        $n = isset( $li['name'] ) ? $li['name'] : '';
+                        $a = isset( $li['amount'] ) ? floatval( $li['amount'] ) : 0.0;
+                        ?>
+                        <tr>
+                            <td><?php echo esc_html( $n ); ?></td>
+                            <td>
+                                <?php if ( $booking ) : ?>
+                                    <?php echo esc_html( $booking['booking_date'] ); ?> <?php echo esc_html( $booking['booking_time'] ); ?>
+                                <?php else : ?>
+                                    N/A
+                                <?php endif; ?>
+                            </td>
+                            <td>1</td>
+                            <td><?php echo esc_html( number_format( $a, 2 ) ); ?></td>
+                            <td><?php echo esc_html( number_format( $a, 2 ) ); ?></td>
+                        </tr>
+                        <?php
+                        $rendered = true;
+                    }
+                }
+                if ( ! $rendered ) : ?>
+                    <tr>
+                        <td><?php echo esc_html( $invoice['item_name'] ); ?></td>
+                        <td>
+                            <?php if ( $booking ) : ?>
+                                <?php echo esc_html( $booking['booking_date'] ); ?> <?php echo esc_html( $booking['booking_time'] ); ?>
+                            <?php else : ?>
+                                N/A
+                            <?php endif; ?>
+                        </td>
+                        <td>1</td>
+                        <td><?php echo esc_html( number_format( $invoice['subtotal'], 2 ) ); ?></td>
+                        <td><?php echo esc_html( number_format( $invoice['subtotal'], 2 ) ); ?></td>
+                    </tr>
+                <?php endif; ?>
 			</tbody>
 		</table>
 

@@ -211,7 +211,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '<div class="kab-card">';
         echo '<div class="kab-card-header"><h2>' . esc_html__( 'Create Invoice', 'kura-ai-booking-free' ) . '</h2></div>';
         echo '<div class="kab-card-body">';
-        echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+        echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" id="kab-create-invoice-form">';
         echo '<input type="hidden" name="action" value="kab_create_invoice">';
         wp_nonce_field( 'kab_create_invoice', 'kab_create_invoice_nonce' );
         echo '<div class="kab-form-group">';
@@ -220,13 +220,20 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo $users_dropdown;
         echo '</div>';
         echo '<div class="kab-form-group">';
-        echo '<label class="kab-form-label">' . esc_html__( 'Item Name', 'kura-ai-booking-free' ) . '</label>';
-        echo '<input type="text" name="item_name" class="kab-form-control" required>';
+        echo '<label class="kab-form-label">' . esc_html__( 'Invoice Items', 'kura-ai-booking-free' ) . '</label>';
+        echo '<table class="kab-items-builder" style="width:100%;border-collapse:collapse;">';
+        echo '<thead><tr><th style="text-align:left;padding:6px;border:1px solid #ddd;">' . esc_html__( 'Description', 'kura-ai-booking-free' ) . '</th><th style="text-align:right;padding:6px;border:1px solid #ddd;">' . esc_html__( 'Amount', 'kura-ai-booking-free' ) . '</th><th style="width:40px;padding:6px;border:1px solid #ddd;">&nbsp;</th></tr></thead>';
+        echo '<tbody id="kab-items-rows">';
+        echo '<tr>';
+        echo '<td style="padding:6px;border:1px solid #ddd;"><input type="text" name="items[name][]" class="kab-form-control" placeholder="' . esc_attr__( 'Item description', 'kura-ai-booking-free' ) . '" required></td>';
+        echo '<td style="padding:6px;border:1px solid #ddd;text-align:right;"><input type="number" step="0.01" min="0" name="items[amount][]" class="kab-form-control kab-item-amount" placeholder="0.00" required></td>';
+        echo '<td style="padding:6px;border:1px solid #ddd;text-align:center;"><button type="button" class="kab-btn" id="kab-add-row">+</button></td>';
+        echo '</tr>';
+        echo '</tbody>';
+        echo '<tfoot><tr><td style="padding:6px;border:1px solid #ddd;font-weight:600;">' . esc_html__( 'Total', 'kura-ai-booking-free' ) . '</td><td style="padding:6px;border:1px solid #ddd;text-align:right;"><span id="kab-items-total">0.00</span></td><td style="padding:6px;border:1px solid #ddd;">&nbsp;</td></tr></tfoot>';
+        echo '</table>';
         echo '</div>';
-        echo '<div class="kab-form-group">';
-        echo '<label class="kab-form-label">' . esc_html__( 'Amount', 'kura-ai-booking-free' ) . '</label>';
-        echo '<input type="number" step="0.01" name="amount" class="kab-form-control" required>';
-        echo '</div>';
+        echo '<script>(function(){const rows=document.getElementById("kab-items-rows");const add=document.getElementById("kab-add-row");const totalEl=document.getElementById("kab-items-total");function recalc(){let t=0;rows.querySelectorAll(".kab-item-amount").forEach(function(inp){const v=parseFloat(inp.value);if(!isNaN(v))t+=v;});totalEl.textContent=t.toFixed(2);}function makeRow(){const tr=document.createElement("tr");tr.innerHTML=`<td style=\"padding:6px;border:1px solid #ddd;\"><input type=\"text\" name=\"items[name][]\" class=\"kab-form-control\" placeholder=\"Item description\" required></td><td style=\"padding:6px;border:1px solid #ddd;text-align:right;\"><input type=\"number\" step=\"0.01\" min=\"0\" name=\"items[amount][]\" class=\"kab-form-control kab-item-amount\" placeholder=\"0.00\" required></td><td style=\"padding:6px;border:1px solid #ddd;text-align:center;\"><button type=\"button\" class=\"kab-btn kab-remove-row\">−</button></td>`;rows.appendChild(tr);bind(tr);}function bind(scope){scope.querySelectorAll(".kab-item-amount").forEach(function(inp){inp.addEventListener("input",recalc);});scope.querySelectorAll(".kab-remove-row").forEach(function(btn){btn.addEventListener("click",function(){btn.closest("tr").remove();recalc();});});}add.addEventListener("click",function(){makeRow();});bind(document);recalc();})();</script>';
         echo '<div class="kab-form-group">';
         echo '<button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> ' . esc_html__( 'Create Invoice', 'kura-ai-booking-free' ) . '</button>';
         echo ' <a href="' . esc_url( admin_url( 'admin.php?page=kab-invoices' ) ) . '" class="kab-btn">' . esc_html__( 'Cancel', 'kura-ai-booking-free' ) . '</a>';
@@ -240,9 +247,20 @@ class KAB_Invoice_Admin extends KAB_Admin {
             wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) );
         }
         $user_id   = intval( $_POST['user_id'] ?? 0 );
-        $item_name = sanitize_text_field( $_POST['item_name'] ?? '' );
-        $amount    = floatval( $_POST['amount'] ?? 0 );
-        if ( ! $user_id || ! $item_name || $amount <= 0 ) {
+        $items     = isset( $_POST['items'] ) && is_array( $_POST['items'] ) ? $_POST['items'] : array();
+        $names     = isset( $items['name'] ) && is_array( $items['name'] ) ? $items['name'] : array();
+        $amounts   = isset( $items['amount'] ) && is_array( $items['amount'] ) ? $items['amount'] : array();
+        $clean     = array();
+        $subtotal  = 0.0;
+        for ( $i = 0; $i < count( $names ); $i++ ) {
+            $n = sanitize_text_field( $names[$i] ?? '' );
+            $a = floatval( $amounts[$i] ?? 0 );
+            if ( $n && $a > 0 ) {
+                $clean[] = $n;
+                $subtotal += $a;
+            }
+        }
+        if ( ! $user_id || empty( $clean ) || $subtotal <= 0 ) {
             wp_die( __( 'Please provide all required fields.', 'kura-ai-booking-free' ) );
         }
         $user = get_user_by( 'id', $user_id );
@@ -250,7 +268,15 @@ class KAB_Invoice_Admin extends KAB_Admin {
             wp_die( __( 'User not found.', 'kura-ai-booking-free' ) );
         }
         require_once plugin_dir_path( __FILE__ ) . 'class-kab-invoices.php';
-        $invoice_id = KAB_Invoices::create_manual_invoice( $user_id, $user->display_name, $user->user_email, $item_name, $amount );
+        $items_payload = array();
+        for ( $i = 0; $i < count( $clean ); $i++ ) {
+            $items_payload[] = array(
+                'name'   => $clean[$i],
+                'amount' => floatval( $amounts[$i] ?? 0 ),
+            );
+        }
+        $item_blob = wp_json_encode( $items_payload );
+        $invoice_id = KAB_Invoices::create_manual_invoice( $user_id, $user->display_name, $user->user_email, $item_blob, $subtotal );
         if ( ! $invoice_id ) {
             wp_die( __( 'Failed to create invoice.', 'kura-ai-booking-free' ) );
         }
@@ -282,7 +308,25 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '</table>';
         echo '<table class="kab-invoice-items">';
         echo '<thead><tr><th>' . esc_html__( 'Description', 'kura-ai-booking-free' ) . '</th><th>' . esc_html__( 'Qty', 'kura-ai-booking-free' ) . '</th><th>' . esc_html__( 'Unit Price', 'kura-ai-booking-free' ) . '</th><th>' . esc_html__( 'Amount', 'kura-ai-booking-free' ) . '</th></tr></thead><tbody>';
-        echo '<tr><td>' . esc_html( $invoice['item_name'] ) . '</td><td>1</td><td>' . esc_html( number_format( $invoice['subtotal'], 2 ) ) . '</td><td>' . esc_html( number_format( $invoice['subtotal'], 2 ) ) . '</td></tr>';
+        $rendered = false;
+        $items = array();
+        if ( ! empty( $invoice['item_name'] ) ) {
+            $decoded = json_decode( $invoice['item_name'], true );
+            if ( is_array( $decoded ) ) {
+                $items = $decoded;
+            }
+        }
+        if ( ! empty( $items ) ) {
+            foreach ( $items as $li ) {
+                $n = isset( $li['name'] ) ? $li['name'] : '';
+                $a = isset( $li['amount'] ) ? floatval( $li['amount'] ) : 0.0;
+                echo '<tr><td>' . esc_html( $n ) . '</td><td>1</td><td>' . esc_html( number_format( $a, 2 ) ) . '</td><td>' . esc_html( number_format( $a, 2 ) ) . '</td></tr>';
+                $rendered = true;
+            }
+        }
+        if ( ! $rendered ) {
+            echo '<tr><td>' . esc_html( $invoice['item_name'] ) . '</td><td>1</td><td>' . esc_html( number_format( $invoice['subtotal'], 2 ) ) . '</td><td>' . esc_html( number_format( $invoice['subtotal'], 2 ) ) . '</td></tr>';
+        }
         echo '</tbody></table>';
         echo '<div class="kab-invoice-summary"><table>';
         echo '<tr><td>' . esc_html__( 'Subtotal', 'kura-ai-booking-free' ) . '</td><td class="text-right">' . esc_html( number_format( $invoice['subtotal'], 2 ) ) . '</td></tr>';
