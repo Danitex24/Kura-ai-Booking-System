@@ -126,4 +126,48 @@ class KAB_Tickets {
 		global $wpdb;
 		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_tickets WHERE ticket_id = %s", $ticket_id ), ARRAY_A );
 	}
+
+	/**
+	 * Validate a ticket by its ID
+	 *
+	 * @param string $ticket_id The ticket ID to validate.
+	 * @return array Validation result.
+	 */
+	public static function validate_ticket( $ticket_id ) {
+		global $wpdb;
+		$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_tickets WHERE ticket_id = %s", $ticket_id ), ARRAY_A );
+
+		if ( ! $ticket ) {
+			return array(
+				'valid'   => false,
+				'status'  => 'invalid',
+				'message' => 'Ticket not found.',
+			);
+		}
+
+		if ( $ticket['status'] === 'used' ) {
+			return array(
+				'valid'   => false,
+				'status'  => 'invalid',
+				'message' => 'Ticket has already been used.',
+				'details' => $ticket,
+			);
+		}
+
+		if ( $ticket['status'] === 'valid' ) {
+			return array(
+				'valid'   => true,
+				'status'  => 'valid',
+				'message' => 'Ticket is valid.',
+				'details' => $ticket,
+			);
+		}
+
+		return array(
+			'valid'   => false,
+			'status'  => 'invalid',
+			'message' => 'Invalid ticket status.',
+			'details' => $ticket,
+		);
+	}
 }

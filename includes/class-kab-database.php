@@ -38,6 +38,7 @@ class KAB_Database {
 			location VARCHAR(255),
 			price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
 			capacity INT NOT NULL DEFAULT 1,
+			status VARCHAR(20) NOT NULL DEFAULT 'active',
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id)
 		) $charset_collate;";

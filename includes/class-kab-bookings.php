@@ -181,4 +181,46 @@ class KAB_Bookings {
 		// 1 = Monday, 7 = Sunday
 		return $day_of_week >= 1 && $day_of_week <= 5; // Monday to Friday
 	}
+
+	/**
+	 * Get upcoming appointments
+	 *
+	 * @param int $limit Number of appointments to retrieve.
+	 * @return array List of upcoming appointments.
+	 */
+	public static function get_upcoming_appointments( $limit = 5 ) {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'kab_bookings';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table_name} WHERE booking_date >= CURDATE() AND status = 'pending' ORDER BY booking_date, booking_time ASC LIMIT %d",
+				$limit
+			),
+			ARRAY_A
+		);
+
+		return $results;
+	}
+
+	/**
+	 * Get recent bookings
+	 *
+	 * @param int $limit Number of bookings to retrieve.
+	 * @return array List of recent bookings.
+	 */
+	public static function get_recent_bookings( $limit = 5 ) {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'kab_bookings';
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table_name} ORDER BY created_at DESC LIMIT %d",
+				$limit
+			),
+			ARRAY_A
+		);
+
+		return $results;
+	}
 }

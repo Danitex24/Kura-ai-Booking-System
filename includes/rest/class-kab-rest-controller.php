@@ -77,15 +77,9 @@ class KAB_REST_Controller {
 		$ticket_id = sanitize_text_field( $request['ticket_id'] );
 
 		require_once plugin_dir_path( __FILE__ ) . '../class-kab-tickets.php';
-		$is_valid = KAB_Tickets::validate_ticket( $ticket_id );
+		$validation_result = KAB_Tickets::validate_ticket( $ticket_id );
 
-		return rest_ensure_response(
-			array(
-				'valid'     => $is_valid,
-				'ticket_id' => $ticket_id,
-				'message'   => $is_valid ? 'Ticket is valid' : 'Ticket not found or already used',
-			)
-		);
+		return rest_ensure_response( $validation_result );
 	}
 
 	/**

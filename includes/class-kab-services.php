@@ -137,15 +137,7 @@ class KAB_Services {
 	 * @return bool True on success, false on failure
 	 */
 	public function delete_service( $service_id ) {
-		global $wpdb;
-
-		$result = $wpdb->delete(
-			$wpdb->prefix . 'kab_services',
-			array( 'id' => $service_id ),
-			array( '%d' )
-		);
-
-		return $result !== false;
+		return $this->update_service( $service_id, array( 'status' => 'deleted' ) );
 	}
 
 	/**
