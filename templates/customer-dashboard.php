@@ -11,7 +11,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-wp_enqueue_style( 'kab-frontend', plugins_url( '../assets/css/frontend.css', __FILE__ ), array(), KAB_VERSION );
+wp_enqueue_style( 'kab-frontend', KAB_FREE_PLUGIN_URL . 'assets/css/frontend.css', array(), KAB_VERSION );
 
 // Handle booking cancellation.
 if ( isset( $_POST['kab_cancel_booking_id'] ) && isset( $_POST['kab_cancel_booking_nonce'] ) ) {

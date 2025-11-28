@@ -23,20 +23,23 @@ $support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
 <head>
 	<meta charset="UTF-8">
 	<title>Invoice <?php echo esc_html( $invoice['invoice_number'] ); ?></title>
-	<style>
-		body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-		.invoice-header { border-bottom: 2px solid #3a3a3a; padding-bottom: 20px; margin-bottom: 30px; }
-		.invoice-logo { max-width: 150px; margin-bottom: 20px; }
-		.invoice-details { width: 100%; border-collapse: collapse; margin: 20px 0; }
-		.invoice-details th { background-color: #f8f9fa; text-align: left; padding: 12px; border: 1px solid #dee2e6; }
-		.invoice-details td { padding: 12px; border: 1px solid #dee2e6; }
-		.invoice-totals { width: 300px; float: right; margin-top: 20px; }
-		.invoice-totals .total-row { border-top: 2px solid #3a3a3a; font-weight: bold; }
-		.invoice-footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; }
-		.text-right { text-align: right; }
-		.text-center { text-align: center; }
-		.brand-color { color: #3a3a3a; }
-	</style>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.4; font-size: 12px; }
+        h1 { font-size: 18px; margin: 0 0 6px; }
+        h2 { font-size: 16px; margin: 0 0 8px; }
+        h3 { font-size: 13px; margin: 12px 0 6px; }
+        .invoice-header { border-bottom: 2px solid #3a3a3a; padding-bottom: 12px; margin-bottom: 20px; }
+        .invoice-logo { max-width: 120px; margin-bottom: 12px; }
+        .invoice-details { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        .invoice-details th { background-color: #f8f9fa; text-align: left; padding: 8px; border: 1px solid #dee2e6; font-weight: 600; }
+        .invoice-details td { padding: 8px; border: 1px solid #dee2e6; }
+        .invoice-totals { width: 240px; float: right; margin-top: 12px; }
+        .invoice-totals .total-row { border-top: 2px solid #3a3a3a; font-weight: bold; }
+        .invoice-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 11px; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .brand-color { color: #3a3a3a; }
+    </style>
 </head>
 <body>
 	<div class="invoice-header">
@@ -49,31 +52,31 @@ $support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
 	</div>
 
 	<div class="invoice-body">
-		<h2>INVOICE</h2>
+        <h2>INVOICE</h2>
 		<p><strong>Invoice Number:</strong> <?php echo esc_html( $invoice['invoice_number'] ); ?></p>
 		<p><strong>Issue Date:</strong> <?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $invoice['invoice_date'] ) ) ); ?></p>
 		<p><strong>Due Date:</strong> <?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $invoice['invoice_date'] . ' +30 days' ) ) ); ?></p>
 		<p><strong>Payment Status:</strong> <?php echo esc_html( ucfirst( $invoice['payment_status'] ) ); ?></p>
 
-		<div style="margin: 30px 0;">
-			<div style="width: 48%; float: left;">
-				<h3>Bill To:</h3>
-				<p>
-					<strong><?php echo esc_html( $invoice['customer_name'] ); ?></strong><br>
-					<?php echo esc_html( $invoice['customer_email'] ); ?>
-				</p>
-			</div>
-			
-			<div style="width: 48%; float: right;">
-				<h3>From:</h3>
-				<p>
-					<strong><?php echo esc_html( $company_name ); ?></strong><br>
-					<?php echo esc_html( get_bloginfo( 'admin_email' ) ); ?><br>
-					<?php echo esc_html( get_site_url() ); ?>
-				</p>
-			</div>
-			<div style="clear: both;"></div>
-		</div>
+        <div style="margin: 20px 0;">
+            <div style="width: 46%; float: left;">
+                <h3>Bill To:</h3>
+                <p>
+                    <strong><?php echo esc_html( $invoice['customer_name'] ); ?></strong><br>
+                    <?php echo esc_html( $invoice['customer_email'] ); ?>
+                </p>
+            </div>
+
+            <div style="width: 46%; float: right;">
+                <h3>From:</h3>
+                <p>
+                    <strong><?php echo esc_html( $company_name ); ?></strong><br>
+                    <?php echo esc_html( get_bloginfo( 'admin_email' ) ); ?><br>
+                    <?php echo esc_html( get_site_url() ); ?>
+                </p>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
 
 		<table class="invoice-details">
 			<thead>

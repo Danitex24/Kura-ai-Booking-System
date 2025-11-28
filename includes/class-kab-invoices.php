@@ -138,20 +138,59 @@ class KAB_Invoices {
 	 *
 	 * @return string Invoice number
 	 */
-	private static function generate_invoice_number() {
+	public static function generate_invoice_number() {
 		global $wpdb;
 
-		// Get the last invoice number
 		$last_invoice = $wpdb->get_var( "SELECT invoice_number FROM {$wpdb->prefix}kab_invoices ORDER BY id DESC LIMIT 1" );
-
 		if ( $last_invoice ) {
-			// Extract the numeric part and increment
 			$number = intval( substr( $last_invoice, 1 ) ) + 1;
 			return '#' . str_pad( $number, 4, '0', STR_PAD_LEFT );
 		}
-
-		// First invoice
 		return '#0001';
+	}
+
+	/**
+	 * Create a manual invoice not linked to a booking.
+	 */
+	public static function create_manual_invoice( $user_id, $customer_name, $customer_email, $item_name, $amount ) {
+		global $wpdb;
+		$invoice_number = self::generate_invoice_number();
+		$subtotal       = floatval( $amount );
+		$tax_amount     = 0.00;
+		$total_amount   = $subtotal + $tax_amount;
+		$wpdb->insert(
+			$wpdb->prefix . 'kab_invoices',
+			array(
+				'invoice_number' => $invoice_number,
+				'booking_id'     => 0,
+				'user_id'        => intval( $user_id ),
+				'customer_name'  => sanitize_text_field( $customer_name ),
+				'customer_email' => sanitize_email( $customer_email ),
+				'item_name'      => sanitize_text_field( $item_name ),
+				'subtotal'       => $subtotal,
+				'tax_amount'     => $tax_amount,
+				'total_amount'   => $total_amount,
+				'payment_status' => 'pending',
+				'created_at'     => current_time( 'mysql' ),
+			),
+			array( '%s', '%d', '%d', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%s' )
+		);
+		$invoice_id = $wpdb->insert_id;
+		if ( ! $invoice_id ) {
+			return false;
+		}
+		require_once plugin_dir_path( __FILE__ ) . 'class-kab-invoice-pdf.php';
+		$pdf_path = KAB_Invoice_PDF::create_pdf( $invoice_id );
+		if ( $pdf_path ) {
+			$wpdb->update(
+				$wpdb->prefix . 'kab_invoices',
+				array( 'pdf_path' => $pdf_path ),
+				array( 'id' => $invoice_id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+		}
+		return $invoice_id;
 	}
 
 	/**
@@ -228,10 +267,16 @@ class KAB_Invoices {
 		$where_clauses = array();
 		$query_params  = array();
 
-		// Date range filter
+		// Date filters
 		if ( ! empty( $filters['date_from'] ) && ! empty( $filters['date_to'] ) ) {
 			$where_clauses[] = 'invoice_date BETWEEN %s AND %s';
 			$query_params[]  = $filters['date_from'];
+			$query_params[]  = $filters['date_to'];
+		} elseif ( ! empty( $filters['date_from'] ) ) {
+			$where_clauses[] = 'invoice_date >= %s';
+			$query_params[]  = $filters['date_from'];
+		} elseif ( ! empty( $filters['date_to'] ) ) {
+			$where_clauses[] = 'invoice_date <= %s';
 			$query_params[]  = $filters['date_to'];
 		}
 
@@ -256,10 +301,61 @@ class KAB_Invoices {
 
 		$query = "SELECT * FROM {$wpdb->prefix}kab_invoices {$where_sql} ORDER BY created_at DESC";
 
+		// Pagination
+		$limit  = isset( $filters['limit'] ) ? intval( $filters['limit'] ) : 0;
+		$offset = isset( $filters['offset'] ) ? intval( $filters['offset'] ) : 0;
+		if ( $limit > 0 ) {
+			$query .= $wpdb->prepare( ' LIMIT %d OFFSET %d', $limit, $offset );
+		}
+
 		if ( ! empty( $query_params ) ) {
 			$query = $wpdb->prepare( $query, $query_params );
 		}
 
 		return $wpdb->get_results( $query, ARRAY_A );
+	}
+
+	/**
+	 * Count invoices with filters (for pagination)
+	 */
+	public static function get_invoices_count( $filters = array() ) {
+		global $wpdb;
+		$where_clauses = array();
+		$query_params  = array();
+
+		if ( ! empty( $filters['date_from'] ) && ! empty( $filters['date_to'] ) ) {
+			$where_clauses[] = 'invoice_date BETWEEN %s AND %s';
+			$query_params[]  = $filters['date_from'];
+			$query_params[]  = $filters['date_to'];
+		} elseif ( ! empty( $filters['date_from'] ) ) {
+			$where_clauses[] = 'invoice_date >= %s';
+			$query_params[]  = $filters['date_from'];
+		} elseif ( ! empty( $filters['date_to'] ) ) {
+			$where_clauses[] = 'invoice_date <= %s';
+			$query_params[]  = $filters['date_to'];
+		}
+
+		if ( ! empty( $filters['payment_status'] ) ) {
+			$where_clauses[] = 'payment_status = %s';
+			$query_params[]  = $filters['payment_status'];
+		}
+
+		if ( ! empty( $filters['search'] ) ) {
+			$where_clauses[] = '(invoice_number LIKE %s OR customer_name LIKE %s)';
+			$search_term     = '%' . $wpdb->esc_like( $filters['search'] ) . '%';
+			$query_params[]  = $search_term;
+			$query_params[]  = $search_term;
+		}
+
+		$where_sql = '';
+		if ( ! empty( $where_clauses ) ) {
+			$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
+		}
+
+		$query = "SELECT COUNT(*) FROM {$wpdb->prefix}kab_invoices {$where_sql}";
+		if ( ! empty( $query_params ) ) {
+			$query = $wpdb->prepare( $query, $query_params );
+		}
+		return intval( $wpdb->get_var( $query ) );
 	}
 }

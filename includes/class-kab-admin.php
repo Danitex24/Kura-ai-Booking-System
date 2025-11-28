@@ -50,6 +50,8 @@ class KAB_Admin {
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'services' ? 'active' : ''; ?>"><?php echo esc_html__( 'Services', 'kura-ai-booking-free' ); ?></a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'events' ? 'active' : ''; ?>"><?php echo esc_html__( 'Events', 'kura-ai-booking-free' ); ?></a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customers' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'customers' ? 'active' : ''; ?>"><?php echo esc_html__( 'Customers', 'kura-ai-booking-free' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-finance' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'finance' ? 'active' : ''; ?>"><?php echo esc_html__( 'Finance', 'kura-ai-booking-free' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-invoices' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'invoices' ? 'active' : ''; ?>"><?php echo esc_html__( 'Invoices', 'kura-ai-booking-free' ); ?></a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'settings' ? 'active' : ''; ?>"><?php echo esc_html__( 'Settings', 'kura-ai-booking-free' ); ?></a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-validation' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'validation' ? 'active' : ''; ?>"><?php echo esc_html__( 'Validation', 'kura-ai-booking-free' ); ?></a>
 				</nav>
@@ -62,6 +64,9 @@ class KAB_Admin {
 	 * Enqueue admin styles
 	 */
 	public function enqueue_admin_styles( $hook ) {
+		if ( ! is_string( $hook ) ) {
+			return;
+		}
 		// Only load on our plugin pages
 		if ( strpos( $hook, 'kab-' ) === false ) {
 			return;
@@ -83,6 +88,16 @@ class KAB_Admin {
 			'dashicons-calendar-alt',
 			25
 		);
+
+        // Finance submenu under Kura-ai Booking
+        add_submenu_page(
+            'kab-dashboard',
+            __( 'Finance', 'kura-ai-booking-free' ),
+            __( 'Finance', 'kura-ai-booking-free' ),
+            'manage_options',
+            'kab-finance',
+            array( $this, 'render_finance_page' )
+        );
 
 		add_submenu_page(
 			'kab-dashboard',
@@ -120,15 +135,15 @@ class KAB_Admin {
 			array( $this, 'render_settings_page' )
 		);
 
-		// Add validation panel as a submenu page
-		add_submenu_page(
-			'kab-dashboard',
-			__( 'Ticket Validation', 'kura-ai-booking-free' ),
-			__( 'Ticket Validation', 'kura-ai-booking-free' ),
-			'manage_options',
-			'kab-validation',
-			array( $this, 'render_validation_page' )
-		);
+        // Ticket Validation under Kura-ai Booking
+        add_submenu_page(
+            'kab-dashboard',
+            __( 'Ticket Validation', 'kura-ai-booking-free' ),
+            __( 'Ticket Validation', 'kura-ai-booking-free' ),
+            'manage_options',
+            'kab-validation',
+            array( $this, 'render_validation_page' )
+        );
 	}
 
 	/**
@@ -320,6 +335,35 @@ class KAB_Admin {
 						$services_table->display();
 						?>
 					</form>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render Finance overview page
+	 */
+	public function render_finance_page() {
+		?>
+		<div class="wrap kab-admin-wrapper">
+			<?php $this->render_static_header( 'finance' ); ?>
+			<div class="kab-card">
+				<div class="kab-card-header">
+					<h2><?php echo esc_html__( 'Finance', 'kura-ai-booking-free' ); ?></h2>
+				</div>
+				<div class="kab-card-body">
+					<p><?php echo esc_html__( 'Access invoices and ticket validation tools.', 'kura-ai-booking-free' ); ?></p>
+					<div class="kab-invoice-actions">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-invoices' ) ); ?>" class="kab-btn kab-btn-primary">
+							<span class="dashicons dashicons-media-spreadsheet"></span>
+							<?php echo esc_html__( 'Manage Invoices', 'kura-ai-booking-free' ); ?>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-validation' ) ); ?>" class="kab-btn kab-btn-secondary">
+							<span class="dashicons dashicons-yes"></span>
+							<?php echo esc_html__( 'Ticket Validation', 'kura-ai-booking-free' ); ?>
+						</a>
+					</div>
 				</div>
 			</div>
 		</div>

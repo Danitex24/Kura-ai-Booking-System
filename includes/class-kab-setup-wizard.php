@@ -75,13 +75,16 @@ class KAB_Setup_Wizard {
 		// Only show setup wizard if not completed or user wants to rerun
 		if ( ! get_option( 'kab_setup_completed' ) || ( isset( $_GET['page'] ) && 'kab-setup' === $_GET['page'] ) ) {
 			add_submenu_page(
-				null,
+				'kab-dashboard',
 				__( 'Kura-ai Setup Wizard', 'kura-ai-booking-free' ),
 				__( 'Setup Wizard', 'kura-ai-booking-free' ),
 				'manage_options',
 				'kab-setup',
 				array( $this, 'render_setup_page' )
 			);
+			add_action( 'admin_menu', function() {
+				remove_submenu_page( 'kab-dashboard', 'kab-setup' );
+			}, 999 );
 		}
 	}
 
@@ -219,7 +222,6 @@ class KAB_Setup_Wizard {
 			<meta charset="<?php bloginfo( 'charset' ); ?>">
 			<meta name="viewport" content="width=device-width, initial-scale=1">
 			<title><?php esc_html_e( 'Kura-ai Booking System Setup', 'kura-ai-booking-free' ); ?></title>
-			<?php wp_print_styles( array( 'dashicons', 'common' ) ); ?>
 			<style>
 				body {
 					background: <?php echo $this->colors['background']; ?>;

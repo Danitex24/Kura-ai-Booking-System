@@ -32,6 +32,9 @@ class KAB_PDF_Generator {
 	 */
 	public static function generate_ticket_pdf( $booking_id, $ticket_id, $data, $qr_code_path ) {
 		$upload_dir = wp_upload_dir();
+		if ( ! empty( $upload_dir['error'] ) || empty( $upload_dir['basedir'] ) || empty( $upload_dir['baseurl'] ) ) {
+			return false;
+		}
 		$pdf_dir    = trailingslashit( $upload_dir['basedir'] ) . 'kab_ticket_pdfs/';
 
 		if ( ! file_exists( $pdf_dir ) ) {
@@ -129,6 +132,9 @@ class KAB_PDF_Generator {
 			$pdf->Output( $pdf_file, 'F' );
 
 			$upload_dir = wp_upload_dir();
+			if ( empty( $upload_dir['baseurl'] ) ) {
+				return false;
+			}
 			return trailingslashit( $upload_dir['baseurl'] ) . 'kab_ticket_pdfs/' . $ticket_id . '.pdf';
 
 		} catch ( Exception $e ) {
@@ -176,6 +182,9 @@ class KAB_PDF_Generator {
 		file_put_contents( $pdf_file, $html );
 
 		$upload_dir = wp_upload_dir();
+		if ( empty( $upload_dir['baseurl'] ) ) {
+			return false;
+		}
 		return trailingslashit( $upload_dir['baseurl'] ) . 'kab_ticket_pdfs/' . $ticket_id . '.pdf';
 	}
 }

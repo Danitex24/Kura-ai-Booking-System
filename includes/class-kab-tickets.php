@@ -35,6 +35,9 @@ class KAB_Tickets {
 
 	public static function generate_qr_code_png( $ticket_id ) {
 		$upload_dir = wp_upload_dir();
+		if ( ! empty( $upload_dir['error'] ) || empty( $upload_dir['basedir'] ) || empty( $upload_dir['baseurl'] ) ) {
+			return 'data:image/png;base64,' . base64_encode( $ticket_id );
+		}
 		$qr_dir     = trailingslashit( $upload_dir['basedir'] ) . 'kab_qr_codes/';
 		if ( ! file_exists( $qr_dir ) ) {
 			wp_mkdir_p( $qr_dir );

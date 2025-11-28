@@ -84,9 +84,9 @@ add_action( 'admin_enqueue_scripts', 'kab_free_enqueue_admin_scripts' );
  * @return void
  */
 function kab_free_enqueue_admin_scripts() {
-	wp_enqueue_script( 'sweetalert2', KAB_FREE_PLUGIN_URL . 'assets/js/sweetalert2.all.min.js', array(), '11.26.3', true );
-	wp_enqueue_style( 'sweetalert2', KAB_FREE_PLUGIN_URL . 'assets/css/sweetalert2.min.css', array(), '11.26.3' );
-	wp_enqueue_script( 'kab-free-admin', KAB_FREE_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery', 'sweetalert2' ), '1.0.0', true );
+    wp_enqueue_script( 'sweetalert2', KAB_FREE_PLUGIN_URL . 'assets/js/sweetalert2.all.min.js', array(), '11.26.3', true );
+    wp_enqueue_style( 'sweetalert2', KAB_FREE_PLUGIN_URL . 'assets/css/sweetalert2.min.css', array(), '11.26.3' );
+    wp_enqueue_script( 'kab-free-admin', KAB_FREE_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery', 'sweetalert2' ), '1.0.0', true );
 }
 
 // Setup wizard admin notice/redirect.
@@ -170,7 +170,7 @@ function kab_free_load_textdomain() {
 $kab_setup_wizard_instance = null;
 
 // Load plugin includes and initialize components.
-add_action( 'plugins_loaded', 'kab_free_init_plugin' );
+add_action( 'init', 'kab_free_init_plugin' );
 
 /**
  * Initialize the plugin, load includes, and set up hooks.
@@ -179,7 +179,7 @@ add_action( 'plugins_loaded', 'kab_free_init_plugin' );
  * @return void
  */
 function kab_free_init_plugin() {
-	global $kab_setup_wizard_instance;
+    global $kab_setup_wizard_instance;
 
 	// Load core plugin classes.
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-loader.php';
@@ -195,16 +195,56 @@ function kab_free_init_plugin() {
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoice-admin.php';
 
 	// Instantiate the admin class to register menus.
-	new KAB_Admin();
-	new KAB_Invoices();
-	new KAB_Invoice_Admin();
+    new KAB_Admin();
+    new KAB_Invoices();
+    if ( class_exists( 'KAB_Invoice_Admin' ) ) {
+        new KAB_Invoice_Admin();
+    } else {
+        error_log( 'KAB: KAB_Invoice_Admin not found after require. Check includes/class-kab-invoice-admin.php for parse errors.' );
+    }
 
 	// Load and instantiate the setup wizard.
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-setup-wizard.php';
 	$kab_setup_wizard_instance = new KAB_Setup_Wizard();
 
 	// Add the menu page.
-	add_action( 'admin_menu', 'kab_free_setup_wizard_menu' );
+    add_action( 'admin_menu', 'kab_free_setup_wizard_menu' );
+}
+
+add_action( 'plugins_loaded', 'kab_free_enable_deprecation_trace', 1 );
+function kab_free_enable_deprecation_trace() {
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        set_error_handler( function( $errno, $errstr, $errfile, $errline ) {
+            if ( $errno === E_DEPRECATED && ( strpos( $errstr, 'strpos(): Passing null' ) !== false || strpos( $errstr, 'str_replace(): Passing null' ) !== false ) ) {
+                error_log( 'KAB TRACE: ' . $errstr . ' at ' . $errfile . ':' . $errline );
+                $bt = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
+                foreach ( $bt as $frame ) {
+                    $fn   = isset( $frame['function'] ) ? $frame['function'] : '';
+                    $file = isset( $frame['file'] ) ? $frame['file'] : '';
+                    $line = isset( $frame['line'] ) ? $frame['line'] : 0;
+                    error_log( 'KAB TRACE: ' . $fn . ' ' . $file . ':' . $line );
+                }
+            }
+        }, E_DEPRECATED );
+    }
+}
+
+add_filter( 'style_loader_src', 'kab_free_sanitize_asset_src', 10, 2 );
+add_filter( 'script_loader_src', 'kab_free_sanitize_asset_src', 10, 2 );
+function kab_free_sanitize_asset_src( $src, $handle = '' ) {
+    return is_string( $src ) ? $src : '';
+}
+add_filter( 'upload_dir', 'kab_free_sanitize_upload_dir' );
+function kab_free_sanitize_upload_dir( $paths ) {
+    if ( ! is_array( $paths ) ) {
+        return $paths;
+    }
+    foreach ( array( 'path', 'url', 'subdir', 'basedir', 'baseurl' ) as $k ) {
+        if ( isset( $paths[ $k ] ) && ! is_string( $paths[ $k ] ) ) {
+            $paths[ $k ] = '';
+        }
+    }
+    return $paths;
 }
 
 /**
@@ -265,3 +305,44 @@ function kab_free_load_includes() {
 		}
 	);
 }
+
+if ( ! function_exists( 'kab_format_currency' ) ) {
+    function kab_format_currency( $amount, $symbol = null ) {
+        $symbol = $symbol ?: get_option( 'kab_currency_symbol', '$' );
+        return $symbol . number_format( (float) $amount, 2 );
+    }
+}
+
+add_action( 'admin_post_kab_download_invoice', function() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 );
+    $nonce      = sanitize_text_field( $_GET['_wpnonce'] ?? '' );
+    if ( ! $invoice_id || ! wp_verify_nonce( $nonce, 'kab_download_invoice_' . $invoice_id ) ) {
+        wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) );
+    }
+    require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoice-pdf.php';
+    KAB_Invoice_PDF::serve_pdf( $invoice_id, 'attachment' );
+    exit;
+} );
+
+add_action( 'admin_post_kab_preview_invoice', function() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 );
+    $nonce      = sanitize_text_field( $_GET['_wpnonce'] ?? '' );
+    if ( ! $invoice_id || ! wp_verify_nonce( $nonce, 'kab_preview_invoice_' . $invoice_id ) ) {
+        wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) );
+    }
+    require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoice-pdf.php';
+    KAB_Invoice_PDF::serve_pdf( $invoice_id, 'inline' );
+    exit;
+} );
+
+add_action( 'admin_post_kab_resend_invoice', function() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 );
+    $nonce      = sanitize_text_field( $_GET['_wpnonce'] ?? '' );
+    if ( ! $invoice_id || ! wp_verify_nonce( $nonce, 'kab_resend_invoice_' . $invoice_id ) ) {
+        wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) );
+    }
+    require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoices.php';
+    $ok = KAB_Invoices::email_invoice( $invoice_id );
+    wp_redirect( add_query_arg( array( 'page' => 'kab-invoice-details', 'invoice_id' => $invoice_id, 'sent' => $ok ? '1' : '0' ), admin_url( 'admin.php' ) ) );
+    exit;
+} );
