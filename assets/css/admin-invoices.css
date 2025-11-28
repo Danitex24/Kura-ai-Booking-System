@@ -220,6 +220,14 @@
     border-left: 4px solid #E67E22;
 }
 
+/* Branded backgrounds for summary tabs */
+.kab-detail-grid .kab-detail-item:nth-child(1) { background: #F5E9D2; color: #24321a; }
+.kab-detail-grid .kab-detail-item:nth-child(2) { background: #C9DFB0; color: #24321a; }
+.kab-detail-grid .kab-detail-item:nth-child(3) { background: #A1C08C; color: #24321a; }
+.kab-detail-grid .kab-detail-item:nth-child(4) { background: #F0A45C; color: #24321a; }
+.kab-detail-grid .kab-detail-item .kab-detail-label,
+.kab-detail-grid .kab-detail-item .kab-detail-value { color: inherit; }
+
 .kab-detail-label {
 	font-weight: 600;
 	color: #6c757d;
@@ -283,9 +291,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(90deg, #EBD5AB 0%, #8BAE66 50%, #628141 100%);
+    background: linear-gradient(90deg, #F5E9D2 0%, #C9DFB0 50%, #A1C08C 100%);
     color: #24321a;
 }
+
+/* Pagination styling */
+.kab-pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+.kab-pagination .kab-page-info { font-weight: 600; color: #24321a; }
+.kab-pagination .kab-btn { border-color: #8BAE66; color: #24321a; }
+.kab-pagination .kab-btn:hover { background: #8BAE66; color: #fff; }
+.kab-pagination .kab-btn.disabled { opacity: 0.5; pointer-events: none; }
 
 .kab-card-body {
     padding: 20px;

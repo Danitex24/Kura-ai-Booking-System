@@ -141,8 +141,8 @@ class KAB_Invoice_Admin extends KAB_Admin {
 			}
 			echo '</tbody></table>';
 			// Pagination UI
-			echo '<div class="kab-pagination" style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:12px;">';
-			echo '<span>Page ' . esc_html( $paged ) . ' of ' . esc_html( $total_pages ) . '</span>';
+			echo '<div class="kab-pagination">';
+			echo '<span class="kab-page-info">Page ' . esc_html( $paged ) . ' of ' . esc_html( $total_pages ) . '</span>';
 			$base_url = admin_url( 'admin.php?page=kab-invoices' );
 			$query   = $_GET;
 			$query['per_page'] = $per_page;
