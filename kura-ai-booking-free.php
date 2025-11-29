@@ -346,3 +346,70 @@ add_action( 'admin_post_kab_resend_invoice', function() {
     wp_redirect( add_query_arg( array( 'page' => 'kab-invoice-details', 'invoice_id' => $invoice_id, 'sent' => $ok ? '1' : '0' ), admin_url( 'admin.php' ) ) );
     exit;
 } );
+
+add_action( 'admin_post_kab_delete_invoice', function() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( __( 'Insufficient permissions', 'kura-ai-booking-free' ) );
+    }
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 );
+    $nonce      = sanitize_text_field( $_GET['_wpnonce'] ?? '' );
+    if ( ! $invoice_id || ! wp_verify_nonce( $nonce, 'kab_delete_invoice_' . $invoice_id ) ) {
+        wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) );
+    }
+    global $wpdb;
+    $inv = $wpdb->get_row( $wpdb->prepare( "SELECT pdf_path FROM {$wpdb->prefix}kab_invoices WHERE id = %d", $invoice_id ), ARRAY_A );
+    if ( $inv && ! empty( $inv['pdf_path'] ) ) {
+        $upload_dir = wp_upload_dir();
+        $file_path = '';
+        if ( is_string( $upload_dir['baseurl'] ?? '' ) && strpos( $inv['pdf_path'], $upload_dir['baseurl'] ) === 0 ) {
+            $rel = substr( $inv['pdf_path'], strlen( $upload_dir['baseurl'] ) );
+            $file_path = trailingslashit( $upload_dir['basedir'] ) . ltrim( $rel, '/' );
+        } else {
+            $file_path = ABSPATH . wp_parse_url( $inv['pdf_path'], PHP_URL_PATH );
+        }
+        if ( $file_path && file_exists( $file_path ) ) {
+            @unlink( $file_path );
+        }
+    }
+    $wpdb->delete( $wpdb->prefix . 'kab_invoices', array( 'id' => $invoice_id ), array( '%d' ) );
+    $map = get_option( 'kab_service_invoice_map', array() );
+    if ( is_array( $map ) ) {
+        foreach ( $map as $sid => $iid ) {
+            if ( intval( $iid ) === $invoice_id ) {
+                unset( $map[ $sid ] );
+            }
+        }
+        update_option( 'kab_service_invoice_map', $map );
+    }
+    wp_redirect( add_query_arg( array( 'page' => 'kab-invoices', 'deleted' => '1' ), admin_url( 'admin.php' ) ) );
+    exit;
+} );
+
+add_action( 'admin_post_kab_update_invoice', function() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( __( 'Insufficient permissions', 'kura-ai-booking-free' ) );
+    }
+    $invoice_id = intval( $_POST['invoice_id'] ?? 0 );
+    $nonce      = sanitize_text_field( $_POST['_wpnonce'] ?? '' );
+    if ( ! $invoice_id || ! wp_verify_nonce( $nonce, 'kab_update_invoice_' . $invoice_id ) ) {
+        wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) );
+    }
+    $payment_status = sanitize_text_field( $_POST['payment_status'] ?? '' );
+    $payment_method = sanitize_text_field( $_POST['payment_method'] ?? '' );
+    if ( ! in_array( $payment_status, array( 'pending', 'paid', 'partial' ), true ) ) {
+        $payment_status = 'pending';
+    }
+    global $wpdb;
+    $wpdb->update(
+        $wpdb->prefix . 'kab_invoices',
+        array(
+            'payment_status' => $payment_status,
+            'payment_method' => $payment_method,
+        ),
+        array( 'id' => $invoice_id ),
+        array( '%s', '%s' ),
+        array( '%d' )
+    );
+    wp_redirect( add_query_arg( array( 'page' => 'kab-invoice-details', 'invoice_id' => $invoice_id, 'updated' => '1' ), admin_url( 'admin.php' ) ) );
+    exit;
+} );

@@ -33,31 +33,42 @@ class KAB_Tickets {
 		self::send_ticket_email( $data['customer_email'], $ticket_id, $qr_code_path, $pdf_path, $data );
 	}
 
-	public static function generate_qr_code_png( $ticket_id ) {
-		$upload_dir = wp_upload_dir();
-		if ( ! empty( $upload_dir['error'] ) || empty( $upload_dir['basedir'] ) || empty( $upload_dir['baseurl'] ) ) {
-			return 'data:image/png;base64,' . base64_encode( $ticket_id );
-		}
-		$qr_dir     = trailingslashit( $upload_dir['basedir'] ) . 'kab_qr_codes/';
-		if ( ! file_exists( $qr_dir ) ) {
-			wp_mkdir_p( $qr_dir );
-		}
-		$qr_file = $qr_dir . $ticket_id . '.png';
-		$qr_url  = trailingslashit( $upload_dir['baseurl'] ) . 'kab_qr_codes/' . $ticket_id . '.png';
+    public static function generate_qr_code_png( $ticket_id, $data = null ) {
+        $upload_dir = wp_upload_dir();
+        if ( ! empty( $upload_dir['error'] ) || empty( $upload_dir['basedir'] ) || empty( $upload_dir['baseurl'] ) ) {
+            // Fallback to external QR if uploads unavailable
+            if ( ! empty( $data ) ) {
+                return 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' . rawurlencode( $data );
+            }
+            return 'data:image/png;base64,' . base64_encode( $ticket_id );
+        }
+        $qr_dir     = trailingslashit( $upload_dir['basedir'] ) . 'kab_qr_codes/';
+        if ( ! file_exists( $qr_dir ) ) {
+            wp_mkdir_p( $qr_dir );
+        }
+        $key     = preg_replace( '/[^A-Za-z0-9_.-]/', '', (string) $ticket_id );
+        $qr_file = $qr_dir . $key . '.png';
+        $qr_url  = trailingslashit( $upload_dir['baseurl'] ) . 'kab_qr_codes/' . $key . '.png';
 
-		if ( function_exists( 'imagepng' ) && function_exists( 'imagestring' ) ) {
-			$im    = imagecreatetruecolor( 180, 180 );
-			$white = imagecolorallocate( $im, 255, 255, 255 );
-			$black = imagecolorallocate( $im, 0, 0, 0 );
-			imagefilledrectangle( $im, 0, 0, 180, 180, $white );
-			imagestring( $im, 5, 20, 80, $ticket_id, $black );
-			imagepng( $im, $qr_file );
-			imagedestroy( $im );
-			return $qr_url;
-		} else {
-			return 'data:image/png;base64,' . base64_encode( $ticket_id );
-		}
-	}
+        // If a data payload is provided, try external QR service for best quality
+        if ( ! empty( $data ) ) {
+            return 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' . rawurlencode( $data );
+        }
+
+        if ( function_exists( 'imagepng' ) && function_exists( 'imagestring' ) && function_exists( 'imagefilledrectangle' ) ) {
+            $im    = imagecreatetruecolor( 160, 160 );
+            $white = imagecolorallocate( $im, 255, 255, 255 );
+            $black = imagecolorallocate( $im, 0, 0, 0 );
+            imagefilledrectangle( $im, 0, 0, 160, 160, $white );
+            // Simple placeholder rendering
+            imagestring( $im, 5, 18, 74, (string) $ticket_id, $black );
+            imagepng( $im, $qr_file );
+            imagedestroy( $im );
+            return $qr_url;
+        } else {
+            return 'data:image/png;base64,' . base64_encode( $ticket_id );
+        }
+    }
 
 	public static function generate_ticket_pdf( $booking_id, $ticket_id, $data, $qr_code_path ) {
 		// Use the new PDF generator class

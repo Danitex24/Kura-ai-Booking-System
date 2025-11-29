@@ -33,7 +33,11 @@ $support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
         .invoice-details { width: 100%; border-collapse: collapse; margin: 12px 0; }
         .invoice-details th { background-color: #f8f9fa; text-align: left; padding: 8px; border: 1px solid #dee2e6; font-weight: 600; }
         .invoice-details td { padding: 8px; border: 1px solid #dee2e6; }
-        .invoice-totals { width: 240px; float: right; margin-top: 12px; }
+        .invoice-summary-table { width: 100%; margin-top: 12px; border-collapse: collapse; }
+        .invoice-summary-table td { vertical-align: top; }
+        .invoice-totals { width: 200px; margin-top: 0; }
+        .invoice-totals table { width: 200px; }
+        .invoice-totals td { padding: 3px 5px; }
         .invoice-totals .total-row { border-top: 2px solid #3a3a3a; font-weight: bold; }
         .invoice-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 11px; }
         .text-right { text-align: right; }
@@ -51,7 +55,7 @@ $support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
 		<p><?php echo esc_html( get_bloginfo( 'description' ) ); ?></p>
 	</div>
 
-	<div class="invoice-body">
+    <div class="invoice-body">
         <h2>INVOICE</h2>
 		<p><strong>Invoice Number:</strong> <?php echo esc_html( $invoice['invoice_number'] ); ?></p>
 		<p><strong>Issue Date:</strong> <?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $invoice['invoice_date'] ) ) ); ?></p>
@@ -138,23 +142,34 @@ $support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
 			</tbody>
 		</table>
 
-		<div class="invoice-totals">
-			<table style="width: 100%;">
-				<tr>
-					<td>Subtotal:</td>
-					<td class="text-right"><?php echo esc_html( number_format( $invoice['subtotal'], 2 ) ); ?></td>
-				</tr>
-				<tr>
-					<td>Tax:</td>
-					<td class="text-right"><?php echo esc_html( number_format( $invoice['tax_amount'], 2 ) ); ?></td>
-				</tr>
-				<tr class="total-row">
-					<td><strong>Total:</strong></td>
-					<td class="text-right"><strong><?php echo esc_html( number_format( $invoice['total_amount'], 2 ) ); ?></strong></td>
-				</tr>
-			</table>
-		</div>
-		<div style="clear: both;"></div>
+        <table class="invoice-summary-table">
+            <tr>
+                <td style="width:110px;">
+                    <?php if ( isset( $qr_url ) ) : ?>
+                        <img src="<?php echo esc_url( $qr_url ); ?>" alt="QR" style="width:90px;height:90px;border:1px solid #dee2e6;border-radius:6px;">
+                        <div style="font-size:10px;color:#6c757d;margin-top:4px;">Scan to view invoice</div>
+                    <?php endif; ?>
+                </td>
+                <td style="width:200px;">
+                    <div class="invoice-totals">
+                        <table style="width: 100%;">
+                            <tr>
+                                <td>Subtotal:</td>
+                                <td class="text-right"><?php echo esc_html( number_format( $invoice['subtotal'], 2 ) ); ?></td>
+                            </tr>
+                            <tr>
+                                <td>Tax:</td>
+                                <td class="text-right"><?php echo esc_html( number_format( $invoice['tax_amount'], 2 ) ); ?></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Total:</strong></td>
+                                <td class="text-right"><strong><?php echo esc_html( number_format( $invoice['total_amount'], 2 ) ); ?></strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
 
 		<div style="margin-top: 40px;">
 			<h3>Payment Instructions:</h3>

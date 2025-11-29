@@ -217,6 +217,10 @@ class KAB_Invoice_PDF {
 	 * @return string HTML content
 	 */
 	private static function get_invoice_html_content( $invoice, $booking ) {
+        // Generate QR for invoice view URL
+        require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-tickets.php';
+        $invoice_view = admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . intval( $invoice['id'] ) );
+        $qr_url = KAB_Tickets::generate_qr_code_png( 'inv-' . preg_replace( '/[^A-Za-z0-9_.-]/', '', str_replace( '#', '', (string) $invoice['invoice_number'] ) ), $invoice_view );
 		ob_start();
 		include plugin_dir_path( __FILE__ ) . '../templates/invoice-template.php';
 		return ob_get_clean();
