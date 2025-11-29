@@ -30,7 +30,7 @@ class KAB_Events_List_Table extends WP_List_Table {
     }
 
     public function prepare_items() {
-        $this->_column_headers = $this->get_column_info();
+        $this->_column_headers = array( $this->get_columns(), array(), array() );
 
         require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-events.php';
         $events_model = new KAB_Events();
@@ -58,7 +58,7 @@ class KAB_Events_List_Table extends WP_List_Table {
     protected function column_default( $item, $column_name ) {
         switch ( $column_name ) {
             case 'price':
-                return number_format( $item[ $column_name ], 2 );
+                return kab_format_currency( $item[ $column_name ], kab_currency_symbol( 'USD' ) );
             default:
                 return $item[ $column_name ];
         }
@@ -83,12 +83,22 @@ class KAB_Events_List_Table extends WP_List_Table {
             admin_url( 'admin-post.php' )
         );
 
-        $actions = array(
-            'edit'   => sprintf( '<a href="%s">%s</a>', esc_url( $edit_url ), __( 'Edit', 'kura-ai-booking-free' ) ),
-            'delete' => sprintf( '<a href="%s" class="kab-delete-event" data-event-name="%s">%s</a>', esc_url( $delete_url ), esc_attr( $item['name'] ), __( 'Delete', 'kura-ai-booking-free' ) ),
+        $view_url = add_query_arg(
+            array(
+                'page'     => 'kab-events',
+                'action'   => 'view',
+                'event_id' => $item['id'],
+            ),
+            admin_url( 'admin.php' )
         );
 
-        return sprintf( '%1$s %2$s', $item['name'], $this->row_actions( $actions ) );
+        $buttons = array(
+            sprintf( '<a href="%s" class="kab-btn kab-btn-secondary kab-btn-sm">%s</a>', esc_url( $view_url ), __( 'View', 'kura-ai-booking-free' ) ),
+            sprintf( '<a href="%s" class="kab-btn kab-btn-primary kab-btn-sm">%s</a>', esc_url( $edit_url ), __( 'Edit', 'kura-ai-booking-free' ) ),
+            sprintf( '<a href="%s" class="kab-btn kab-btn-danger kab-btn-sm kab-delete-event" data-event-name="%s">%s</a>', esc_url( $delete_url ), esc_attr( $item['name'] ), __( 'Delete', 'kura-ai-booking-free' ) ),
+        );
+        $buttons = implode( ' ', $buttons );
+        return sprintf( '%1$s <div class="kab-row-actions">%2$s</div>', esc_html( $item['name'] ), $buttons );
     }
 
     protected function column_cb( $item ) {
