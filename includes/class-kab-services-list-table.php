@@ -48,7 +48,7 @@ class KAB_Services_List_Table extends WP_List_Table {
             case 'duration':
                 return $item[ $column_name ] . ' ' . __( 'minutes', 'kura-ai-booking-free' );
             case 'price':
-                return number_format( $item[ $column_name ], 2 );
+                return kab_format_currency( $item[ $column_name ], kab_currency_symbol( $item['currency'] ?? 'USD' ) );
             default:
                 return $item[ $column_name ];
         }

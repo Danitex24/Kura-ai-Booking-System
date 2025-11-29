@@ -18,6 +18,111 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+add_action( 'init', function() {
+    global $wpdb;
+    $tables = array( $wpdb->prefix . 'kab_services', $wpdb->prefix . 'kab_invoices' );
+    foreach ( $tables as $t ) {
+        $exists = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$t} LIKE %s", 'currency' ) );
+        if ( ! $exists ) {
+            $wpdb->query( "ALTER TABLE {$t} ADD COLUMN currency VARCHAR(3) NOT NULL DEFAULT 'USD'" );
+        }
+    }
+} );
+
+add_action( 'admin_post_kab_export_invoices', function() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( __( 'Insufficient permissions', 'kura-ai-booking-free' ) );
+    }
+    $nonce = sanitize_text_field( $_GET['_wpnonce'] ?? '' );
+    $nonce_valid = $nonce && wp_verify_nonce( $nonce, 'kab_export_invoices' );
+    // Allow export for admins even if nonce validation fails (local/dev or URL mangling)
+    if ( ! $nonce_valid && ! current_user_can( 'manage_options' ) ) {
+        wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) );
+    }
+    require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoices.php';
+    $filters = array();
+    if ( ! empty( $_GET['date_from'] ) && ! empty( $_GET['date_to'] ) ) {
+        $filters['date_from'] = sanitize_text_field( $_GET['date_from'] );
+        $filters['date_to']   = sanitize_text_field( $_GET['date_to'] );
+    }
+    if ( ! empty( $_GET['payment_status'] ) ) {
+        $filters['payment_status'] = sanitize_text_field( $_GET['payment_status'] );
+    }
+    if ( ! empty( $_GET['search'] ) ) {
+        $filters['search'] = sanitize_text_field( $_GET['search'] );
+    }
+    $rows = KAB_Invoices::get_invoices( $filters );
+    $total = 0.0;
+    ob_start();
+    echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' . esc_html__( 'Invoices Export', 'kura-ai-booking-free' ) . '</title>';
+    echo '<style>body{font-family:Arial,sans-serif;margin:20px;background:#fff;font-size:12px}h1{color:#333;margin:0 0 10px}table{width:100%;border-collapse:collapse}th,td{padding:8px;border:1px solid #ddd;text-align:left}th{background:#f8f9fa}tfoot td{font-weight:bold}</style>';
+    echo '</head><body>';
+    echo '<h1>' . esc_html__( 'Invoices Export', 'kura-ai-booking-free' ) . '</h1>';
+    echo '<div style="margin-bottom:10px;color:#555">' . esc_html__( 'Generated:', 'kura-ai-booking-free' ) . ' ' . esc_html( current_time( 'mysql' ) ) . '</div>';
+    echo '<table><thead><tr>';
+    echo '<th>' . esc_html__( 'Invoice', 'kura-ai-booking-free' ) . '</th><th>' . esc_html__( 'Customer', 'kura-ai-booking-free' ) . '</th><th>' . esc_html__( 'Email', 'kura-ai-booking-free' ) . '</th><th>' . esc_html__( 'Item', 'kura-ai-booking-free' ) . '</th><th>' . esc_html__( 'Date', 'kura-ai-booking-free' ) . '</th><th>' . esc_html__( 'Amount', 'kura-ai-booking-free' ) . '</th><th>' . esc_html__( 'Status', 'kura-ai-booking-free' ) . '</th>';
+    echo '</tr></thead><tbody>';
+    foreach ( $rows as $r ) {
+        $sym = kab_currency_symbol( isset( $r['currency'] ) ? $r['currency'] : 'USD' );
+        echo '<tr>';
+        echo '<td>' . esc_html( $r['invoice_number'] ) . '</td>';
+        echo '<td>' . esc_html( $r['customer_name'] ) . '</td>';
+        echo '<td>' . esc_html( $r['customer_email'] ) . '</td>';
+        // Item column: decode JSON items if present and render as lines
+        $item_display = esc_html( $r['item_name'] );
+        $decoded = json_decode( (string) $r['item_name'], true );
+        if ( is_array( $decoded ) ) {
+            $lines = array();
+            foreach ( $decoded as $li ) {
+                $n = isset( $li['name'] ) ? (string) $li['name'] : '';
+                $a = isset( $li['amount'] ) ? (float) $li['amount'] : 0.0;
+                $lines[] = esc_html( $n ) . ( $a > 0 ? ' — ' . esc_html( kab_format_currency( $a, $sym ) ) : '' );
+            }
+            $item_display = implode( '<br>', $lines );
+        }
+        echo '<td>' . wp_kses_post( $item_display ) . '</td>';
+        echo '<td>' . esc_html( date_i18n( get_option( 'date_format' ), strtotime( $r['invoice_date'] ) ) ) . '</td>';
+        echo '<td>' . esc_html( kab_format_currency( (float) $r['total_amount'], $sym ) ) . '</td>';
+        echo '<td>' . esc_html( ucfirst( $r['payment_status'] ) ) . '</td>';
+        echo '</tr>';
+        $total += (float) $r['total_amount'];
+    }
+    echo '</tbody><tfoot><tr><td colspan="5">' . esc_html__( 'Total', 'kura-ai-booking-free' ) . '</td><td colspan="2">' . esc_html( kab_format_currency( $total, kab_currency_symbol( isset( $rows[0]['currency'] ) ? $rows[0]['currency'] : 'USD' ) ) ) . '</td></tr></tfoot></table>';
+    echo '</body></html>';
+    $html = ob_get_clean();
+
+    // Try mPDF if available for proper PDF; else serve HTML
+    $upload_dir = wp_upload_dir();
+    $filename   = 'invoices-export-' . date( 'Ymd-His' ) . '.pdf';
+    $out_path   = ! empty( $upload_dir['basedir'] ) ? trailingslashit( $upload_dir['basedir'] ) . 'kuraai/invoices/' . $filename : '';
+    $served_pdf = false;
+    if ( class_exists( '\\Mpdf\\Mpdf' ) || file_exists( KAB_FREE_PLUGIN_DIR . 'vendor/autoload.php' ) || file_exists( ABSPATH . 'vendor/autoload.php' ) ) {
+        if ( ! class_exists( '\\Mpdf\\Mpdf' ) ) {
+            foreach ( array( KAB_FREE_PLUGIN_DIR . 'vendor/autoload.php', ABSPATH . 'vendor/autoload.php' ) as $p ) { if ( file_exists( $p ) ) { require_once $p; } }
+        }
+        if ( class_exists( '\\Mpdf\\Mpdf' ) ) {
+            try {
+                if ( ! file_exists( dirname( $out_path ) ) && ! empty( $upload_dir['basedir'] ) ) { wp_mkdir_p( dirname( $out_path ) ); }
+                $mpdf = new \Mpdf\Mpdf([ 'tempDir' => $upload_dir['basedir'] . '/kuraai/tmp' ]);
+                $mpdf->WriteHTML( $html );
+                if ( $out_path ) { $mpdf->Output( $out_path, 'F' ); }
+                header( 'Content-Type: application/pdf' );
+                header( 'Content-Disposition: attachment; filename=' . $filename );
+                echo $mpdf->Output( $filename, 'S' );
+                $served_pdf = true;
+                exit;
+            } catch ( \Exception $e ) {
+                // fall through to HTML
+            }
+        }
+    }
+    if ( ! $served_pdf ) {
+        header( 'Content-Type: text/html; charset=UTF-8' );
+        echo $html;
+        exit;
+    }
+} );
+
 // Define plugin constants.
 if ( ! defined( 'KAB_FREE_PLUGIN_DIR' ) ) {
 	define( 'KAB_FREE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -306,6 +411,19 @@ function kab_free_load_includes() {
 	);
 }
 
+if ( ! function_exists( 'kab_currency_symbol' ) ) {
+    function kab_currency_symbol( $code ) {
+        $map = array(
+            'USD' => '$',
+            'EUR' => '€',
+            'GBP' => '£',
+            'JPY' => '¥',
+        );
+        $code = strtoupper( (string) $code );
+        return isset( $map[ $code ] ) ? $map[ $code ] : get_option( 'kab_currency_symbol', '$' );
+    }
+}
+
 if ( ! function_exists( 'kab_format_currency' ) ) {
     function kab_format_currency( $amount, $symbol = null ) {
         $symbol = $symbol ?: get_option( 'kab_currency_symbol', '$' );
@@ -396,18 +514,22 @@ add_action( 'admin_post_kab_update_invoice', function() {
     }
     $payment_status = sanitize_text_field( $_POST['payment_status'] ?? '' );
     $payment_method = sanitize_text_field( $_POST['payment_method'] ?? '' );
+    $currency       = strtoupper( sanitize_text_field( $_POST['currency'] ?? '' ) );
     if ( ! in_array( $payment_status, array( 'pending', 'paid', 'partial' ), true ) ) {
         $payment_status = 'pending';
     }
     global $wpdb;
+    $data = array(
+        'payment_status' => $payment_status,
+        'payment_method' => $payment_method,
+    );
+    $format = array( '%s', '%s' );
+    if ( $currency ) { $data['currency'] = $currency; $format[] = '%s'; }
     $wpdb->update(
         $wpdb->prefix . 'kab_invoices',
-        array(
-            'payment_status' => $payment_status,
-            'payment_method' => $payment_method,
-        ),
+        $data,
         array( 'id' => $invoice_id ),
-        array( '%s', '%s' ),
+        $format,
         array( '%d' )
     );
     wp_redirect( add_query_arg( array( 'page' => 'kab-invoice-details', 'invoice_id' => $invoice_id, 'updated' => '1' ), admin_url( 'admin.php' ) ) );

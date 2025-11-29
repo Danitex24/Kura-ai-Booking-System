@@ -117,8 +117,9 @@ $support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
                                 <?php endif; ?>
                             </td>
                             <td>1</td>
-                            <td><?php echo esc_html( number_format( $a, 2 ) ); ?></td>
-                            <td><?php echo esc_html( number_format( $a, 2 ) ); ?></td>
+                            <?php $sym = kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ); ?>
+                            <td><?php echo esc_html( kab_format_currency( $a, $sym ) ); ?></td>
+                            <td><?php echo esc_html( kab_format_currency( $a, $sym ) ); ?></td>
                         </tr>
                         <?php
                         $rendered = true;
@@ -135,8 +136,9 @@ $support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
                             <?php endif; ?>
                         </td>
                         <td>1</td>
-                        <td><?php echo esc_html( number_format( $invoice['subtotal'], 2 ) ); ?></td>
-                        <td><?php echo esc_html( number_format( $invoice['subtotal'], 2 ) ); ?></td>
+                        <?php $sym = kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ); ?>
+                        <td><?php echo esc_html( kab_format_currency( $invoice['subtotal'], $sym ) ); ?></td>
+                        <td><?php echo esc_html( kab_format_currency( $invoice['subtotal'], $sym ) ); ?></td>
                     </tr>
                 <?php endif; ?>
 			</tbody>
@@ -155,15 +157,16 @@ $support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
                         <table style="width: 100%;">
                             <tr>
                                 <td>Subtotal:</td>
-                                <td class="text-right"><?php echo esc_html( number_format( $invoice['subtotal'], 2 ) ); ?></td>
+                                <?php $sym = kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ); ?>
+                                <td class="text-right"><?php echo esc_html( kab_format_currency( $invoice['subtotal'], $sym ) ); ?></td>
                             </tr>
                             <tr>
                                 <td>Tax:</td>
-                                <td class="text-right"><?php echo esc_html( number_format( $invoice['tax_amount'], 2 ) ); ?></td>
+                                <td class="text-right"><?php echo esc_html( kab_format_currency( $invoice['tax_amount'], $sym ) ); ?></td>
                             </tr>
                             <tr class="total-row">
                                 <td><strong>Total:</strong></td>
-                                <td class="text-right"><strong><?php echo esc_html( number_format( $invoice['total_amount'], 2 ) ); ?></strong></td>
+                                <td class="text-right"><strong><?php echo esc_html( kab_format_currency( $invoice['total_amount'], $sym ) ); ?></strong></td>
                             </tr>
                         </table>
                     </div>

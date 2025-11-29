@@ -63,19 +63,21 @@ class KAB_Invoices {
 		$item_name = '';
 		$price     = 0.00;
 
-		if ( 'service' === $booking['booking_type'] && $booking['service_id'] ) {
-			$service = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_services WHERE id = %d", $booking['service_id'] ), ARRAY_A );
-			if ( $service ) {
-				$item_name = $service['name'];
-				$price     = floatval( $service['price'] );
-			}
-		} elseif ( 'event' === $booking['booking_type'] && $booking['event_id'] ) {
-			$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_events WHERE id = %d", $booking['event_id'] ), ARRAY_A );
-			if ( $event ) {
-				$item_name = $event['name'];
-				$price     = floatval( $event['price'] );
-			}
-		}
+        $currency = 'USD';
+        if ( 'service' === $booking['booking_type'] && $booking['service_id'] ) {
+            $service = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_services WHERE id = %d", $booking['service_id'] ), ARRAY_A );
+            if ( $service ) {
+                $item_name = $service['name'];
+                $price     = floatval( $service['price'] );
+                $currency  = isset( $service['currency'] ) ? strtoupper( $service['currency'] ) : 'USD';
+            }
+        } elseif ( 'event' === $booking['booking_type'] && $booking['event_id'] ) {
+            $event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_events WHERE id = %d", $booking['event_id'] ), ARRAY_A );
+            if ( $event ) {
+                $item_name = $event['name'];
+                $price     = floatval( $event['price'] );
+            }
+        }
 
 		// Generate invoice number
 		$invoice_number = self::generate_invoice_number();
@@ -88,23 +90,24 @@ class KAB_Invoices {
 		// Create invoice record
 		$wpdb->insert(
 			$wpdb->prefix . 'kab_invoices',
-			array(
-				'invoice_number' => $invoice_number,
-				'booking_id'     => $booking_id,
-				'user_id'        => $booking['user_id'],
-				'customer_name'  => $customer_name,
-				'customer_email' => $customer_email,
-				'item_name'      => $item_name,
-				'subtotal'       => $subtotal,
-				'tax_amount'     => $tax_amount,
-				'total_amount'   => $total_amount,
-				'payment_status' => 'pending',
-				'created_at'     => current_time( 'mysql' ),
-			),
-			array(
-				'%s', '%d', '%d', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%s'
-			)
-		);
+            array(
+                'invoice_number' => $invoice_number,
+                'booking_id'     => $booking_id,
+                'user_id'        => $booking['user_id'],
+                'customer_name'  => $customer_name,
+                'customer_email' => $customer_email,
+                'item_name'      => $item_name,
+                'subtotal'       => $subtotal,
+                'tax_amount'     => $tax_amount,
+                'total_amount'   => $total_amount,
+                'currency'       => $currency,
+                'payment_status' => 'pending',
+                'created_at'     => current_time( 'mysql' ),
+            ),
+            array(
+                '%s', '%d', '%d', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%s', '%s'
+            )
+        );
 
 		$invoice_id = $wpdb->insert_id;
 
@@ -152,12 +155,12 @@ class KAB_Invoices {
 	/**
 	 * Create a manual invoice not linked to a booking.
 	 */
-	public static function create_manual_invoice( $user_id, $customer_name, $customer_email, $item_name, $amount ) {
-		global $wpdb;
-		$invoice_number = self::generate_invoice_number();
-		$subtotal       = floatval( $amount );
-		$tax_amount     = 0.00;
-		$total_amount   = $subtotal + $tax_amount;
+    public static function create_manual_invoice( $user_id, $customer_name, $customer_email, $item_name, $amount, $currency = 'USD' ) {
+        global $wpdb;
+        $invoice_number = self::generate_invoice_number();
+        $subtotal       = floatval( $amount );
+        $tax_amount     = 0.00;
+        $total_amount   = $subtotal + $tax_amount;
         $wpdb->insert(
             $wpdb->prefix . 'kab_invoices',
             array(
@@ -170,10 +173,11 @@ class KAB_Invoices {
                 'subtotal'       => $subtotal,
                 'tax_amount'     => $tax_amount,
                 'total_amount'   => $total_amount,
+                'currency'       => strtoupper( $currency ),
                 'payment_status' => 'pending',
                 'created_at'     => current_time( 'mysql' ),
             ),
-            array( '%s', '%d', '%d', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%s' )
+            array( '%s', '%d', '%d', '%s', '%s', '%s', '%f', '%f', '%f', '%s', '%s', '%s' )
         );
 		$invoice_id = $wpdb->insert_id;
 		if ( ! $invoice_id ) {

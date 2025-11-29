@@ -150,9 +150,9 @@ class KAB_Invoice_PDF {
             'Customer: ' . (string) $invoice['customer_name'],
             'Email: ' . (string) $invoice['customer_email'],
             'Item: ' . (string) $invoice['item_name'],
-            'Subtotal: ' . number_format( (float) $invoice['subtotal'], 2 ),
-            'Tax: ' . number_format( (float) $invoice['tax_amount'], 2 ),
-            'Total: ' . number_format( (float) $invoice['total_amount'], 2 ),
+            'Subtotal: ' . kab_format_currency( (float) $invoice['subtotal'], kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ) ),
+            'Tax: ' . kab_format_currency( (float) $invoice['tax_amount'], kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ) ),
+            'Total: ' . kab_format_currency( (float) $invoice['total_amount'], kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ) ),
             'Status: ' . ucfirst( (string) $invoice['payment_status'] ),
         );
 

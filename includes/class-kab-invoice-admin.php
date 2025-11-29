@@ -82,6 +82,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
         $paid_count = 0;
         $pending_count = 0;
         $total_revenue = 0.0;
+        $revenue_currency = 'USD';
         foreach ( $invoices as $inv ) {
             if ( isset( $inv['payment_status'] ) ) {
                 if ( $inv['payment_status'] === 'paid' ) {
@@ -92,6 +93,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
                 }
             }
             $total_revenue += floatval( $inv['total_amount'] );
+            if ( isset( $inv['currency'] ) && $inv['currency'] ) { $revenue_currency = strtoupper( $inv['currency'] ); }
         }
         $this->render_static_header( 'invoices' );
         echo '<div class="wrap">';
@@ -110,7 +112,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '<div class="kab-detail-item"><div class="kab-detail-label">' . esc_html__( 'Total Invoices', 'kura-ai-booking-free' ) . '</div><div class="kab-detail-value">' . esc_html( $total_count ) . '</div></div>';
         echo '<div class="kab-detail-item"><div class="kab-detail-label">' . esc_html__( 'Paid', 'kura-ai-booking-free' ) . '</div><div class="kab-detail-value">' . esc_html( $paid_count ) . '</div></div>';
         echo '<div class="kab-detail-item"><div class="kab-detail-label">' . esc_html__( 'Pending', 'kura-ai-booking-free' ) . '</div><div class="kab-detail-value">' . esc_html( $pending_count ) . '</div></div>';
-        echo '<div class="kab-detail-item"><div class="kab-detail-label">' . esc_html__( 'Total Revenue', 'kura-ai-booking-free' ) . '</div><div class="kab-detail-value">' . esc_html( number_format( $total_revenue, 2 ) ) . '</div></div>';
+        echo '<div class="kab-detail-item"><div class="kab-detail-label">' . esc_html__( 'Total Revenue', 'kura-ai-booking-free' ) . '</div><div class="kab-detail-value">' . esc_html( kab_format_currency( $total_revenue, kab_currency_symbol( $revenue_currency ) ) ) . '</div></div>';
         echo '</div>';
         echo '<div class="kab-invoice-filters">';
         $this->render_invoice_filters( $filters );
@@ -147,7 +149,8 @@ class KAB_Invoice_Admin extends KAB_Admin {
                 }
                 echo '<td>' . $item_cell . '</td>';
                 echo '<td>' . esc_html( date_i18n( get_option( 'date_format' ), strtotime( $invoice['invoice_date'] ) ) ) . '</td>';
-                echo '<td>' . esc_html( number_format( $invoice['total_amount'], 2 ) ) . '</td>';
+                $sym = kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' );
+                echo '<td>' . esc_html( kab_format_currency( $invoice['total_amount'], $sym ) ) . '</td>';
                 echo '<td><span class="kab-status-badge ' . esc_attr( $status_class ) . '">' . esc_html( ucfirst( $invoice['payment_status'] ) ) . '</span></td>';
                 echo '<td class="kab-invoice-actions">';
                 echo '<a href="' . esc_url( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice['id'] ) ) . '" class="kab-btn kab-btn-primary kab-btn-sm">' . esc_html__( 'View', 'kura-ai-booking-free' ) . '</a> ';
@@ -234,6 +237,15 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '<input type="hidden" name="action" value="kab_create_invoice">';
         wp_nonce_field( 'kab_create_invoice', 'kab_create_invoice_nonce' );
         echo '<div class="kab-form-group">';
+        echo '<label class="kab-form-label">' . esc_html__( 'Currency', 'kura-ai-booking-free' ) . '</label>';
+        echo '<select name="currency" id="kab-currency" class="kab-form-control" required>';
+        echo '<option value="USD">USD (&#36;)</option>';
+        echo '<option value="EUR">EUR (&euro;)</option>';
+        echo '<option value="GBP">GBP (&pound;)</option>';
+        echo '<option value="JPY">JPY (&yen;)</option>';
+        echo '</select>';
+        echo '</div>';
+        echo '<div class="kab-form-group">';
         echo '<label class="kab-form-label">' . esc_html__( 'User', 'kura-ai-booking-free' ) . '</label>';
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo $users_dropdown;
@@ -252,7 +264,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '<tfoot><tr><td style="padding:6px;border:1px solid #ddd;font-weight:600;">' . esc_html__( 'Total', 'kura-ai-booking-free' ) . '</td><td style="padding:6px;border:1px solid #ddd;text-align:right;"><span id="kab-items-total">0.00</span></td><td style="padding:6px;border:1px solid #ddd;">&nbsp;</td></tr></tfoot>';
         echo '</table>';
         echo '</div>';
-        echo '<script>(function(){const rows=document.getElementById("kab-items-rows");const add=document.getElementById("kab-add-row");const totalEl=document.getElementById("kab-items-total");function recalc(){let t=0;rows.querySelectorAll(".kab-item-amount").forEach(function(inp){const v=parseFloat(inp.value);if(!isNaN(v))t+=v;});totalEl.textContent=t.toFixed(2);}function makeRow(){const tr=document.createElement("tr");tr.innerHTML=`<td style=\"padding:6px;border:1px solid #ddd;\"><input type=\"text\" name=\"items[name][]\" class=\"kab-form-control\" placeholder=\"Item description\" required></td><td style=\"padding:6px;border:1px solid #ddd;text-align:right;\"><input type=\"number\" step=\"0.01\" min=\"0\" name=\"items[amount][]\" class=\"kab-form-control kab-item-amount\" placeholder=\"0.00\" required></td><td style=\"padding:6px;border:1px solid #ddd;text-align:center;\"><button type=\"button\" class=\"kab-btn kab-remove-row\">−</button></td>`;rows.appendChild(tr);bind(tr);}function bind(scope){scope.querySelectorAll(".kab-item-amount").forEach(function(inp){inp.addEventListener("input",recalc);});scope.querySelectorAll(".kab-remove-row").forEach(function(btn){btn.addEventListener("click",function(){btn.closest("tr").remove();recalc();});});}add.addEventListener("click",function(){makeRow();});bind(document);recalc();})();</script>';
+        echo '<script>(function(){const rows=document.getElementById("kab-items-rows");const add=document.getElementById("kab-add-row");const totalEl=document.getElementById("kab-items-total");const curSel=document.getElementById("kab-currency");function sym(){var c=(curSel&&curSel.value)||"USD";return {USD:"$",EUR:"€",GBP:"£",JPY:"¥"}[c]||"$";}function recalc(){let t=0;rows.querySelectorAll(".kab-item-amount").forEach(function(inp){const v=parseFloat(inp.value);if(!isNaN(v))t+=v;});totalEl.textContent=sym()+t.toFixed(2);}function makeRow(){const tr=document.createElement("tr");tr.innerHTML=`<td style=\"padding:6px;border:1px solid #ddd;\"><input type=\"text\" name=\"items[name][]\" class=\"kab-form-control\" placeholder=\"Item description\" required></td><td style=\"padding:6px;border:1px solid #ddd;text-align:right;\"><input type=\"number\" step=\"0.01\" min=\"0\" name=\"items[amount][]\" class=\"kab-form-control kab-item-amount\" placeholder=\"0.00\" required></td><td style=\"padding:6px;border:1px solid #ddd;text-align:center;\"><button type=\"button\" class=\"kab-btn kab-remove-row\">−</button></td>`;rows.appendChild(tr);bind(tr);}function bind(scope){scope.querySelectorAll(".kab-item-amount").forEach(function(inp){inp.addEventListener("input",recalc);});scope.querySelectorAll(".kab-remove-row").forEach(function(btn){btn.addEventListener("click",function(){btn.closest("tr").remove();recalc();});});}add.addEventListener("click",function(){makeRow();});if(curSel){curSel.addEventListener("change",recalc);}bind(document);recalc();})();</script>';
         echo '<div class="kab-form-group">';
         echo '<button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> ' . esc_html__( 'Create Invoice', 'kura-ai-booking-free' ) . '</button>';
         echo ' <a href="' . esc_url( admin_url( 'admin.php?page=kab-invoices' ) ) . '" class="kab-btn">' . esc_html__( 'Cancel', 'kura-ai-booking-free' ) . '</a>';
@@ -267,6 +279,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
         }
         $user_id   = intval( $_POST['user_id'] ?? 0 );
         $items     = isset( $_POST['items'] ) && is_array( $_POST['items'] ) ? $_POST['items'] : array();
+        $currency  = strtoupper( sanitize_text_field( $_POST['currency'] ?? 'USD' ) );
         $names     = isset( $items['name'] ) && is_array( $items['name'] ) ? $items['name'] : array();
         $amounts   = isset( $items['amount'] ) && is_array( $items['amount'] ) ? $items['amount'] : array();
         $clean     = array();
@@ -295,7 +308,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
             );
         }
         $item_blob = wp_json_encode( $items_payload );
-        $invoice_id = KAB_Invoices::create_manual_invoice( $user_id, $user->display_name, $user->user_email, $item_blob, $subtotal );
+        $invoice_id = KAB_Invoices::create_manual_invoice( $user_id, $user->display_name, $user->user_email, $item_blob, $subtotal, $currency );
         if ( ! $invoice_id ) {
             wp_die( __( 'Failed to create invoice.', 'kura-ai-booking-free' ) );
         }
@@ -339,12 +352,14 @@ class KAB_Invoice_Admin extends KAB_Admin {
             foreach ( $items as $li ) {
                 $n = isset( $li['name'] ) ? $li['name'] : '';
                 $a = isset( $li['amount'] ) ? floatval( $li['amount'] ) : 0.0;
-                echo '<tr><td>' . esc_html( $n ) . '</td><td>1</td><td>' . esc_html( number_format( $a, 2 ) ) . '</td><td>' . esc_html( number_format( $a, 2 ) ) . '</td></tr>';
+                $sym = kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' );
+                echo '<tr><td>' . esc_html( $n ) . '</td><td>1</td><td>' . esc_html( kab_format_currency( $a, $sym ) ) . '</td><td>' . esc_html( kab_format_currency( $a, $sym ) ) . '</td></tr>';
                 $rendered = true;
             }
         }
         if ( ! $rendered ) {
-            echo '<tr><td>' . esc_html( $invoice['item_name'] ) . '</td><td>1</td><td>' . esc_html( number_format( $invoice['subtotal'], 2 ) ) . '</td><td>' . esc_html( number_format( $invoice['subtotal'], 2 ) ) . '</td></tr>';
+            $sym = kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' );
+            echo '<tr><td>' . esc_html( $invoice['item_name'] ) . '</td><td>1</td><td>' . esc_html( kab_format_currency( $invoice['subtotal'], $sym ) ) . '</td><td>' . esc_html( kab_format_currency( $invoice['subtotal'], $sym ) ) . '</td></tr>';
         }
         echo '</tbody></table>';
         require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-tickets.php';
@@ -353,9 +368,10 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '<div style="display:flex;justify-content:flex-end;align-items:flex-start;gap:12px;margin-top:8px;">';
         echo '<img src="' . esc_url( $qr_url ) . '" alt="QR" style="width:80px;height:80px;border:1px solid #e2e4e7;border-radius:6px;">';
         echo '<div class="kab-invoice-summary"><table>';
-        echo '<tr><td>' . esc_html__( 'Subtotal', 'kura-ai-booking-free' ) . '</td><td class="text-right">' . esc_html( number_format( $invoice['subtotal'], 2 ) ) . '</td></tr>';
-        echo '<tr><td>' . esc_html__( 'Tax', 'kura-ai-booking-free' ) . '</td><td class="text-right">' . esc_html( number_format( $invoice['tax_amount'], 2 ) ) . '</td></tr>';
-        echo '<tr class="kab-invoice-total"><td>' . esc_html__( 'Total', 'kura-ai-booking-free' ) . '</td><td class="text-right"><strong>' . esc_html( number_format( $invoice['total_amount'], 2 ) ) . '</strong></td></tr>';
+        $sym = kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' );
+        echo '<tr><td>' . esc_html__( 'Subtotal', 'kura-ai-booking-free' ) . '</td><td class="text-right">' . esc_html( kab_format_currency( $invoice['subtotal'], $sym ) ) . '</td></tr>';
+        echo '<tr><td>' . esc_html__( 'Tax', 'kura-ai-booking-free' ) . '</td><td class="text-right">' . esc_html( kab_format_currency( $invoice['tax_amount'], $sym ) ) . '</td></tr>';
+        echo '<tr class="kab-invoice-total"><td>' . esc_html__( 'Total', 'kura-ai-booking-free' ) . '</td><td class="text-right"><strong>' . esc_html( kab_format_currency( $invoice['total_amount'], $sym ) ) . '</strong></td></tr>';
         echo '</table></div>';
         echo '</div>'; // end summary row
         echo '</div>'; // end details
@@ -384,6 +400,16 @@ class KAB_Invoice_Admin extends KAB_Admin {
             echo '<div class="kab-form-group">';
             echo '<label class="kab-form-label">' . esc_html__( 'Payment Method', 'kura-ai-booking-free' ) . '</label>';
             echo '<input type="text" name="payment_method" class="kab-form-control" value="' . esc_attr( $invoice['payment_method'] ?? '' ) . '" placeholder="' . esc_attr__( 'e.g. Bank transfer, Cash', 'kura-ai-booking-free' ) . '">';
+            echo '</div>';
+            echo '<div class="kab-form-group">';
+            echo '<label class="kab-form-label">' . esc_html__( 'Currency', 'kura-ai-booking-free' ) . '</label>';
+            $curr = isset( $invoice['currency'] ) ? strtoupper( $invoice['currency'] ) : 'USD';
+            echo '<select name="currency" class="kab-form-control">';
+            echo '<option value="USD" ' . selected( $curr, 'USD', false ) . '>USD (&#36;)</option>';
+            echo '<option value="EUR" ' . selected( $curr, 'EUR', false ) . '>EUR (&euro;)</option>';
+            echo '<option value="GBP" ' . selected( $curr, 'GBP', false ) . '>GBP (&pound;)</option>';
+            echo '<option value="JPY" ' . selected( $curr, 'JPY', false ) . '>JPY (&yen;)</option>';
+            echo '</select>';
             echo '</div>';
             echo '<div class="kab-form-group">';
             echo '<button type="submit" class="kab-btn kab-btn-primary">' . esc_html__( 'Update Invoice', 'kura-ai-booking-free' ) . '</button> ';

@@ -77,10 +77,11 @@ class KAB_Services {
 				'description' => sanitize_textarea_field( $data['description'] ),
 				'duration'    => intval( $data['duration'] ),
 				'price'       => floatval( $data['price'] ),
+				'currency'    => isset( $data['currency'] ) ? strtoupper( sanitize_text_field( $data['currency'] ) ) : 'USD',
 				'status'      => 'active',
 				'created_at'  => current_time( 'mysql' ),
 			),
-			array( '%s', '%s', '%d', '%f', '%s', '%s' )
+			array( '%s', '%s', '%d', '%f', '%s', '%s', '%s' )
 		);
 
 		return $result ? $wpdb->insert_id : false;
@@ -117,6 +118,11 @@ class KAB_Services {
 		if ( isset( $data['price'] ) ) {
 			$update_data['price'] = floatval( $data['price'] );
 			$format[]             = '%f';
+		}
+
+		if ( isset( $data['currency'] ) ) {
+			$update_data['currency'] = strtoupper( sanitize_text_field( $data['currency'] ) );
+			$format[]                 = '%s';
 		}
 
 		if ( isset( $data['status'] ) ) {
