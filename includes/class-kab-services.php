@@ -78,10 +78,11 @@ class KAB_Services {
 				'duration'    => intval( $data['duration'] ),
 				'price'       => floatval( $data['price'] ),
 				'currency'    => isset( $data['currency'] ) ? strtoupper( sanitize_text_field( $data['currency'] ) ) : 'USD',
+				'payment_methods' => isset( $data['payment_methods'] ) ? wp_json_encode( (array) $data['payment_methods'] ) : null,
 				'status'      => 'active',
 				'created_at'  => current_time( 'mysql' ),
 			),
-			array( '%s', '%s', '%d', '%f', '%s', '%s', '%s' )
+			array( '%s', '%s', '%d', '%f', '%s', '%s', '%s', '%s' )
 		);
 
 		return $result ? $wpdb->insert_id : false;
@@ -122,6 +123,11 @@ class KAB_Services {
 
 		if ( isset( $data['currency'] ) ) {
 			$update_data['currency'] = strtoupper( sanitize_text_field( $data['currency'] ) );
+			$format[]                 = '%s';
+		}
+
+		if ( isset( $data['payment_methods'] ) ) {
+			$update_data['payment_methods'] = wp_json_encode( (array) $data['payment_methods'] );
 			$format[]                 = '%s';
 		}
 

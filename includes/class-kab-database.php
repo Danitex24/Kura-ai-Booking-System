@@ -25,6 +25,7 @@ class KAB_Database {
             duration INT NOT NULL,
             price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
             currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+            payment_methods TEXT,
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id)

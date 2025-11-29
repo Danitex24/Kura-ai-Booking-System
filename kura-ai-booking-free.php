@@ -27,6 +27,11 @@ add_action( 'init', function() {
             $wpdb->query( "ALTER TABLE {$t} ADD COLUMN currency VARCHAR(3) NOT NULL DEFAULT 'USD'" );
         }
     }
+    // Add payment_methods to services
+    $exists_pm = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$wpdb->prefix}kab_services LIKE %s", 'payment_methods' ) );
+    if ( ! $exists_pm ) {
+        $wpdb->query( "ALTER TABLE {$wpdb->prefix}kab_services ADD COLUMN payment_methods TEXT" );
+    }
 } );
 
 add_action( 'admin_post_kab_export_invoices', function() {
@@ -579,4 +584,169 @@ add_action( 'admin_post_kab_update_invoice', function() {
     );
     wp_redirect( add_query_arg( array( 'page' => 'kab-invoice-details', 'invoice_id' => $invoice_id, 'updated' => '1' ), admin_url( 'admin.php' ) ) );
     exit;
+} );
+if ( ! function_exists( 'kab_get_payment_settings' ) ) {
+    function kab_get_payment_settings() {
+        $opt = get_option( 'kab_settings', array() );
+        return array(
+            'default'        => isset( $opt['payment_default'] ) ? $opt['payment_default'] : 'onsite',
+            'paypal_enabled' => ! empty( $opt['paypal_enabled'] ),
+            'paypal_sandbox' => ! empty( $opt['paypal_sandbox'] ),
+            'paypal_merchant'=> isset( $opt['paypal_merchant'] ) ? $opt['paypal_merchant'] : '',
+            'stripe_enabled' => ! empty( $opt['stripe_enabled'] ),
+            'stripe_testmode'=> ! empty( $opt['stripe_testmode'] ),
+            'stripe_secret'  => isset( $opt['stripe_secret'] ) ? $opt['stripe_secret'] : '',
+            'mollie_enabled' => ! empty( $opt['mollie_enabled'] ),
+            'mollie_key'     => isset( $opt['mollie_key'] ) ? $opt['mollie_key'] : '',
+            'razor_enabled'  => ! empty( $opt['razor_enabled'] ),
+            'razor_testmode' => ! empty( $opt['razor_testmode'] ),
+            'razor_key_id'   => isset( $opt['razor_key_id'] ) ? $opt['razor_key_id'] : '',
+            'razor_key_secret'=> isset( $opt['razor_key_secret'] ) ? $opt['razor_key_secret'] : '',
+            'paystack_enabled'=> ! empty( $opt['paystack_enabled'] ),
+            'paystack_testmode'=> ! empty( $opt['paystack_testmode'] ),
+            'paystack_secret' => isset( $opt['paystack_secret'] ) ? $opt['paystack_secret'] : '',
+            'flutter_enabled' => ! empty( $opt['flutter_enabled'] ),
+            'flutter_testmode'=> ! empty( $opt['flutter_testmode'] ),
+            'flutter_secret'  => isset( $opt['flutter_secret'] ) ? $opt['flutter_secret'] : '',
+        );
+    }
+}
+
+// PayPal IPN handler
+add_action( 'admin_post_nopriv_kab_paypal_ipn', 'kab_paypal_ipn_handler' );
+add_action( 'admin_post_kab_paypal_ipn', 'kab_paypal_ipn_handler' );
+function kab_paypal_ipn_handler() {
+    // Validate IPN
+    $raw = file_get_contents( 'php://input' );
+    $payload = 'cmd=_notify-validate&' . $raw;
+    $settings = kab_get_payment_settings();
+    $endpoint = $settings['paypal_sandbox'] ? 'https://ipnpb.sandbox.paypal.com/cgi-bin/webscr' : 'https://ipnpb.paypal.com/cgi-bin/webscr';
+    $resp = wp_remote_post( $endpoint, array( 'body' => $payload, 'timeout' => 20 ) );
+    if ( is_wp_error( $resp ) ) { status_header( 500 ); exit; }
+    $body = wp_remote_retrieve_body( $resp );
+    // Update invoice on VERIFIED Completed
+    if ( trim( $body ) === 'VERIFIED' && isset( $_POST['payment_status'] ) && $_POST['payment_status'] === 'Completed' && isset( $_POST['custom'] ) ) {
+        $invoice_id = intval( $_POST['custom'] );
+        global $wpdb;
+        $wpdb->update( $wpdb->prefix . 'kab_invoices', array( 'payment_status' => 'paid', 'payment_method' => 'paypal' ), array( 'id' => $invoice_id ), array( '%s', '%s' ), array( '%d' ) );
+    }
+    exit;
+}
+
+// PayPal return handler (non-authoritative, friendly redirect)
+add_action( 'admin_post_nopriv_kab_paypal_return', 'kab_paypal_return_handler' );
+add_action( 'admin_post_kab_paypal_return', 'kab_paypal_return_handler' );
+function kab_paypal_return_handler() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 );
+    if ( $invoice_id ) {
+        wp_redirect( add_query_arg( array( 'page' => 'kab-invoice-details', 'invoice_id' => $invoice_id, 'paid' => '1' ), admin_url( 'admin.php' ) ) );
+        exit;
+    }
+    wp_redirect( admin_url( 'admin.php?page=kab-invoices' ) );
+    exit;
+}
+function kab_mark_invoice_paid( $invoice_id, $method ) {
+    global $wpdb;
+    $wpdb->update( $wpdb->prefix . 'kab_invoices', array( 'payment_status' => 'paid', 'payment_method' => sanitize_text_field( $method ) ), array( 'id' => intval( $invoice_id ) ), array( '%s', '%s' ), array( '%d' ) );
+}
+
+add_action( 'admin_post_kab_pay_invoice', function() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 );
+    $gateway    = sanitize_key( $_GET['gateway'] ?? '' );
+    if ( ! $invoice_id || ! $gateway ) { wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) ); }
+    global $wpdb; $inv = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_invoices WHERE id=%d", $invoice_id ), ARRAY_A );
+    if ( ! $inv ) { wp_die( __( 'Invoice not found', 'kura-ai-booking-free' ) ); }
+    $settings = kab_get_payment_settings();
+    $currency = isset( $inv['currency'] ) ? strtoupper( $inv['currency'] ) : 'USD';
+    $amount   = number_format( (float) $inv['total_amount'], 2, '.', '' );
+    $return   = admin_url( 'admin-post.php?action=kab_' . $gateway . '_return&invoice_id=' . $invoice_id );
+    switch ( $gateway ) {
+        case 'stripe':
+            if ( empty( $settings['stripe_enabled'] ) || empty( $settings['stripe_secret'] ) ) { wp_die( __( 'Stripe not configured', 'kura-ai-booking-free' ) ); }
+            $body = array(
+                'mode' => 'payment',
+                'success_url' => $return . '&session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url'  => admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id ),
+                'client_reference_id' => (string) $invoice_id,
+                'metadata[invoice_id]' => (string) $invoice_id,
+                'line_items[0][price_data][currency]' => $currency,
+                'line_items[0][price_data][product_data][name]' => 'Invoice ' . (string) $inv['invoice_number'],
+                'line_items[0][price_data][unit_amount]' => (int) round( (float) $amount * 100 ),
+                'line_items[0][quantity]' => 1,
+            );
+            $resp = wp_remote_post( 'https://api.stripe.com/v1/checkout/sessions', array( 'headers' => array( 'Authorization' => 'Bearer ' . $settings['stripe_secret'] ), 'body' => $body ) );
+            if ( is_wp_error( $resp ) ) { wp_die( __( 'Stripe error', 'kura-ai-booking-free' ) ); }
+            $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+            if ( empty( $data['url'] ) ) { wp_die( __( 'Failed to create Stripe session', 'kura-ai-booking-free' ) ); }
+            wp_redirect( $data['url'] ); exit;
+        case 'mollie':
+            if ( empty( $settings['mollie_enabled'] ) || empty( $settings['mollie_key'] ) ) { wp_die( __( 'Mollie not configured', 'kura-ai-booking-free' ) ); }
+            $body = wp_json_encode( array( 'amount' => array( 'currency' => $currency, 'value' => $amount ), 'description' => 'Invoice ' . (string) $inv['invoice_number'], 'redirectUrl' => $return, 'metadata' => array( 'invoice_id' => $invoice_id ) ) );
+            $resp = wp_remote_post( 'https://api.mollie.com/v2/payments', array( 'headers' => array( 'Authorization' => 'Bearer ' . $settings['mollie_key'], 'Content-Type' => 'application/json' ), 'body' => $body ) );
+            $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+            if ( empty( $data['_links']['checkout']['href'] ) ) { wp_die( __( 'Failed to create Mollie payment', 'kura-ai-booking-free' ) ); }
+            wp_redirect( $data['_links']['checkout']['href'] ); exit;
+        case 'razorpay':
+            if ( empty( $settings['razor_enabled'] ) || empty( $settings['razor_key_id'] ) || empty( $settings['razor_key_secret'] ) ) { wp_die( __( 'Razorpay not configured', 'kura-ai-booking-free' ) ); }
+            $body = array( 'amount' => (int) round( (float) $amount * 100 ), 'currency' => $currency, 'description' => 'Invoice ' . (string) $inv['invoice_number'], 'callback_url' => $return, 'callback_method' => 'get' );
+            $resp = wp_remote_post( 'https://api.razorpay.com/v1/payment_links', array( 'headers' => array( 'Authorization' => 'Basic ' . base64_encode( $settings['razor_key_id'] . ':' . $settings['razor_key_secret'] ) ), 'body' => $body ) );
+            $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+            if ( empty( $data['short_url'] ) ) { wp_die( __( 'Failed to create Razorpay link', 'kura-ai-booking-free' ) ); }
+            wp_redirect( $data['short_url'] ); exit;
+        case 'paystack':
+            if ( empty( $settings['paystack_enabled'] ) || empty( $settings['paystack_secret'] ) ) { wp_die( __( 'Paystack not configured', 'kura-ai-booking-free' ) ); }
+            $body = wp_json_encode( array( 'amount' => (int) round( (float) $amount * 100 ), 'currency' => $currency, 'email' => $inv['customer_email'], 'reference' => 'inv_' . $invoice_id, 'callback_url' => $return ) );
+            $resp = wp_remote_post( 'https://api.paystack.co/transaction/initialize', array( 'headers' => array( 'Authorization' => 'Bearer ' . $settings['paystack_secret'], 'Content-Type' => 'application/json' ), 'body' => $body ) );
+            $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+            if ( empty( $data['data']['authorization_url'] ) ) { wp_die( __( 'Failed to init Paystack', 'kura-ai-booking-free' ) ); }
+            wp_redirect( $data['data']['authorization_url'] ); exit;
+        case 'flutterwave':
+            if ( empty( $settings['flutter_enabled'] ) || empty( $settings['flutter_secret'] ) ) { wp_die( __( 'Flutterwave not configured', 'kura-ai-booking-free' ) ); }
+            $body = wp_json_encode( array( 'tx_ref' => 'inv_' . $invoice_id, 'amount' => (float) $amount, 'currency' => $currency, 'redirect_url' => $return, 'customer' => array( 'email' => $inv['customer_email'], 'name' => $inv['customer_name'] ), 'meta' => array( 'invoice_id' => $invoice_id ), 'payment_options' => 'card' ) );
+            $resp = wp_remote_post( 'https://api.flutterwave.com/v3/payments', array( 'headers' => array( 'Authorization' => 'Bearer ' . $settings['flutter_secret'], 'Content-Type' => 'application/json' ), 'body' => $body ) );
+            $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+            if ( empty( $data['data']['link'] ) ) { wp_die( __( 'Failed to init Flutterwave', 'kura-ai-booking-free' ) ); }
+            wp_redirect( $data['data']['link'] ); exit;
+        default:
+            wp_die( __( 'Unknown gateway', 'kura-ai-booking-free' ) );
+    }
+} );
+
+add_action( 'admin_post_kab_stripe_return', function() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 ); $session_id = sanitize_text_field( $_GET['session_id'] ?? '' );
+    $s = kab_get_payment_settings(); if ( $invoice_id && $session_id && ! empty( $s['stripe_secret'] ) ) {
+        $resp = wp_remote_get( 'https://api.stripe.com/v1/checkout/sessions/' . rawurlencode( $session_id ), array( 'headers' => array( 'Authorization' => 'Bearer ' . $s['stripe_secret'] ) ) );
+        $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+        if ( isset( $data['payment_status'] ) && $data['payment_status'] === 'paid' ) { kab_mark_invoice_paid( $invoice_id, 'stripe' ); }
+    }
+    wp_redirect( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id . '&paid=1' ) ); exit;
+} );
+
+add_action( 'admin_post_kab_mollie_return', function() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 ); $s = kab_get_payment_settings();
+    wp_redirect( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id . '&paid=1' ) ); exit;
+} );
+
+add_action( 'admin_post_kab_razorpay_return', function() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 ); wp_redirect( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id . '&paid=1' ) ); exit;
+} );
+
+add_action( 'admin_post_kab_paystack_return', function() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 ); $reference = sanitize_text_field( $_GET['reference'] ?? '' );
+    $s = kab_get_payment_settings(); if ( $reference && ! empty( $s['paystack_secret'] ) ) {
+        $resp = wp_remote_get( 'https://api.paystack.co/transaction/verify/' . rawurlencode( $reference ), array( 'headers' => array( 'Authorization' => 'Bearer ' . $s['paystack_secret'] ) ) );
+        $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+        if ( isset( $data['data']['status'] ) && $data['data']['status'] === 'success' ) { kab_mark_invoice_paid( $invoice_id, 'paystack' ); }
+    }
+    wp_redirect( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id . '&paid=1' ) ); exit;
+} );
+
+add_action( 'admin_post_kab_flutterwave_return', function() {
+    $invoice_id = intval( $_GET['invoice_id'] ?? 0 ); $tx_id = sanitize_text_field( $_GET['transaction_id'] ?? '' ); $s = kab_get_payment_settings();
+    if ( $tx_id && ! empty( $s['flutter_secret'] ) ) {
+        $resp = wp_remote_get( 'https://api.flutterwave.com/v3/transactions/' . rawurlencode( $tx_id ) . '/verify', array( 'headers' => array( 'Authorization' => 'Bearer ' . $s['flutter_secret'] ) ) );
+        $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+        if ( isset( $data['status'] ) && $data['status'] === 'success' ) { kab_mark_invoice_paid( $invoice_id, 'flutterwave' ); }
+    }
+    wp_redirect( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id . '&paid=1' ) ); exit;
 } );

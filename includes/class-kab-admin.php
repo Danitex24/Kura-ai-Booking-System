@@ -432,22 +432,22 @@ class KAB_Admin {
                             <div class="kab-col">
                                 <div class="kab-form-group">
                                     <label for="name" class="kab-form-label"><?php esc_html_e( 'Service Name', 'kura-ai-booking-free' ); ?></label>
-                                    <input type="text" name="name" id="name" class="kab-form-control" value="<?php echo $service ? esc_attr( $service['name'] ) : ''; ?>" required>
+                                    <input type="text" name="name" id="name" class="kab-form-control" value="<?php echo $service ? esc_attr( $service['name'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'Service name', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
                                 <div class="kab-form-group">
                                     <label for="description" class="kab-form-label"><?php esc_html_e( 'Description', 'kura-ai-booking-free' ); ?></label>
-                                    <textarea name="description" id="description" rows="5" class="kab-form-control" required><?php echo $service ? esc_textarea( $service['description'] ) : ''; ?></textarea>
+                                    <textarea name="description" id="description" rows="5" class="kab-form-control" placeholder="<?php esc_attr_e( 'Describe the service', 'kura-ai-booking-free' ); ?>" required><?php echo $service ? esc_textarea( $service['description'] ) : ''; ?></textarea>
                                 </div>
                             </div>
                             <div class="kab-col">
                                 <div class="kab-form-group">
                                     <label for="duration_date" class="kab-form-label"><?php esc_html_e( 'Duration (date)', 'kura-ai-booking-free' ); ?></label>
-                                    <input type="date" name="duration_date" id="duration_date" class="kab-form-control" value="" required>
+                                    <input type="date" name="duration_date" id="duration_date" class="kab-form-control" value="" placeholder="<?php esc_attr_e( 'mm/dd/yyyy', 'kura-ai-booking-free' ); ?>" required>
                                     <input type="hidden" name="duration" value="<?php echo $service ? esc_attr( $service['duration'] ) : 0; ?>">
                                 </div>
                                 <div class="kab-form-group">
                                     <label for="price" class="kab-form-label"><?php esc_html_e( 'Price', 'kura-ai-booking-free' ); ?></label>
-                                    <input type="number" step="0.01" name="price" id="price" class="kab-form-control" value="<?php echo $service ? esc_attr( $service['price'] ) : ''; ?>" required>
+                                    <input type="number" step="0.01" name="price" id="price" class="kab-form-control" value="<?php echo $service ? esc_attr( $service['price'] ) : ''; ?>" placeholder="<?php esc_attr_e( '0.00', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
                                 <div class="kab-form-group">
                                     <label for="currency" class="kab-form-label"><?php esc_html_e( 'Currency', 'kura-ai-booking-free' ); ?></label>
@@ -458,6 +458,20 @@ class KAB_Admin {
                                         <option value="GBP" <?php selected( $curr, 'GBP' ); ?>>GBP (&pound;)</option>
                                         <option value="JPY" <?php selected( $curr, 'JPY' ); ?>>JPY (&yen;)</option>
                                     </select>
+                                </div>
+                                <div class="kab-form-group">
+                                    <label class="kab-form-label"><?php esc_html_e( 'Allowed Payment Methods', 'kura-ai-booking-free' ); ?></label>
+                                    <?php $pm = $service && ! empty( $service['payment_methods'] ) ? (array) json_decode( $service['payment_methods'], true ) : array(); ?>
+                                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+                                        <label><input type="checkbox" name="payment_methods[]" value="onsite" <?php checked( in_array( 'onsite', $pm, true ) ); ?> /> <?php esc_html_e( 'On-site', 'kura-ai-booking-free' ); ?></label>
+                                        <label><input type="checkbox" name="payment_methods[]" value="paypal" <?php checked( in_array( 'paypal', $pm, true ) ); ?> /> <?php esc_html_e( 'PayPal', 'kura-ai-booking-free' ); ?></label>
+                                        <label><input type="checkbox" name="payment_methods[]" value="stripe" <?php checked( in_array( 'stripe', $pm, true ) ); ?> /> <?php esc_html_e( 'Stripe', 'kura-ai-booking-free' ); ?></label>
+                                        <label><input type="checkbox" name="payment_methods[]" value="mollie" <?php checked( in_array( 'mollie', $pm, true ) ); ?> /> <?php esc_html_e( 'Mollie', 'kura-ai-booking-free' ); ?></label>
+                                        <label><input type="checkbox" name="payment_methods[]" value="razorpay" <?php checked( in_array( 'razorpay', $pm, true ) ); ?> /> <?php esc_html_e( 'Razorpay', 'kura-ai-booking-free' ); ?></label>
+                                        <label><input type="checkbox" name="payment_methods[]" value="paystack" <?php checked( in_array( 'paystack', $pm, true ) ); ?> /> <?php esc_html_e( 'Paystack', 'kura-ai-booking-free' ); ?></label>
+                                        <label><input type="checkbox" name="payment_methods[]" value="flutterwave" <?php checked( in_array( 'flutterwave', $pm, true ) ); ?> /> <?php esc_html_e( 'Flutterwave', 'kura-ai-booking-free' ); ?></label>
+                                    </div>
+                                    <p class="description"><?php esc_html_e( 'If none is checked, global defaults apply.', 'kura-ai-booking-free' ); ?></p>
                                 </div>
                             </div>
                         </div>
@@ -506,6 +520,7 @@ class KAB_Admin {
             'currency'    => strtoupper( sanitize_text_field( $_POST['currency'] ?? 'USD' ) ),
         );
 
+        $service_data['payment_methods'] = isset( $_POST['payment_methods'] ) ? array_map( 'sanitize_key', (array) $_POST['payment_methods'] ) : array();
         $service_id = $services_model->create_service( $service_data );
 
         // Auto-generate invoice
@@ -561,8 +576,9 @@ class KAB_Admin {
             'price'       => floatval( $_POST['price'] ),
             'currency'    => strtoupper( sanitize_text_field( $_POST['currency'] ?? 'USD' ) ),
         );
+        $service_data['payment_methods'] = isset( $_POST['payment_methods'] ) ? array_map( 'sanitize_key', (array) $_POST['payment_methods'] ) : array();
 
-		$result = $services_model->update_service( $service_id, $service_data );
+        $result = $services_model->update_service( $service_id, $service_data );
 
 		$redirect_url = add_query_arg(
 			array(
@@ -793,33 +809,33 @@ class KAB_Admin {
                             <div class="kab-col">
                                 <div class="kab-form-group">
                                     <label for="name" class="kab-form-label"><?php esc_html_e( 'Name', 'kura-ai-booking-free' ); ?></label>
-                                    <input type="text" name="name" id="name" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['name'] ) : ''; ?>" required>
+                                    <input type="text" name="name" id="name" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['name'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'Event name', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
                                 <div class="kab-form-group">
                                     <label for="description" class="kab-form-label"><?php esc_html_e( 'Description', 'kura-ai-booking-free' ); ?></label>
-                                    <textarea name="description" id="description" rows="5" class="kab-form-control" required><?php echo $event ? esc_textarea( $event['description'] ) : ''; ?></textarea>
+                                    <textarea name="description" id="description" rows="5" class="kab-form-control" placeholder="<?php esc_attr_e( 'Describe the event', 'kura-ai-booking-free' ); ?>" required><?php echo $event ? esc_textarea( $event['description'] ) : ''; ?></textarea>
                                 </div>
                             </div>
                             <div class="kab-col">
                                 <div class="kab-form-group">
                                     <label for="event_date" class="kab-form-label"><?php esc_html_e( 'Date', 'kura-ai-booking-free' ); ?></label>
-                                    <input type="date" name="event_date" id="event_date" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['event_date'] ) : ''; ?>" required>
+                                    <input type="date" name="event_date" id="event_date" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['event_date'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'YYYY-MM-DD', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
                                 <div class="kab-form-group">
                                     <label for="event_time" class="kab-form-label"><?php esc_html_e( 'Time', 'kura-ai-booking-free' ); ?></label>
-                                    <input type="time" name="event_time" id="event_time" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['event_time'] ) : ''; ?>" required>
+                                    <input type="time" name="event_time" id="event_time" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['event_time'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'HH:MM', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
                                 <div class="kab-form-group">
                                     <label for="location" class="kab-form-label"><?php esc_html_e( 'Location', 'kura-ai-booking-free' ); ?></label>
-                                    <input type="text" name="location" id="location" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['location'] ) : ''; ?>" required>
+                                    <input type="text" name="location" id="location" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['location'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'Venue or meeting link', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
                                 <div class="kab-form-group">
                                     <label for="price" class="kab-form-label"><?php esc_html_e( 'Price', 'kura-ai-booking-free' ); ?></label>
-                                    <input type="number" step="0.01" name="price" id="price" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['price'] ) : ''; ?>" required>
+                                    <input type="number" step="0.01" name="price" id="price" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['price'] ) : ''; ?>" placeholder="<?php esc_attr_e( '0.00', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
                                 <div class="kab-form-group">
                                     <label for="capacity" class="kab-form-label"><?php esc_html_e( 'Capacity', 'kura-ai-booking-free' ); ?></label>
-                                    <input type="number" name="capacity" id="capacity" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['capacity'] ) : ''; ?>" required>
+                                    <input type="number" name="capacity" id="capacity" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['capacity'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'e.g. 20', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
                             </div>
                         </div>
@@ -1008,6 +1024,141 @@ class KAB_Admin {
             'kab_general_settings_section'
         );
 
+        // Payments
+        add_settings_field(
+            'kab_payment_default',
+            __( 'Default Payment Method', 'kura-ai-booking-free' ),
+            array( $this, 'render_payment_default_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_paypal_enabled',
+            __( 'Enable PayPal', 'kura-ai-booking-free' ),
+            array( $this, 'render_paypal_enabled_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_paypal_sandbox',
+            __( 'PayPal Sandbox Mode', 'kura-ai-booking-free' ),
+            array( $this, 'render_paypal_sandbox_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_paypal_merchant',
+            __( 'PayPal Merchant Email', 'kura-ai-booking-free' ),
+            array( $this, 'render_paypal_merchant_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_stripe_enabled',
+            __( 'Enable Stripe', 'kura-ai-booking-free' ),
+            array( $this, 'render_stripe_enabled_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_stripe_testmode',
+            __( 'Stripe Test Mode', 'kura-ai-booking-free' ),
+            array( $this, 'render_stripe_testmode_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_stripe_secret',
+            __( 'Stripe Secret Key', 'kura-ai-booking-free' ),
+            array( $this, 'render_stripe_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_mollie_enabled',
+            __( 'Enable Mollie', 'kura-ai-booking-free' ),
+            array( $this, 'render_mollie_enabled_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_mollie_key',
+            __( 'Mollie API Key', 'kura-ai-booking-free' ),
+            array( $this, 'render_mollie_key_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_razor_enabled',
+            __( 'Enable Razorpay', 'kura-ai-booking-free' ),
+            array( $this, 'render_razor_enabled_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_razor_testmode',
+            __( 'Razorpay Test Mode', 'kura-ai-booking-free' ),
+            array( $this, 'render_razor_testmode_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_razor_key_id',
+            __( 'Razorpay Key ID', 'kura-ai-booking-free' ),
+            array( $this, 'render_razor_key_id_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_razor_key_secret',
+            __( 'Razorpay Key Secret', 'kura-ai-booking-free' ),
+            array( $this, 'render_razor_key_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_paystack_enabled',
+            __( 'Enable Paystack', 'kura-ai-booking-free' ),
+            array( $this, 'render_paystack_enabled_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_paystack_testmode',
+            __( 'Paystack Test Mode', 'kura-ai-booking-free' ),
+            array( $this, 'render_paystack_testmode_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_paystack_secret',
+            __( 'Paystack Secret Key', 'kura-ai-booking-free' ),
+            array( $this, 'render_paystack_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_flutter_enabled',
+            __( 'Enable Flutterwave', 'kura-ai-booking-free' ),
+            array( $this, 'render_flutter_enabled_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_flutter_testmode',
+            __( 'Flutterwave Test Mode', 'kura-ai-booking-free' ),
+            array( $this, 'render_flutter_testmode_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_flutter_secret',
+            __( 'Flutterwave Secret Key', 'kura-ai-booking-free' ),
+            array( $this, 'render_flutter_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+
         // Taxes settings
         add_settings_field(
             'kab_tax_enabled',
@@ -1056,6 +1207,31 @@ class KAB_Admin {
         if ( isset( $input['enable_tickets'] ) ) {
             $sanitized['enable_tickets'] = absint( $input['enable_tickets'] );
         }
+
+        // Payments
+        if ( isset( $input['payment_default'] ) && in_array( $input['payment_default'], array( 'onsite', 'paypal' ), true ) ) {
+            $sanitized['payment_default'] = $input['payment_default'];
+        }
+        $sanitized['paypal_enabled'] = isset( $input['paypal_enabled'] ) ? absint( $input['paypal_enabled'] ) : 0;
+        $sanitized['paypal_sandbox'] = isset( $input['paypal_sandbox'] ) ? absint( $input['paypal_sandbox'] ) : 0;
+        if ( isset( $input['paypal_merchant'] ) ) {
+            $sanitized['paypal_merchant'] = sanitize_email( $input['paypal_merchant'] );
+        }
+        $sanitized['stripe_enabled']   = isset( $input['stripe_enabled'] ) ? absint( $input['stripe_enabled'] ) : 0;
+        $sanitized['stripe_testmode']  = isset( $input['stripe_testmode'] ) ? absint( $input['stripe_testmode'] ) : 0;
+        if ( isset( $input['stripe_secret'] ) ) { $sanitized['stripe_secret'] = sanitize_text_field( $input['stripe_secret'] ); }
+        $sanitized['mollie_enabled']   = isset( $input['mollie_enabled'] ) ? absint( $input['mollie_enabled'] ) : 0;
+        if ( isset( $input['mollie_key'] ) ) { $sanitized['mollie_key'] = sanitize_text_field( $input['mollie_key'] ); }
+        $sanitized['razor_enabled']    = isset( $input['razor_enabled'] ) ? absint( $input['razor_enabled'] ) : 0;
+        $sanitized['razor_testmode']   = isset( $input['razor_testmode'] ) ? absint( $input['razor_testmode'] ) : 0;
+        if ( isset( $input['razor_key_id'] ) ) { $sanitized['razor_key_id'] = sanitize_text_field( $input['razor_key_id'] ); }
+        if ( isset( $input['razor_key_secret'] ) ) { $sanitized['razor_key_secret'] = sanitize_text_field( $input['razor_key_secret'] ); }
+        $sanitized['paystack_enabled'] = isset( $input['paystack_enabled'] ) ? absint( $input['paystack_enabled'] ) : 0;
+        $sanitized['paystack_testmode']= isset( $input['paystack_testmode'] ) ? absint( $input['paystack_testmode'] ) : 0;
+        if ( isset( $input['paystack_secret'] ) ) { $sanitized['paystack_secret'] = sanitize_text_field( $input['paystack_secret'] ); }
+        $sanitized['flutter_enabled']  = isset( $input['flutter_enabled'] ) ? absint( $input['flutter_enabled'] ) : 0;
+        $sanitized['flutter_testmode'] = isset( $input['flutter_testmode'] ) ? absint( $input['flutter_testmode'] ) : 0;
+        if ( isset( $input['flutter_secret'] ) ) { $sanitized['flutter_secret'] = sanitize_text_field( $input['flutter_secret'] ); }
 
         // Taxes
         $sanitized['tax_enabled'] = isset( $input['tax_enabled'] ) ? absint( $input['tax_enabled'] ) : 0;
@@ -1115,6 +1291,149 @@ class KAB_Admin {
 		<?php
     }
 
+    // Payments fields
+    public function render_payment_default_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['payment_default'] ) ? $options['payment_default'] : 'onsite';
+        ?>
+        <select name="kab_settings[payment_default]">
+            <option value="onsite" <?php selected( $val, 'onsite' ); ?>><?php esc_html_e( 'On-site', 'kura-ai-booking-free' ); ?></option>
+            <option value="paypal" <?php selected( $val, 'paypal' ); ?>><?php esc_html_e( 'PayPal', 'kura-ai-booking-free' ); ?></option>
+        </select>
+        <?php
+    }
+
+    public function render_paypal_enabled_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['paypal_enabled'] ) ? absint( $options['paypal_enabled'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[paypal_enabled]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Allow PayPal payments', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+
+    public function render_paypal_sandbox_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['paypal_sandbox'] ) ? absint( $options['paypal_sandbox'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[paypal_sandbox]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Use PayPal Sandbox (testing)', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+
+    public function render_paypal_merchant_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['paypal_merchant'] ) ? $options['paypal_merchant'] : '';
+        ?>
+        <input type="email" name="kab_settings[paypal_merchant]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'merchant@example.com', 'kura-ai-booking-free' ); ?>" />
+        <p class="description"><?php esc_html_e( 'PayPal business/merchant email for Standard payments.', 'kura-ai-booking-free' ); ?></p>
+        <?php
+    }
+
+    public function render_stripe_enabled_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['stripe_enabled'] ) ? absint( $options['stripe_enabled'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[stripe_enabled]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Allow Stripe payments', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+    public function render_stripe_testmode_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['stripe_testmode'] ) ? absint( $options['stripe_testmode'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[stripe_testmode]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Use Stripe Test Mode', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+    public function render_stripe_secret_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['stripe_secret'] ) ? $options['stripe_secret'] : '';
+        ?>
+        <input type="text" name="kab_settings[stripe_secret]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'sk_test_... or sk_live_...', 'kura-ai-booking-free' ); ?>" />
+        <?php
+    }
+    public function render_mollie_enabled_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['mollie_enabled'] ) ? absint( $options['mollie_enabled'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[mollie_enabled]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Allow Mollie payments', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+    public function render_mollie_key_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['mollie_key'] ) ? $options['mollie_key'] : '';
+        ?>
+        <input type="text" name="kab_settings[mollie_key]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'test_xxx or live_xxx', 'kura-ai-booking-free' ); ?>" />
+        <?php
+    }
+    public function render_razor_enabled_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['razor_enabled'] ) ? absint( $options['razor_enabled'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[razor_enabled]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Allow Razorpay payments', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+    public function render_razor_testmode_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['razor_testmode'] ) ? absint( $options['razor_testmode'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[razor_testmode]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Use Razorpay Test Mode', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+    public function render_razor_key_id_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['razor_key_id'] ) ? $options['razor_key_id'] : '';
+        ?>
+        <input type="text" name="kab_settings[razor_key_id]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'rzp_test_... or rzp_live_...', 'kura-ai-booking-free' ); ?>" />
+        <?php
+    }
+    public function render_razor_key_secret_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['razor_key_secret'] ) ? $options['razor_key_secret'] : '';
+        ?>
+        <input type="text" name="kab_settings[razor_key_secret]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'your razorpay key secret', 'kura-ai-booking-free' ); ?>" />
+        <?php
+    }
+    public function render_paystack_enabled_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['paystack_enabled'] ) ? absint( $options['paystack_enabled'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[paystack_enabled]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Allow Paystack payments', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+    public function render_paystack_testmode_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['paystack_testmode'] ) ? absint( $options['paystack_testmode'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[paystack_testmode]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Use Paystack Test Mode', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+    public function render_paystack_secret_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['paystack_secret'] ) ? $options['paystack_secret'] : '';
+        ?>
+        <input type="text" name="kab_settings[paystack_secret]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'sk_test_... or sk_live_...', 'kura-ai-booking-free' ); ?>" />
+        <?php
+    }
+    public function render_flutter_enabled_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['flutter_enabled'] ) ? absint( $options['flutter_enabled'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[flutter_enabled]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Allow Flutterwave payments', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+    public function render_flutter_testmode_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['flutter_testmode'] ) ? absint( $options['flutter_testmode'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[flutter_testmode]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Use Flutterwave Test Mode', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+    public function render_flutter_secret_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['flutter_secret'] ) ? $options['flutter_secret'] : '';
+        ?>
+        <input type="text" name="kab_settings[flutter_secret]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'FLWSECK-...', 'kura-ai-booking-free' ); ?>" />
+        <?php
+    }
+
     // Taxes fields
     public function render_tax_enabled_field() {
         $options = get_option( 'kab_settings' );
@@ -1150,7 +1469,7 @@ class KAB_Admin {
         $options = get_option( 'kab_settings' );
         $val = isset( $options['tax_value'] ) ? floatval( $options['tax_value'] ) : 0.0;
         ?>
-        <input type="number" step="0.01" name="kab_settings[tax_value]" value="<?php echo esc_attr( $val ); ?>" />
+        <input type="number" step="0.01" name="kab_settings[tax_value]" value="<?php echo esc_attr( $val ); ?>" placeholder="<?php esc_attr_e( 'e.g. 10 or 5.00', 'kura-ai-booking-free' ); ?>" />
         <p class="description"><?php esc_html_e( 'Enter percentage (e.g., 10 for 10%) or fixed amount, depending on Tax Type.', 'kura-ai-booking-free' ); ?></p>
         <?php
     }
@@ -1158,33 +1477,103 @@ class KAB_Admin {
 	/**
 	 * Render settings page
 	 */
-	public function render_settings_page() {
-		?>
-		<div class="kab-admin-wrapper">
-			<?php $this->render_static_header( 'settings' ); ?>
-			
-			<div class="kab-card">
-				<div class="kab-card-header">
-					<h2><?php echo esc_html__( 'Settings', 'kura-ai-booking-free' ); ?></h2>
-				</div>
-				<div class="kab-card-body">
-					<form method="post" action="options.php">
-						<?php
-						settings_fields( 'kab-settings-group' );
-						do_settings_sections( 'kab-settings' );
-						?>
-						<div class="kab-form-group">
-							<button type="submit" class="kab-btn kab-btn-primary">
-								<span class="dashicons dashicons-yes"></span>
-								<?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?>
-							</button>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
-		<?php
-	}
+    public function render_settings_page() {
+        ?>
+        <div class="kab-admin-wrapper">
+            <?php $this->render_static_header( 'settings' ); ?>
+            <form method="post" action="options.php">
+                <?php settings_fields( 'kab-settings-group' ); ?>
+                <div class="kab-settings-grid">
+                    <div class="kab-card kab-settings-card accent-secondary">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-admin-users"></span> <?php echo esc_html__( 'Company', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_company_name_field(); ?>
+                            <?php $this->render_support_email_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-success">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-money"></span> <?php echo esc_html__( 'Taxes', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_tax_enabled_field(); ?>
+                            <?php $this->render_tax_mode_field(); ?>
+                            <?php $this->render_tax_type_field(); ?>
+                            <?php $this->render_tax_value_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-primary">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-cart"></span> <?php echo esc_html__( 'Payments (General)', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_payment_default_field(); ?>
+                            <?php $this->render_enable_tickets_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-primary">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-admin-site"></span> <?php echo esc_html__( 'PayPal', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_paypal_enabled_field(); ?>
+                            <?php $this->render_paypal_sandbox_field(); ?>
+                            <?php $this->render_paypal_merchant_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-primary">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-shield"></span> <?php echo esc_html__( 'Stripe', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_stripe_enabled_field(); ?>
+                            <?php $this->render_stripe_testmode_field(); ?>
+                            <?php $this->render_stripe_secret_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-primary">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-networking"></span> <?php echo esc_html__( 'Mollie', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_mollie_enabled_field(); ?>
+                            <?php $this->render_mollie_key_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-primary">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'Razorpay', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_razor_enabled_field(); ?>
+                            <?php $this->render_razor_testmode_field(); ?>
+                            <?php $this->render_razor_key_id_field(); ?>
+                            <?php $this->render_razor_key_secret_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-primary">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-admin-network"></span> <?php echo esc_html__( 'Paystack', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_paystack_enabled_field(); ?>
+                            <?php $this->render_paystack_testmode_field(); ?>
+                            <?php $this->render_paystack_secret_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-primary">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-admin-plugins"></span> <?php echo esc_html__( 'Flutterwave', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_flutter_enabled_field(); ?>
+                            <?php $this->render_flutter_testmode_field(); ?>
+                            <?php $this->render_flutter_secret_field(); ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="kab-card-footer">
+                    <button type="submit" class="kab-btn kab-btn-primary">
+                        <span class="dashicons dashicons-yes"></span>
+                        <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <?php
+    }
 
 	/**
 	 * Render validation page

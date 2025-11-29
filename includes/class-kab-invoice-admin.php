@@ -380,6 +380,36 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '<a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=kab_preview_invoice&invoice_id=' . $invoice_id ), 'kab_preview_invoice_' . $invoice_id ) ) . '" class="button" target="_blank">' . esc_html__( 'Preview PDF', 'kura-ai-booking-free' ) . '</a>';
         $resend_url = wp_nonce_url( admin_url( 'admin-post.php?action=kab_resend_invoice&invoice_id=' . $invoice_id ), 'kab_resend_invoice_' . $invoice_id );
         echo '<a href="#" id="kab-resend-email-btn" data-href="' . esc_url( $resend_url ) . '" class="button">' . esc_html__( 'Re-send Email', 'kura-ai-booking-free' ) . '</a>';
+        $payset = kab_get_payment_settings();
+        // Per-service payment restrictions
+        $allowed = array();
+        if ( $booking && ! empty( $booking['service_id'] ) ) {
+            global $wpdb; $srv = $wpdb->get_row( $wpdb->prepare( "SELECT payment_methods FROM {$wpdb->prefix}kab_services WHERE id=%d", intval( $booking['service_id'] ) ), ARRAY_A );
+            if ( $srv && ! empty( $srv['payment_methods'] ) ) { $allowed = (array) json_decode( $srv['payment_methods'], true ); }
+        }
+        $allow = function( $k ) use ( $allowed ) { return empty( $allowed ) ? true : in_array( $k, $allowed, true ); };
+        if ( $invoice['payment_status'] !== 'paid' && ! empty( $payset['paypal_enabled'] ) && ! empty( $payset['paypal_merchant'] ) && $allow('paypal') ) {
+            $paypal_endpoint = ! empty( $payset['paypal_sandbox'] ) ? 'https://www.sandbox.paypal.com/cgi-bin/webscr' : 'https://www.paypal.com/cgi-bin/webscr';
+            echo '<form id="kab-paypal-form" method="post" action="' . esc_url( $paypal_endpoint ) . '" style="display:none;">';
+            echo '<input type="hidden" name="cmd" value="_xclick">';
+            echo '<input type="hidden" name="business" value="' . esc_attr( $payset['paypal_merchant'] ) . '">';
+            echo '<input type="hidden" name="item_name" value="' . esc_attr( 'Invoice ' . (string) $invoice['invoice_number'] ) . '">';
+            echo '<input type="hidden" name="amount" value="' . esc_attr( number_format( (float) $invoice['total_amount'], 2, '.', '' ) ) . '">';
+            echo '<input type="hidden" name="currency_code" value="' . esc_attr( isset( $invoice['currency'] ) ? strtoupper( $invoice['currency'] ) : 'USD' ) . '">';
+            echo '<input type="hidden" name="notify_url" value="' . esc_url( admin_url( 'admin-post.php?action=kab_paypal_ipn' ) ) . '">';
+            echo '<input type="hidden" name="return" value="' . esc_url( admin_url( 'admin-post.php?action=kab_paypal_return&invoice_id=' . $invoice_id ) ) . '">';
+            echo '<input type="hidden" name="cancel_return" value="' . esc_url( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id ) ) . '">';
+            echo '<input type="hidden" name="custom" value="' . esc_attr( $invoice_id ) . '">';
+            echo '</form>';
+            echo '<a href="#" class="button kab-btn-success" id="kab-pay-now">' . esc_html__( 'Pay with PayPal', 'kura-ai-booking-free' ) . '</a>';
+        }
+        if ( $invoice['payment_status'] !== 'paid' ) {
+            if ( ! empty( $payset['stripe_enabled'] ) && $allow('stripe') ) { echo ' <a href="' . esc_url( admin_url( 'admin-post.php?action=kab_pay_invoice&gateway=stripe&invoice_id=' . $invoice_id ) ) . '" class="button kab-btn-success">' . esc_html__( 'Pay with Stripe', 'kura-ai-booking-free' ) . '</a>'; }
+            if ( ! empty( $payset['mollie_enabled'] ) && $allow('mollie') ) { echo ' <a href="' . esc_url( admin_url( 'admin-post.php?action=kab_pay_invoice&gateway=mollie&invoice_id=' . $invoice_id ) ) . '" class="button kab-btn-success">' . esc_html__( 'Pay with Mollie', 'kura-ai-booking-free' ) . '</a>'; }
+            if ( ! empty( $payset['razor_enabled'] ) && $allow('razorpay') ) { echo ' <a href="' . esc_url( admin_url( 'admin-post.php?action=kab_pay_invoice&gateway=razorpay&invoice_id=' . $invoice_id ) ) . '" class="button kab-btn-success">' . esc_html__( 'Pay with Razorpay', 'kura-ai-booking-free' ) . '</a>'; }
+            if ( ! empty( $payset['paystack_enabled'] ) && $allow('paystack') ) { echo ' <a href="' . esc_url( admin_url( 'admin-post.php?action=kab_pay_invoice&gateway=paystack&invoice_id=' . $invoice_id ) ) . '" class="button kab-btn-success">' . esc_html__( 'Pay with Paystack', 'kura-ai-booking-free' ) . '</a>'; }
+            if ( ! empty( $payset['flutter_enabled'] ) && $allow('flutterwave') ) { echo ' <a href="' . esc_url( admin_url( 'admin-post.php?action=kab_pay_invoice&gateway=flutterwave&invoice_id=' . $invoice_id ) ) . '" class="button kab-btn-success">' . esc_html__( 'Pay with Flutterwave', 'kura-ai-booking-free' ) . '</a>'; }
+        }
         echo '</div>';
         // Edit form
         $is_edit = isset( $_GET['edit'] ) && $_GET['edit'] === '1';
@@ -418,7 +448,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
             echo '</form>';
             echo '</div></div>';
         }
-        echo '<script>(function(){function waitSwal(cb){if(window.Swal){cb(window.Swal);return;}var i=setInterval(function(){if(window.Swal){clearInterval(i);cb(window.Swal);}},50);}var btn=document.getElementById("kab-resend-email-btn");if(btn){btn.addEventListener("click",function(e){e.preventDefault();var href=btn.getAttribute("data-href");waitSwal(function(Swal){Swal.fire({title:"' . esc_js( __( 'Re-send invoice email?', 'kura-ai-booking-free' ) ) . '",icon:"question",showCancelButton:true,confirmButtonText:"' . esc_js( __( 'Send', 'kura-ai-booking-free' ) ) . '",cancelButtonText:"' . esc_js( __( 'Cancel', 'kura-ai-booking-free' ) ) . '"}).then(function(r){if(r.isConfirmed){window.location.href=href;}});});});}var params=new URLSearchParams(window.location.search);if(params.has("sent")){var ok=params.get("sent")==="1";waitSwal(function(Swal){Swal.fire({title: ok?"' . esc_js( __( 'Email sent', 'kura-ai-booking-free' ) ) . '":"' . esc_js( __( 'Failed to send', 'kura-ai-booking-free' ) ) . '",icon: ok?"success":"error"});});}if(params.has("updated")){waitSwal(function(Swal){Swal.fire({title: "' . esc_js( __( 'Invoice updated', 'kura-ai-booking-free' ) ) . '", icon: "success"});});}})();</script>';
+        echo '<script>(function(){function waitSwal(cb){if(window.Swal){cb(window.Swal);return;}var i=setInterval(function(){if(window.Swal){clearInterval(i);cb(window.Swal);}},50);}var btn=document.getElementById("kab-resend-email-btn");if(btn){btn.addEventListener("click",function(e){e.preventDefault();var href=btn.getAttribute("data-href");waitSwal(function(Swal){Swal.fire({title:"' . esc_js( __( 'Re-send invoice email?', 'kura-ai-booking-free' ) ) . '",icon:"question",showCancelButton:true,confirmButtonText:"' . esc_js( __( 'Send', 'kura-ai-booking-free' ) ) . '",cancelButtonText:"' . esc_js( __( 'Cancel', 'kura-ai-booking-free' ) ) . '"}).then(function(r){if(r.isConfirmed){window.location.href=href;}});});});}var params=new URLSearchParams(window.location.search);if(params.has("sent")){var ok=params.get("sent")==="1";waitSwal(function(Swal){Swal.fire({title: ok?"' . esc_js( __( 'Email sent', 'kura-ai-booking-free' ) ) . '":"' . esc_js( __( 'Failed to send', 'kura-ai-booking-free' ) ) . '",icon: ok?"success":"error"});});}if(params.has("updated")){waitSwal(function(Swal){Swal.fire({title: "' . esc_js( __( 'Invoice updated', 'kura-ai-booking-free' ) ) . '", icon: "success"});});}var payBtn=document.getElementById("kab-pay-now");if(payBtn){payBtn.addEventListener("click",function(e){e.preventDefault();waitSwal(function(Swal){Swal.fire({title:"' . esc_js( __( 'Proceed to PayPal?', 'kura-ai-booking-free' ) ) . '",icon:"info",showCancelButton:true,confirmButtonText:"' . esc_js( __( 'Pay Now', 'kura-ai-booking-free' ) ) . '"}).then(function(r){if(r.isConfirmed){document.getElementById("kab-paypal-form").submit();}});});});}if(params.has("paid")){waitSwal(function(Swal){Swal.fire({title:"' . esc_js( __( 'Payment complete', 'kura-ai-booking-free' ) ) . '",icon:"success"});});}})();</script>';
         echo '</div></div></div>';
     }
 

@@ -136,6 +136,16 @@
     gap: 0.5rem;
 }
 
+/* ===== Settings Grid ===== */
+.kab-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.kab-settings-card { border-left: 4px solid var(--kab-primary); }
+.kab-settings-card .kab-card-header { background: linear-gradient(135deg, #F5E9D2 0%, #C9DFB0 50%, #A1C08C 100%); }
+.kab-settings-card.accent-primary { border-left-color: var(--kab-primary); }
+.kab-settings-card.accent-secondary { border-left-color: var(--kab-secondary); }
+.kab-settings-card.accent-success { border-left-color: var(--kab-success); }
+.kab-settings-card.accent-danger { border-left-color: var(--kab-danger); }
+.kab-settings-card .kab-card-title { color: #24321a; }
+
 /* ===== Dashboard Widgets ===== */
 .kab-dashboard-widgets {
     display: grid;
@@ -409,6 +419,8 @@
 /* ===== Responsive Design ===== */
 @media (max-width: 768px) {
     .kab-form-grid { grid-template-columns: 1fr; }
+    .kab-settings-grid { grid-template-columns: 1fr; }
+}
     .kab-admin-header-inner {
         flex-direction: column;
         gap: 1rem;
