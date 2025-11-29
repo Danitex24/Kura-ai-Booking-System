@@ -82,10 +82,8 @@ class KAB_Invoices {
 		// Generate invoice number
 		$invoice_number = self::generate_invoice_number();
 
-		// Calculate amounts
-		$subtotal     = $price;
-		$tax_amount   = 0.00; // No tax in free version
-		$total_amount = $subtotal + $tax_amount;
+        // Calculate amounts with tax settings
+        list( $subtotal, $tax_amount, $total_amount ) = kab_apply_tax( $price );
 
 		// Create invoice record
 		$wpdb->insert(
@@ -158,9 +156,8 @@ class KAB_Invoices {
     public static function create_manual_invoice( $user_id, $customer_name, $customer_email, $item_name, $amount, $currency = 'USD' ) {
         global $wpdb;
         $invoice_number = self::generate_invoice_number();
-        $subtotal       = floatval( $amount );
-        $tax_amount     = 0.00;
-        $total_amount   = $subtotal + $tax_amount;
+        $subtotal_input = floatval( $amount );
+        list( $subtotal, $tax_amount, $total_amount ) = kab_apply_tax( $subtotal_input );
         $wpdb->insert(
             $wpdb->prefix . 'kab_invoices',
             array(

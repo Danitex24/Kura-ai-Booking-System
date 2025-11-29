@@ -431,6 +431,51 @@ if ( ! function_exists( 'kab_format_currency' ) ) {
     }
 }
 
+// Tax helpers
+if ( ! function_exists( 'kab_get_tax_settings' ) ) {
+    function kab_get_tax_settings() {
+        $opt = get_option( 'kab_settings', array() );
+        return array(
+            'enabled' => ! empty( $opt['tax_enabled'] ),
+            'mode'    => isset( $opt['tax_mode'] ) ? $opt['tax_mode'] : 'excluded',
+            'type'    => isset( $opt['tax_type'] ) ? $opt['tax_type'] : 'percent',
+            'value'   => isset( $opt['tax_value'] ) ? floatval( $opt['tax_value'] ) : 0.0,
+        );
+    }
+}
+
+if ( ! function_exists( 'kab_apply_tax' ) ) {
+    // Returns array [subtotal, tax_amount, total]
+    function kab_apply_tax( $amount ) {
+        $s = kab_get_tax_settings();
+        $amount = floatval( $amount );
+        if ( ! $s['enabled'] || $s['value'] <= 0 ) {
+            return array( round( $amount, 2 ), 0.0, round( $amount, 2 ) );
+        }
+        if ( $s['type'] === 'percent' ) {
+            $rate = $s['value'] / 100.0;
+            if ( $s['mode'] === 'included' ) {
+                $subtotal = $amount / ( 1.0 + $rate );
+                $tax      = $amount - $subtotal;
+                return array( round( $subtotal, 2 ), round( $tax, 2 ), round( $amount, 2 ) );
+            } else {
+                $tax = $amount * $rate;
+                return array( round( $amount, 2 ), round( $tax, 2 ), round( $amount + $tax, 2 ) );
+            }
+        } else { // fixed
+            $fixed = $s['value'];
+            if ( $s['mode'] === 'included' ) {
+                $tax = min( $fixed, $amount );
+                $subtotal = $amount - $tax;
+                return array( round( $subtotal, 2 ), round( $tax, 2 ), round( $amount, 2 ) );
+            } else {
+                $tax = $fixed;
+                return array( round( $amount, 2 ), round( $tax, 2 ), round( $amount + $tax, 2 ) );
+            }
+        }
+    }
+}
+
 add_action( 'admin_post_kab_download_invoice', function() {
     $invoice_id = intval( $_GET['invoice_id'] ?? 0 );
     $nonce      = sanitize_text_field( $_GET['_wpnonce'] ?? '' );

@@ -983,7 +983,7 @@ class KAB_Admin {
 			'kab-settings'
 		);
 
-		// Add fields to the "kab_general_settings_section" section
+        // Add fields to the "kab_general_settings_section" section
 		add_settings_field(
 			'kab_company_name',
 			__( 'Company Name', 'kura-ai-booking-free' ),
@@ -1000,20 +1000,50 @@ class KAB_Admin {
 			'kab_general_settings_section'
 		);
 
-		add_settings_field(
-			'kab_enable_tickets',
-			__( 'Enable E-Tickets', 'kura-ai-booking-free' ),
-			array( $this, 'render_enable_tickets_field' ),
-			'kab-settings',
-			'kab_general_settings_section'
-		);
+        add_settings_field(
+            'kab_enable_tickets',
+            __( 'Enable E-Tickets', 'kura-ai-booking-free' ),
+            array( $this, 'render_enable_tickets_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+
+        // Taxes settings
+        add_settings_field(
+            'kab_tax_enabled',
+            __( 'Enable Taxes', 'kura-ai-booking-free' ),
+            array( $this, 'render_tax_enabled_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_tax_mode',
+            __( 'Tax Mode', 'kura-ai-booking-free' ),
+            array( $this, 'render_tax_mode_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_tax_type',
+            __( 'Tax Type', 'kura-ai-booking-free' ),
+            array( $this, 'render_tax_type_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_tax_value',
+            __( 'Tax Value', 'kura-ai-booking-free' ),
+            array( $this, 'render_tax_value_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
 	}
 
 	/**
 	 * Sanitize settings
 	 */
-	public function sanitize_settings( $input ) {
-		$sanitized = array();
+    public function sanitize_settings( $input ) {
+        $sanitized = array();
 
 		if ( isset( $input['company_name'] ) ) {
 			$sanitized['company_name'] = sanitize_text_field( $input['company_name'] );
@@ -1023,12 +1053,24 @@ class KAB_Admin {
 			$sanitized['support_email'] = sanitize_email( $input['support_email'] );
 		}
 
-		if ( isset( $input['enable_tickets'] ) ) {
-			$sanitized['enable_tickets'] = absint( $input['enable_tickets'] );
-		}
+        if ( isset( $input['enable_tickets'] ) ) {
+            $sanitized['enable_tickets'] = absint( $input['enable_tickets'] );
+        }
 
-		return $sanitized;
-	}
+        // Taxes
+        $sanitized['tax_enabled'] = isset( $input['tax_enabled'] ) ? absint( $input['tax_enabled'] ) : 0;
+        if ( isset( $input['tax_mode'] ) && in_array( $input['tax_mode'], array( 'excluded', 'included' ), true ) ) {
+            $sanitized['tax_mode'] = $input['tax_mode'];
+        }
+        if ( isset( $input['tax_type'] ) && in_array( $input['tax_type'], array( 'percent', 'fixed' ), true ) ) {
+            $sanitized['tax_type'] = $input['tax_type'];
+        }
+        if ( isset( $input['tax_value'] ) ) {
+            $sanitized['tax_value'] = floatval( $input['tax_value'] );
+        }
+
+        return $sanitized;
+    }
 
 	/**
 	 * Render general settings section
@@ -1062,7 +1104,7 @@ class KAB_Admin {
 	/**
 	 * Render enable tickets field
 	 */
-	public function render_enable_tickets_field() {
+    public function render_enable_tickets_field() {
 		$options = get_option( 'kab_settings' );
 		$value = isset( $options['enable_tickets'] ) ? $options['enable_tickets'] : 0;
 		?>
@@ -1071,7 +1113,47 @@ class KAB_Admin {
 			<?php esc_html_e( 'Enable QR code e-tickets for bookings', 'kura-ai-booking-free' ); ?>
 		</label>
 		<?php
-	}
+    }
+
+    // Taxes fields
+    public function render_tax_enabled_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['tax_enabled'] ) ? absint( $options['tax_enabled'] ) : 0;
+        ?>
+        <label><input type="checkbox" name="kab_settings[tax_enabled]" value="1" <?php checked( $val, 1 ); ?> /> <?php esc_html_e( 'Apply taxes to services and events', 'kura-ai-booking-free' ); ?></label>
+        <?php
+    }
+
+    public function render_tax_mode_field() {
+        $options = get_option( 'kab_settings' );
+        $mode = isset( $options['tax_mode'] ) ? $options['tax_mode'] : 'excluded';
+        ?>
+        <select name="kab_settings[tax_mode]">
+            <option value="excluded" <?php selected( $mode, 'excluded' ); ?>><?php esc_html_e( 'Excluded (show separately)', 'kura-ai-booking-free' ); ?></option>
+            <option value="included" <?php selected( $mode, 'included' ); ?>><?php esc_html_e( 'Included (built into price)', 'kura-ai-booking-free' ); ?></option>
+        </select>
+        <?php
+    }
+
+    public function render_tax_type_field() {
+        $options = get_option( 'kab_settings' );
+        $type = isset( $options['tax_type'] ) ? $options['tax_type'] : 'percent';
+        ?>
+        <select name="kab_settings[tax_type]">
+            <option value="percent" <?php selected( $type, 'percent' ); ?>><?php esc_html_e( 'Percentage (%)', 'kura-ai-booking-free' ); ?></option>
+            <option value="fixed" <?php selected( $type, 'fixed' ); ?>><?php esc_html_e( 'Fixed amount', 'kura-ai-booking-free' ); ?></option>
+        </select>
+        <?php
+    }
+
+    public function render_tax_value_field() {
+        $options = get_option( 'kab_settings' );
+        $val = isset( $options['tax_value'] ) ? floatval( $options['tax_value'] ) : 0.0;
+        ?>
+        <input type="number" step="0.01" name="kab_settings[tax_value]" value="<?php echo esc_attr( $val ); ?>" />
+        <p class="description"><?php esc_html_e( 'Enter percentage (e.g., 10 for 10%) or fixed amount, depending on Tax Type.', 'kura-ai-booking-free' ); ?></p>
+        <?php
+    }
 
 	/**
 	 * Render settings page
