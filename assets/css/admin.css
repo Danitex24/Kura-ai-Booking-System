@@ -203,7 +203,7 @@
     transition: var(--kab-transition);
     font-size: 0.875rem;
 }
-.kab-btn-sm { padding: 6px 10px; font-size: 0.75rem; }
+.kab-btn-sm { padding: 4px 8px; font-size: 0.75rem; }
 .kab-row-actions { display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; }
 
 .kab-btn-primary {

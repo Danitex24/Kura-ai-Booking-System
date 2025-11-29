@@ -100,18 +100,20 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '<div class="kab-card-header" style="display:flex;justify-content:space-between;align-items:center;">';
         echo '<h1 class="kab-card-title"><span class="dashicons dashicons-media-spreadsheet"></span> ' . esc_html__( 'Invoices', 'kura-ai-booking-free' ) . '</h1>';
         $export_url = wp_nonce_url( add_query_arg( $_GET, admin_url( 'admin-post.php?action=kab_export_invoices' ) ), 'kab_export_invoices' );
+        echo '<div class="kab-header-actions">';
         echo '<a href="#" class="kab-btn kab-btn-secondary" id="kab-export-pdf-btn" data-has-invoices="' . ( $total_count > 0 ? '1' : '0' ) . '">' . esc_html__( 'Export PDF', 'kura-ai-booking-free' ) . '</a>';
         echo ' <a href="' . esc_url( admin_url( 'admin.php?page=kab-create-invoice' ) ) . '" class="kab-btn kab-btn-primary">' . esc_html__( 'Create Invoice', 'kura-ai-booking-free' ) . '</a>';
-        echo '<script type="text/javascript">document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("kab-export-pdf-btn");if(!b)return;b.addEventListener("click",function(e){var has=b.getAttribute("data-has-invoices")==="1";if(!has){e.preventDefault();if(window.Swal){Swal.fire({icon:"info",title:"' . esc_js( __( 'No invoices', 'kura-ai-booking-free' ) ) . '",text:"' . esc_js( __( 'There are no invoices to export.', 'kura-ai-booking-free' ) ) . '"});}}else{window.location.href="' . esc_url( $export_url ) . '";}});});</script>';
         echo '</div>';
-        echo '<div class="kab-invoice-filters">';
-        $this->render_invoice_filters( $filters );
+        echo '<script type="text/javascript">document.addEventListener("DOMContentLoaded",function(){var b=document.getElementById("kab-export-pdf-btn");if(!b)return;b.addEventListener("click",function(e){var has=b.getAttribute("data-has-invoices")==="1";if(!has){e.preventDefault();if(window.Swal){Swal.fire({icon:"info",title:"' . esc_js( __( 'No invoices', 'kura-ai-booking-free' ) ) . '",text:"' . esc_js( __( 'There are no invoices to export.', 'kura-ai-booking-free' ) ) . '"});}}else{window.location.href="' . esc_url( $export_url ) . '";}});});</script>';
         echo '</div>';
         echo '<div class="kab-detail-grid" style="margin-top:10px;">';
         echo '<div class="kab-detail-item"><div class="kab-detail-label">' . esc_html__( 'Total Invoices', 'kura-ai-booking-free' ) . '</div><div class="kab-detail-value">' . esc_html( $total_count ) . '</div></div>';
         echo '<div class="kab-detail-item"><div class="kab-detail-label">' . esc_html__( 'Paid', 'kura-ai-booking-free' ) . '</div><div class="kab-detail-value">' . esc_html( $paid_count ) . '</div></div>';
         echo '<div class="kab-detail-item"><div class="kab-detail-label">' . esc_html__( 'Pending', 'kura-ai-booking-free' ) . '</div><div class="kab-detail-value">' . esc_html( $pending_count ) . '</div></div>';
         echo '<div class="kab-detail-item"><div class="kab-detail-label">' . esc_html__( 'Total Revenue', 'kura-ai-booking-free' ) . '</div><div class="kab-detail-value">' . esc_html( number_format( $total_revenue, 2 ) ) . '</div></div>';
+        echo '</div>';
+        echo '<div class="kab-invoice-filters">';
+        $this->render_invoice_filters( $filters );
         echo '</div>';
 		if ( $invoices ) {
             echo '<table class="wp-list-table widefat fixed striped kab-invoices-table">';

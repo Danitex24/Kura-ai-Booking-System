@@ -68,20 +68,23 @@
 /* Invoice Actions */
 .kab-invoice-actions {
 	display: flex;
-	gap: 8px;
-	flex-wrap: wrap;
+	gap: 4px;
+	flex-wrap: nowrap;
+	align-items: center;
+	justify-content: flex-start;
 }
 
 .kab-btn {
 	display: inline-block;
-	padding: 6px 12px;
+	padding: 4px 8px;
 	border: 1px solid #ccc;
-	border-radius: 4px;
+	border-radius: 3px;
 	text-decoration: none;
-	font-size: 13px;
-	line-height: 1.4;
+	font-size: 12px;
+	line-height: 1.2;
 	cursor: pointer;
 	transition: all 0.15s ease-in-out;
+	white-space: nowrap;
 }
 
 .kab-btn-primary {
@@ -294,6 +297,8 @@
     background: linear-gradient(90deg, #F5E9D2 0%, #C9DFB0 50%, #A1C08C 100%);
     color: #24321a;
 }
+
+.kab-header-actions { display: flex; gap: 6px; align-items: center; }
 
 /* Pagination styling */
 .kab-pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
