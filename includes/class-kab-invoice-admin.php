@@ -130,7 +130,20 @@ class KAB_Invoice_Admin extends KAB_Admin {
                 echo '<tr>';
                 echo '<td>' . esc_html( $invoice['invoice_number'] ) . '</td>';
                 echo '<td>' . esc_html( $invoice['customer_name'] ) . '<br><small>' . esc_html( $invoice['customer_email'] ) . '</small></td>';
-                echo '<td>' . esc_html( $invoice['item_name'] ) . '</td>';
+                $item_cell = '';
+                if ( ! empty( $invoice['item_name'] ) ) {
+                    $decoded = json_decode( $invoice['item_name'], true );
+                    if ( is_array( $decoded ) ) {
+                        $lines = array();
+                        foreach ( $decoded as $li ) {
+                            $lines[] = esc_html( isset( $li['name'] ) ? $li['name'] : '' );
+                        }
+                        $item_cell = implode( '<br>', $lines );
+                    } else {
+                        $item_cell = esc_html( $invoice['item_name'] );
+                    }
+                }
+                echo '<td>' . $item_cell . '</td>';
                 echo '<td>' . esc_html( date_i18n( get_option( 'date_format' ), strtotime( $invoice['invoice_date'] ) ) ) . '</td>';
                 echo '<td>' . esc_html( number_format( $invoice['total_amount'], 2 ) ) . '</td>';
                 echo '<td><span class="kab-status-badge ' . esc_attr( $status_class ) . '">' . esc_html( ucfirst( $invoice['payment_status'] ) ) . '</span></td>';
@@ -337,8 +350,10 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '<div class="kab-invoice-actions">';
         echo '<a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=kab_download_invoice&invoice_id=' . $invoice_id ), 'kab_download_invoice_' . $invoice_id ) ) . '" class="button kab-btn-primary">' . esc_html__( 'Download PDF', 'kura-ai-booking-free' ) . '</a>';
         echo '<a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=kab_preview_invoice&invoice_id=' . $invoice_id ), 'kab_preview_invoice_' . $invoice_id ) ) . '" class="button" target="_blank">' . esc_html__( 'Preview PDF', 'kura-ai-booking-free' ) . '</a>';
-        echo '<a href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=kab_resend_invoice&invoice_id=' . $invoice_id ), 'kab_resend_invoice_' . $invoice_id ) ) . '" class="button">' . esc_html__( 'Re-send Email', 'kura-ai-booking-free' ) . '</a>';
+        $resend_url = wp_nonce_url( admin_url( 'admin-post.php?action=kab_resend_invoice&invoice_id=' . $invoice_id ), 'kab_resend_invoice_' . $invoice_id );
+        echo '<a href="#" id="kab-resend-email-btn" data-href="' . esc_url( $resend_url ) . '" class="button">' . esc_html__( 'Re-send Email', 'kura-ai-booking-free' ) . '</a>';
         echo '</div>';
+        echo '<script>(function(){function waitSwal(cb){if(window.Swal){cb(window.Swal);return;}var i=setInterval(function(){if(window.Swal){clearInterval(i);cb(window.Swal);}},50);}var btn=document.getElementById("kab-resend-email-btn");if(btn){btn.addEventListener("click",function(e){e.preventDefault();var href=btn.getAttribute("data-href");waitSwal(function(Swal){Swal.fire({title:"' . esc_js( __( 'Re-send invoice email?', 'kura-ai-booking-free' ) ) . '",icon:"question",showCancelButton:true,confirmButtonText:"' . esc_js( __( 'Send', 'kura-ai-booking-free' ) ) . '",cancelButtonText:"' . esc_js( __( 'Cancel', 'kura-ai-booking-free' ) ) . '"}).then(function(r){if(r.isConfirmed){window.location.href=href;}});});});}var params=new URLSearchParams(window.location.search);if(params.has("sent")){var ok=params.get("sent")==="1";waitSwal(function(Swal){Swal.fire({title: ok?"' . esc_js( __( 'Email sent', 'kura-ai-booking-free' ) ) . '":"' . esc_js( __( 'Failed to send', 'kura-ai-booking-free' ) ) . '",icon: ok?"success":"error"});});}})();</script>';
         echo '</div></div></div>';
     }
 
