@@ -203,10 +203,24 @@
     transition: var(--kab-transition);
     font-size: 0.875rem;
 }
+.kab-btn-sm { padding: 6px 10px; font-size: 0.75rem; }
+.kab-row-actions { display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; }
 
 .kab-btn-primary {
     background: var(--kab-primary);
     color: white;
+}
+
+.kab-btn-success {
+    background: #8BAE66;
+    border-color: #8BAE66;
+    color: #24321a;
+}
+
+.kab-btn-danger {
+    background: #e63946;
+    border-color: #e63946;
+    color: #fff;
 }
 
 .kab-btn-primary:hover {
@@ -277,6 +291,30 @@
     overflow: hidden;
     box-shadow: var(--kab-shadow);
 }
+
+/* Meta table used for detail views */
+.kab-meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: var(--kab-radius);
+    overflow: hidden;
+    box-shadow: var(--kab-shadow);
+    margin-top: 0.5rem;
+}
+.kab-meta-table th {
+    background: linear-gradient(135deg, var(--kab-light) 0%, #f1f5f9 100%);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--kab-dark);
+    border-bottom: 2px solid var(--kab-border);
+}
+.kab-meta-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--kab-border);
+}
+.kab-meta-table tr:last-child td { border-bottom: none; }
 
 .kab-table th {
     background: linear-gradient(135deg, var(--kab-light) 0%, #f1f5f9 100%);

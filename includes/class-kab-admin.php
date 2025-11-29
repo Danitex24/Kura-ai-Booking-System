@@ -280,15 +280,18 @@ class KAB_Admin {
 
 		switch ( $action ) {
 			case 'add':
-				$this->render_service_form();
-				break;
-			case 'edit':
-				$this->render_service_form( $service_id );
-				break;
-			default:
-				$this->render_services_list();
-				break;
-		}
+                $this->render_service_form();
+                break;
+            case 'edit':
+                $this->render_service_form( $service_id );
+                break;
+            case 'view':
+                $this->render_service_view( $service_id );
+                break;
+            default:
+                $this->render_services_list();
+                break;
+        }
 	}
 
 	/**
@@ -330,14 +333,15 @@ class KAB_Admin {
 					</a>
 				</div>
 				<div class="kab-card-body">
-					<form method="post">
-						<?php
-						$services_table->display();
-						?>
-					</form>
-				</div>
-			</div>
-		</div>
+                    <form method="post">
+                        <?php
+                        $services_table->display();
+                        ?>
+                    </form>
+                    <script>document.addEventListener('DOMContentLoaded',function(){var suc=new URLSearchParams(window.location.search).get('success');if(typeof Swal!=='undefined'&&suc){var map={'0':'<?php echo esc_js( __( 'Operation failed', 'kura-ai-booking-free' ) ); ?>','1':'<?php echo esc_js( __( 'Service created', 'kura-ai-booking-free' ) ); ?>','2':'<?php echo esc_js( __( 'Service updated', 'kura-ai-booking-free' ) ); ?>','3':'<?php echo esc_js( __( 'Service deleted', 'kura-ai-booking-free' ) ); ?>'};if(map[suc]){Swal.fire({title:map[suc],icon:suc==='0'?'error':'success'});}}document.querySelectorAll('.kab-delete-service').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var name=a.getAttribute('data-service-name');if(typeof Swal!=='undefined'){Swal.fire({title:'<?php echo esc_js( __( 'Delete service?', 'kura-ai-booking-free' ) ); ?>',text:name,icon:'warning',showCancelButton:true}).then(function(r){if(r.isConfirmed){window.location.href=a.href;}});}else{if(confirm('Delete '+name+'?'))window.location.href=a.href;}});});});</script>
+                </div>
+            </div>
+        </div>
 		<?php
 	}
 
@@ -375,7 +379,7 @@ class KAB_Admin {
 	 *
 	 * @param int $service_id Service ID for editing. Default 0 for adding.
 	 */
-	private function render_service_form( $service_id = 0 ) {
+    private function render_service_form( $service_id = 0 ) {
 		require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-services.php';
 		$services_model = new KAB_Services();
 		$service = null;
@@ -434,26 +438,34 @@ class KAB_Admin {
 							<textarea name="description" id="description" rows="5" class="kab-form-control" required><?php echo $service ? esc_textarea( $service['description'] ) : ''; ?></textarea>
 						</div>
 
-						<div class="kab-form-group">
-							<label for="duration" class="kab-form-label"><?php esc_html_e( 'Duration (minutes)', 'kura-ai-booking-free' ); ?></label>
-							<input type="number" name="duration" id="duration" class="kab-form-control" value="<?php echo $service ? esc_attr( $service['duration'] ) : ''; ?>" required>
-						</div>
+                        <div class="kab-form-group">
+                            <label for="duration_date" class="kab-form-label"><?php esc_html_e( 'Duration (date)', 'kura-ai-booking-free' ); ?></label>
+                            <input type="date" name="duration_date" id="duration_date" class="kab-form-control" value="" required>
+                            <input type="hidden" name="duration" value="<?php echo $service ? esc_attr( $service['duration'] ) : 0; ?>">
+                        </div>
 
 						<div class="kab-form-group">
 							<label for="price" class="kab-form-label"><?php esc_html_e( 'Price', 'kura-ai-booking-free' ); ?></label>
 							<input type="number" step="0.01" name="price" id="price" class="kab-form-control" value="<?php echo $service ? esc_attr( $service['price'] ) : ''; ?>" required>
 						</div>
 
-						<div class="kab-form-group">
-							<button type="submit" class="kab-btn kab-btn-primary">
-								<span class="dashicons dashicons-yes"></span>
-								<?php echo esc_html( $button_text ); ?>
-							</button>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services' ) ); ?>" class="kab-btn kab-btn-outline">
-								<span class="dashicons dashicons-no"></span>
-								<?php esc_html_e( 'Cancel', 'kura-ai-booking-free' ); ?>
-							</a>
-						</div>
+                        <div class="kab-form-group">
+                            <label class="kab-form-label"><?php esc_html_e( 'Customer', 'kura-ai-booking-free' ); ?></label>
+                            <?php echo wp_dropdown_users( array( 'echo' => false, 'name' => 'user_id', 'show_option_none' => __( 'Select existing customer', 'kura-ai-booking-free' ) ) ); ?>
+                            <p style="margin-top:8px;"><?php esc_html_e( 'Or enter new customer details:', 'kura-ai-booking-free' ); ?></p>
+                            <input type="text" name="customer_name" class="kab-form-control" placeholder="<?php esc_attr_e( 'Customer name', 'kura-ai-booking-free' ); ?>">
+                            <input type="email" name="customer_email" class="kab-form-control" placeholder="<?php esc_attr_e( 'Customer email', 'kura-ai-booking-free' ); ?>">
+                        </div>
+                        <div class="kab-form-group">
+                            <button type="submit" class="kab-btn kab-btn-primary">
+                                <span class="dashicons dashicons-yes"></span>
+                                <?php echo esc_html( $button_text ); ?>
+                            </button>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services' ) ); ?>" class="kab-btn kab-btn-outline">
+                                <span class="dashicons dashicons-no"></span>
+                                <?php esc_html_e( 'Cancel', 'kura-ai-booking-free' ); ?>
+                            </a>
+                        </div>
 					</form>
 				</div>
 			</div>
@@ -464,7 +476,7 @@ class KAB_Admin {
 	/**
 	 * Handle add service form submission
 	 */
-	public function handle_add_service_action() {
+    public function handle_add_service_action() {
 		if ( ! isset( $_POST['kab_add_service_nonce'] ) || ! wp_verify_nonce( $_POST['kab_add_service_nonce'], 'kab_add_service' ) ) {
 			return;
 		}
@@ -472,23 +484,45 @@ class KAB_Admin {
 		require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-services.php';
 		$services_model = new KAB_Services();
 
-		$service_data = array(
-			'name'        => sanitize_text_field( $_POST['name'] ),
-			'description' => sanitize_textarea_field( $_POST['description'] ),
-			'duration'    => intval( $_POST['duration'] ),
-			'price'       => floatval( $_POST['price'] ),
-		);
+        $duration_date = sanitize_text_field( $_POST['duration_date'] ?? '' );
+        $service_data = array(
+            'name'        => sanitize_text_field( $_POST['name'] ),
+            'description' => sanitize_textarea_field( $_POST['description'] . ( $duration_date ? "\n" . sprintf( __( 'Duration date: %s', 'kura-ai-booking-free' ), $duration_date ) : '' ) ),
+            'duration'    => intval( $_POST['duration'] ),
+            'price'       => floatval( $_POST['price'] ),
+        );
 
-		$service_id = $services_model->create_service( $service_data );
+        $service_id = $services_model->create_service( $service_data );
 
-		$redirect_url = add_query_arg(
-			array(
-				'page'    => 'kab-services',
-				'action'  => 'list',
-				'success' => $service_id ? '1' : '0',
-			),
-			admin_url( 'admin.php' )
-		);
+        // Auto-generate invoice
+        if ( $service_id ) {
+            require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoices.php';
+            $user_id = intval( $_POST['user_id'] ?? 0 );
+            $cust_name = sanitize_text_field( $_POST['customer_name'] ?? '' );
+            $cust_email = sanitize_email( $_POST['customer_email'] ?? '' );
+            if ( $user_id ) {
+                $u = get_user_by( 'id', $user_id );
+                if ( $u ) { $cust_name = $u->display_name; $cust_email = $u->user_email; }
+            }
+            if ( $cust_name && $cust_email ) {
+                $item = wp_json_encode( array( array( 'name' => $service_data['name'], 'amount' => $service_data['price'] ) ) );
+                $invoice_id = KAB_Invoices::create_manual_invoice( $user_id ?: 0, $cust_name, $cust_email, $item, $service_data['price'] );
+                if ( $invoice_id ) {
+                    $map = get_option( 'kab_service_invoice_map', array() );
+                    $map[ $service_id ] = $invoice_id;
+                    update_option( 'kab_service_invoice_map', $map );
+                }
+            }
+        }
+
+        $redirect_url = add_query_arg(
+            array(
+                'page'    => 'kab-services',
+                'action'  => 'list',
+                'success' => $service_id ? '1' : '0',
+            ),
+            admin_url( 'admin.php' )
+        );
 
 		wp_redirect( $redirect_url );
 		exit;
@@ -600,6 +634,60 @@ class KAB_Admin {
                         $events_table->display();
                         ?>
                     </form>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render service view page
+     */
+    private function render_service_view( $service_id ) {
+        require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-services.php';
+        $services_model = new KAB_Services();
+        $service = $services_model->get_service( $service_id );
+        if ( ! $service ) {
+            wp_die( __( 'Service not found', 'kura-ai-booking-free' ) );
+        }
+        $map = get_option( 'kab_service_invoice_map', array() );
+        $invoice_id = isset( $map[ $service_id ] ) ? intval( $map[ $service_id ] ) : 0;
+        if ( ! $invoice_id ) {
+            global $wpdb;
+            // Try to find an invoice by matching the service name in the JSON payload
+            $like = '%"name":"' . $wpdb->esc_like( $service['name'] ) . '"%';
+            $invoice_id = intval( $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}kab_invoices WHERE item_name LIKE %s ORDER BY id DESC LIMIT 1", $like ) ) );
+        }
+        $invoice_url = $invoice_id ? admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id ) : '';
+        ?>
+        <div class="wrap kab-admin-wrapper">
+            <?php $this->render_static_header( 'services' ); ?>
+            <div class="kab-card">
+                <div class="kab-card-header">
+                    <h2><?php echo esc_html__( 'Service Details', 'kura-ai-booking-free' ); ?></h2>
+                    <div>
+                        <?php if ( $invoice_url ) : ?>
+                            <a href="<?php echo esc_url( $invoice_url ); ?>" class="kab-btn kab-btn-success" style="margin-right:8px;"><?php esc_html_e( 'View Invoice', 'kura-ai-booking-free' ); ?></a>
+                        <?php endif; ?>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services' ) ); ?>" class="kab-btn">&larr; <?php echo esc_html__( 'Back', 'kura-ai-booking-free' ); ?></a>
+                    </div>
+                </div>
+                <div class="kab-card-body">
+                    <table class="kab-meta-table">
+                        <thead>
+                            <tr>
+                                <th><?php esc_html_e( 'Field', 'kura-ai-booking-free' ); ?></th>
+                                <th><?php esc_html_e( 'Value', 'kura-ai-booking-free' ); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><?php esc_html_e( 'Name', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $service['name'] ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Description', 'kura-ai-booking-free' ); ?></td><td><?php echo nl2br( esc_html( $service['description'] ) ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Duration', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $service['duration'] ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Price', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( number_format( (float) $service['price'], 2 ) ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Created', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $service['created_at'] ); ?></td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

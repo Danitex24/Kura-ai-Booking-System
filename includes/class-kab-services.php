@@ -18,19 +18,28 @@ class KAB_Services {
 	 *
 	 * @return array List of services
 	 */
-	public function get_services() {
-		global $wpdb;
+    public function get_services( $limit = 0, $offset = 0 ) {
+        global $wpdb;
 
-		$services = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}kab_services WHERE status = %s ORDER BY name ASC",
-				'active'
-			),
-			ARRAY_A
-		);
+        $sql = $wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}kab_services WHERE status = %s ORDER BY name ASC",
+            'active'
+        );
+        if ( $limit > 0 ) {
+            $sql .= $wpdb->prepare( ' LIMIT %d OFFSET %d', intval( $limit ), intval( $offset ) );
+        }
+        $services = $wpdb->get_results( $sql, ARRAY_A );
 
 		return $services ? $services : array();
-	}
+    }
+
+    /**
+     * Count active services
+     */
+    public function count_services() {
+        global $wpdb;
+        return intval( $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}kab_services WHERE status = %s", 'active' ) ) );
+    }
 
 	/**
 	 * Get service by ID
