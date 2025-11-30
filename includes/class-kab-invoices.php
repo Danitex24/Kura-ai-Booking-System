@@ -70,6 +70,11 @@ class KAB_Invoices {
                 $item_name = $service['name'];
                 $price     = floatval( $service['price'] );
                 $currency  = isset( $service['currency'] ) ? strtoupper( $service['currency'] ) : 'USD';
+                // Employee price override
+                if ( ! empty( $booking['employee_id'] ) ) {
+                    $override = $wpdb->get_row( $wpdb->prepare( "SELECT price,capacity FROM {$wpdb->prefix}kab_employee_services WHERE employee_id=%d AND service_id=%d", $booking['employee_id'], $booking['service_id'] ), ARRAY_A );
+                    if ( $override && isset( $override['price'] ) && $override['price'] !== null ) { $price = floatval( $override['price'] ); }
+                }
             }
         } elseif ( 'event' === $booking['booking_type'] && $booking['event_id'] ) {
             $event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_events WHERE id = %d", $booking['event_id'] ), ARRAY_A );
@@ -265,8 +270,8 @@ class KAB_Invoices {
 	public static function get_invoices( $filters = array() ) {
 		global $wpdb;
 
-		$where_clauses = array();
-		$query_params  = array();
+        $where_clauses = array();
+        $query_params  = array();
 
 		// Date filters
 		if ( ! empty( $filters['date_from'] ) && ! empty( $filters['date_to'] ) ) {
@@ -295,12 +300,31 @@ class KAB_Invoices {
 			$query_params[]  = $search_term;
 		}
 
-		$where_sql = '';
-		if ( ! empty( $where_clauses ) ) {
-			$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
-		}
+        $where_sql = '';
+        if ( ! empty( $where_clauses ) ) {
+            $where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
+        }
 
-		$query = "SELECT * FROM {$wpdb->prefix}kab_invoices {$where_sql} ORDER BY created_at DESC";
+        // Optional filters needing bookings join
+        $join = '';
+        if ( ! empty( $filters['service_id'] ) || ! empty( $filters['event_id'] ) ) {
+            $join = " LEFT JOIN {$wpdb->prefix}kab_bookings b ON b.id = i.booking_id ";
+            if ( ! empty( $filters['service_id'] ) ) {
+                $where_sql .= ( $where_sql ? ' AND ' : 'WHERE ' ) . ' (b.service_id = %d)';
+                $query_params[] = intval( $filters['service_id'] );
+            }
+            if ( ! empty( $filters['event_id'] ) ) {
+                $where_sql .= ( $where_sql ? ' AND ' : 'WHERE ' ) . ' (b.event_id = %d)';
+                $query_params[] = intval( $filters['event_id'] );
+            }
+        }
+
+        if ( ! empty( $filters['customer_id'] ) ) {
+            $where_sql .= ( $where_sql ? ' AND ' : 'WHERE ' ) . ' (user_id = %d)';
+            $query_params[] = intval( $filters['customer_id'] );
+        }
+
+        $query = "SELECT i.* FROM {$wpdb->prefix}kab_invoices i{$join} {$where_sql} ORDER BY i.created_at DESC";
 
 		// Pagination
 		$limit  = isset( $filters['limit'] ) ? intval( $filters['limit'] ) : 0;
@@ -321,8 +345,8 @@ class KAB_Invoices {
 	 */
 	public static function get_invoices_count( $filters = array() ) {
 		global $wpdb;
-		$where_clauses = array();
-		$query_params  = array();
+        $where_clauses = array();
+        $query_params  = array();
 
 		if ( ! empty( $filters['date_from'] ) && ! empty( $filters['date_to'] ) ) {
 			$where_clauses[] = 'invoice_date BETWEEN %s AND %s';
@@ -348,12 +372,29 @@ class KAB_Invoices {
 			$query_params[]  = $search_term;
 		}
 
-		$where_sql = '';
-		if ( ! empty( $where_clauses ) ) {
-			$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
-		}
+        $where_sql = '';
+        if ( ! empty( $where_clauses ) ) {
+            $where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
+        }
 
-		$query = "SELECT COUNT(*) FROM {$wpdb->prefix}kab_invoices {$where_sql}";
+        $join = '';
+        if ( ! empty( $filters['service_id'] ) || ! empty( $filters['event_id'] ) ) {
+            $join = " LEFT JOIN {$wpdb->prefix}kab_bookings b ON b.id = i.booking_id ";
+            if ( ! empty( $filters['service_id'] ) ) {
+                $where_sql .= ( $where_sql ? ' AND ' : 'WHERE ' ) . ' (b.service_id = %d)';
+                $query_params[] = intval( $filters['service_id'] );
+            }
+            if ( ! empty( $filters['event_id'] ) ) {
+                $where_sql .= ( $where_sql ? ' AND ' : 'WHERE ' ) . ' (b.event_id = %d)';
+                $query_params[] = intval( $filters['event_id'] );
+            }
+        }
+        if ( ! empty( $filters['customer_id'] ) ) {
+            $where_sql .= ( $where_sql ? ' AND ' : 'WHERE ' ) . ' (user_id = %d)';
+            $query_params[] = intval( $filters['customer_id'] );
+        }
+
+        $query = "SELECT COUNT(*) FROM {$wpdb->prefix}kab_invoices i{$join} {$where_sql}";
 		if ( ! empty( $query_params ) ) {
 			$query = $wpdb->prepare( $query, $query_params );
 		}

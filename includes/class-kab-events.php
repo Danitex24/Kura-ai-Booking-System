@@ -64,11 +64,16 @@ class KAB_Events {
 				'description' => sanitize_textarea_field( $data['description'] ),
 				'event_date'  => sanitize_text_field( $data['event_date'] ),
 				'event_time'  => sanitize_text_field( $data['event_time'] ),
+				'event_end_time' => isset( $data['event_end_time'] ) ? sanitize_text_field( $data['event_end_time'] ) : null,
+				'organizer'   => isset( $data['organizer'] ) ? sanitize_text_field( $data['organizer'] ) : null,
 				'location'    => sanitize_text_field( $data['location'] ),
 				'price'       => floatval( $data['price'] ),
 				'capacity'    => intval( $data['capacity'] ),
+				'booking_open'=> isset( $data['booking_open'] ) ? sanitize_text_field( $data['booking_open'] ) : null,
+				'booking_close'=> isset( $data['booking_close'] ) ? sanitize_text_field( $data['booking_close'] ) : null,
+				'tags'        => isset( $data['tags'] ) ? sanitize_text_field( $data['tags'] ) : null,
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%f', '%d' )
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%d', '%s', '%s', '%s' )
 		);
 		return $wpdb->insert_id;
 	}
@@ -82,12 +87,17 @@ class KAB_Events {
 				'description' => sanitize_textarea_field( $data['description'] ),
 				'event_date'  => sanitize_text_field( $data['event_date'] ),
 				'event_time'  => sanitize_text_field( $data['event_time'] ),
+				'event_end_time' => isset( $data['event_end_time'] ) ? sanitize_text_field( $data['event_end_time'] ) : null,
+				'organizer'   => isset( $data['organizer'] ) ? sanitize_text_field( $data['organizer'] ) : null,
 				'location'    => sanitize_text_field( $data['location'] ),
 				'price'       => floatval( $data['price'] ),
 				'capacity'    => intval( $data['capacity'] ),
+				'booking_open'=> isset( $data['booking_open'] ) ? sanitize_text_field( $data['booking_open'] ) : null,
+				'booking_close'=> isset( $data['booking_close'] ) ? sanitize_text_field( $data['booking_close'] ) : null,
+				'tags'        => isset( $data['tags'] ) ? sanitize_text_field( $data['tags'] ) : null,
 			),
 			array( 'id' => intval( $id ) ),
-			array( '%s', '%s', '%s', '%s', '%s', '%f', '%d' ),
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%d', '%s', '%s', '%s' ),
 			array( '%d' )
 		);
 	}

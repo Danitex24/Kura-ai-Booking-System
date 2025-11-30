@@ -32,6 +32,84 @@ add_action( 'init', function() {
     if ( ! $exists_pm ) {
         $wpdb->query( "ALTER TABLE {$wpdb->prefix}kab_services ADD COLUMN payment_methods TEXT" );
     }
+    // Events extra columns
+    $events = $wpdb->prefix . 'kab_events';
+    $cols = array( 'event_end_time' => "ALTER TABLE {$events} ADD COLUMN event_end_time TIME NULL",
+                   'organizer' => "ALTER TABLE {$events} ADD COLUMN organizer VARCHAR(255) NULL",
+                   'booking_open' => "ALTER TABLE {$events} ADD COLUMN booking_open DATETIME NULL",
+                   'booking_close' => "ALTER TABLE {$events} ADD COLUMN booking_close DATETIME NULL",
+                   'tags' => "ALTER TABLE {$events} ADD COLUMN tags TEXT" );
+    foreach ( $cols as $col => $sql ) {
+        $exists_col = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$events} LIKE %s", $col ) );
+        if ( ! $exists_col ) { $wpdb->query( $sql ); }
+    }
+
+    // Ensure employee tables exist
+    $prefix = $wpdb->prefix;
+    $maybe_create = array(
+        "CREATE TABLE IF NOT EXISTS {$prefix}kab_employees (
+            id INT NOT NULL AUTO_INCREMENT,
+            first_name VARCHAR(100) NOT NULL,
+            last_name VARCHAR(100) NOT NULL,
+            email VARCHAR(191) NOT NULL,
+            phone VARCHAR(50),
+            location VARCHAR(255),
+            wp_user_id BIGINT UNSIGNED,
+            timezone VARCHAR(100),
+            photo_url TEXT,
+            badge VARCHAR(100),
+            description TEXT,
+            internal_note TEXT,
+            status VARCHAR(20) NOT NULL DEFAULT 'available',
+            show_on_site TINYINT(1) NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY email (email)
+        )",
+        "CREATE TABLE IF NOT EXISTS {$prefix}kab_employee_services (
+            employee_id INT NOT NULL,
+            service_id INT NOT NULL,
+            price DECIMAL(10,2) DEFAULT NULL,
+            capacity INT DEFAULT NULL,
+            PRIMARY KEY (employee_id, service_id)
+        )",
+        "CREATE TABLE IF NOT EXISTS {$prefix}kab_employee_workhours (
+            id INT NOT NULL AUTO_INCREMENT,
+            employee_id INT NOT NULL,
+            weekday TINYINT NOT NULL,
+            start_time TIME NOT NULL,
+            end_time TIME NOT NULL,
+            PRIMARY KEY (id)
+        )",
+        "CREATE TABLE IF NOT EXISTS {$prefix}kab_employee_daysoff (
+            id INT NOT NULL AUTO_INCREMENT,
+            employee_id INT NOT NULL,
+            day_off DATE NOT NULL,
+            reason VARCHAR(255),
+            PRIMARY KEY (id)
+        )",
+        "CREATE TABLE IF NOT EXISTS {$prefix}kab_employee_specialdays (
+            id INT NOT NULL AUTO_INCREMENT,
+            employee_id INT NOT NULL,
+            special_date DATE NOT NULL,
+            start_time TIME,
+            end_time TIME,
+            services TEXT,
+            PRIMARY KEY (id)
+        )",
+    );
+    foreach ( $maybe_create as $sql ) { $wpdb->query( $sql ); }
+
+    // Add employee_id to bookings
+    $exists_emp = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$wpdb->prefix}kab_bookings LIKE %s", 'employee_id' ) );
+    if ( ! $exists_emp ) {
+        $wpdb->query( "ALTER TABLE {$wpdb->prefix}kab_bookings ADD COLUMN employee_id INT NULL" );
+    }
+
+    // Ensure custom fields tables exist
+    $prefix = $wpdb->prefix;
+    $wpdb->query("CREATE TABLE IF NOT EXISTS {$prefix}kab_custom_fields (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(64) NOT NULL, label VARCHAR(255) NOT NULL, type VARCHAR(20) NOT NULL, options TEXT, required TINYINT(1) NOT NULL DEFAULT 0, status VARCHAR(20) NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(id), UNIQUE KEY name (name))");
+    $wpdb->query("CREATE TABLE IF NOT EXISTS {$prefix}kab_booking_meta (id INT NOT NULL AUTO_INCREMENT, booking_id INT NOT NULL, field_id INT NOT NULL, value TEXT, PRIMARY KEY(id), KEY booking_id (booking_id), KEY field_id (field_id))");
 } );
 
 add_action( 'admin_post_kab_export_invoices', function() {
@@ -722,6 +800,34 @@ add_action( 'admin_post_kab_stripe_return', function() {
     wp_redirect( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id . '&paid=1' ) ); exit;
 } );
 
+// Update booking status (complete/cancel)
+add_action( 'admin_post_kab_update_booking', function() {
+    if ( ! current_user_can( 'manage_options' ) ) { wp_die( __( 'Insufficient permissions', 'kura-ai-booking-free' ) ); }
+    $booking_id = intval( $_GET['booking_id'] ?? 0 );
+    $state      = sanitize_text_field( $_GET['state'] ?? '' );
+    $nonce      = sanitize_text_field( $_GET['_wpnonce'] ?? '' );
+    if ( ! $booking_id || ! wp_verify_nonce( $nonce, 'kab_update_booking_' . $booking_id ) ) { wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) ); }
+    global $wpdb; $allowed = array( 'completed','cancelled' );
+    if ( in_array( $state, $allowed, true ) ) {
+        $wpdb->update( $wpdb->prefix . 'kab_bookings', array( 'status' => $state ), array( 'id' => $booking_id ), array( '%s' ), array( '%d' ) );
+    }
+    wp_redirect( admin_url( 'admin.php?page=kab-appointments&success=1' ) ); exit;
+} );
+
+// Send test email
+add_action( 'admin_post_kab_send_test_email', function() {
+    if ( ! current_user_can( 'manage_options' ) ) { wp_die( __( 'Insufficient permissions', 'kura-ai-booking-free' ) ); }
+    $nonce = sanitize_text_field( $_GET['_wpnonce'] ?? '' ); if ( ! wp_verify_nonce( $nonce, 'kab_send_test_email' ) ) { wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) ); }
+    $to = get_option( 'admin_email' );
+    wp_mail( $to, '[Kura-ai] Test Email', 'This is a test email from Kura-ai Booking plugin.' );
+    wp_redirect( admin_url( 'admin.php?page=kab-notifications&success=1' ) ); exit;
+} );
+
+// Custom fields handlers
+add_action( 'admin_post_kab_create_field', function(){ if(!current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $n=sanitize_text_field($_POST['_wpnonce']??''); if(!wp_verify_nonce($n,'kab_create_field')) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-custom-fields.php'; (new KAB_Custom_Fields())->create_field($_POST); wp_redirect(admin_url('admin.php?page=kab-custom-fields&success=1')); exit; });
+add_action( 'admin_post_kab_update_field', function(){ if(!current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_POST['field_id']??0); $n=sanitize_text_field($_POST['_wpnonce']??''); if(!$id||!wp_verify_nonce($n,'kab_update_field_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-custom-fields.php'; (new KAB_Custom_Fields())->update_field($id,$_POST); wp_redirect(admin_url('admin.php?page=kab-custom-fields&success=1')); exit; });
+add_action( 'admin_post_kab_delete_field', function(){ if(!current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_GET['field_id']??0); $n=sanitize_text_field($_GET['_wpnonce']??''); if(!$id||!wp_verify_nonce($n,'kab_delete_field_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-custom-fields.php'; (new KAB_Custom_Fields())->delete_field($id); wp_redirect(admin_url('admin.php?page=kab-custom-fields&success=1')); exit; });
+
 add_action( 'admin_post_kab_mollie_return', function() {
     $invoice_id = intval( $_GET['invoice_id'] ?? 0 ); $s = kab_get_payment_settings();
     wp_redirect( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id . '&paid=1' ) ); exit;
@@ -750,3 +856,39 @@ add_action( 'admin_post_kab_flutterwave_return', function() {
     }
     wp_redirect( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice_id . '&paid=1' ) ); exit;
 } );
+// Employees: add/edit/hide/duplicate/delete
+add_action( 'admin_post_kab_add_employee', function() {
+    if ( ! current_user_can('manage_options') ) { wp_die( __('Insufficient permissions','kura-ai-booking-free') ); }
+    $nonce = sanitize_text_field($_POST['_wpnonce']??''); if( ! wp_verify_nonce( $nonce, 'kab_add_employee' ) ) { wp_die( __('Invalid request','kura-ai-booking-free') ); }
+    require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-employees.php'; $m = new KAB_Employees();
+    $id = $m->create_employee( $_POST );
+    wp_redirect( admin_url( 'admin.php?page=kab-employees&action=edit&employee_id='.$id.'&success=1' ) ); exit;
+} );
+
+add_action( 'admin_post_kab_edit_employee', function() {
+    if ( ! current_user_can('manage_options') ) { wp_die( __('Insufficient permissions','kura-ai-booking-free') ); }
+    $employee_id = intval($_POST['employee_id']??0); $nonce = sanitize_text_field($_POST['_wpnonce']??''); if( ! $employee_id || ! wp_verify_nonce( $nonce, 'kab_edit_employee_'.$employee_id ) ) { wp_die( __('Invalid request','kura-ai-booking-free') ); }
+    require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-employees.php'; $m = new KAB_Employees();
+    $m->update_employee( $employee_id, $_POST );
+    // Assigned services
+    $svc_rows = array(); if ( isset( $_POST['emp_services'] ) && is_array( $_POST['emp_services'] ) ) {
+        foreach ( $_POST['emp_services'] as $sid => $row ) {
+            if ( isset( $row['enable'] ) ) { $svc_rows[] = array( 'service_id' => intval( $sid ), 'price' => $row['price'] ?? null, 'capacity' => $row['capacity'] ?? null ); }
+        }
+    }
+    $m->set_services( $employee_id, $svc_rows );
+    // Work hours
+    $work = array(); if ( isset( $_POST['workhours'] ) && is_array( $_POST['workhours'] ) ) { foreach ( $_POST['workhours'] as $r ) { $work[] = $r; } }
+    $m->set_workhours( $employee_id, $work );
+    // Days off
+    $off = array(); if ( isset( $_POST['daysoff'] ) && is_array( $_POST['daysoff'] ) ) { foreach ( $_POST['daysoff'] as $r ) { $off[] = $r; } }
+    $m->set_daysoff( $employee_id, $off );
+    // Special days
+    $sp = array(); if ( isset( $_POST['specialdays'] ) && is_array( $_POST['specialdays'] ) ) { foreach ( $_POST['specialdays'] as $r ) { $sp[] = $r; } }
+    $m->set_specialdays( $employee_id, $sp );
+    wp_redirect( admin_url( 'admin.php?page=kab-employees&action=edit&employee_id='.$employee_id.'&success=1' ) ); exit;
+} );
+
+add_action( 'admin_post_kab_hide_employee', function(){ if( ! current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_GET['employee_id']??0); $n=sanitize_text_field($_GET['_wpnonce']??''); if( ! $id || ! wp_verify_nonce($n,'kab_hide_employee_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-employees.php'; (new KAB_Employees())->hide_employee($id); wp_redirect(admin_url('admin.php?page=kab-employees&success=1')); exit; });
+add_action( 'admin_post_kab_duplicate_employee', function(){ if( ! current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_GET['employee_id']??0); $n=sanitize_text_field($_GET['_wpnonce']??''); if( ! $id || ! wp_verify_nonce($n,'kab_duplicate_employee_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-employees.php'; (new KAB_Employees())->duplicate_employee($id); wp_redirect(admin_url('admin.php?page=kab-employees&success=1')); exit; });
+add_action( 'admin_post_kab_delete_employee', function(){ if( ! current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_GET['employee_id']??0); $n=sanitize_text_field($_GET['_wpnonce']??''); if( ! $id || ! wp_verify_nonce($n,'kab_delete_employee_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-employees.php'; (new KAB_Employees())->delete_employee($id); wp_redirect(admin_url('admin.php?page=kab-employees&success=1')); exit; });

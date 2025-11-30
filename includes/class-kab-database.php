@@ -37,9 +37,14 @@ class KAB_Database {
 			description TEXT,
 			event_date DATE NOT NULL,
 			event_time TIME NOT NULL,
+			event_end_time TIME NULL,
+			organizer VARCHAR(255) NULL,
 			location VARCHAR(255),
 			price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
 			capacity INT NOT NULL DEFAULT 1,
+			booking_open DATETIME NULL,
+			booking_close DATETIME NULL,
+			tags TEXT,
 			status VARCHAR(20) NOT NULL DEFAULT 'active',
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id)
@@ -48,6 +53,7 @@ class KAB_Database {
 		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_bookings (
 			id INT NOT NULL AUTO_INCREMENT,
 			user_id BIGINT UNSIGNED NOT NULL,
+			employee_id INT,
 			service_id INT,
 			event_id INT,
 			booking_type VARCHAR(20) NOT NULL,
@@ -58,6 +64,87 @@ class KAB_Database {
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (id)
 		) $charset_collate;";
+
+        $tables[] = "CREATE TABLE {$wpdb->prefix}kab_employees (
+            id INT NOT NULL AUTO_INCREMENT,
+            first_name VARCHAR(100) NOT NULL,
+            last_name VARCHAR(100) NOT NULL,
+            email VARCHAR(191) NOT NULL,
+            phone VARCHAR(50),
+            location VARCHAR(255),
+            wp_user_id BIGINT UNSIGNED,
+            timezone VARCHAR(100),
+            photo_url TEXT,
+            badge VARCHAR(100),
+            description TEXT,
+            internal_note TEXT,
+            status VARCHAR(20) NOT NULL DEFAULT 'available',
+            show_on_site TINYINT(1) NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY email (email)
+        ) $charset_collate;";
+
+        $tables[] = "CREATE TABLE {$wpdb->prefix}kab_employee_services (
+            employee_id INT NOT NULL,
+            service_id INT NOT NULL,
+            price DECIMAL(10,2) DEFAULT NULL,
+            capacity INT DEFAULT NULL,
+            PRIMARY KEY (employee_id, service_id)
+        ) $charset_collate;";
+
+        $tables[] = "CREATE TABLE {$wpdb->prefix}kab_employee_workhours (
+            id INT NOT NULL AUTO_INCREMENT,
+            employee_id INT NOT NULL,
+            weekday TINYINT NOT NULL,
+            start_time TIME NOT NULL,
+            end_time TIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY employee_id (employee_id)
+        ) $charset_collate;";
+
+        $tables[] = "CREATE TABLE {$wpdb->prefix}kab_employee_daysoff (
+            id INT NOT NULL AUTO_INCREMENT,
+            employee_id INT NOT NULL,
+            day_off DATE NOT NULL,
+            reason VARCHAR(255),
+            PRIMARY KEY (id),
+            KEY employee_id (employee_id)
+        ) $charset_collate;";
+
+        $tables[] = "CREATE TABLE {$wpdb->prefix}kab_employee_specialdays (
+            id INT NOT NULL AUTO_INCREMENT,
+            employee_id INT NOT NULL,
+            special_date DATE NOT NULL,
+            start_time TIME,
+            end_time TIME,
+            services TEXT,
+            PRIMARY KEY (id),
+            KEY employee_id (employee_id)
+        ) $charset_collate;";
+
+        $tables[] = "CREATE TABLE {$wpdb->prefix}kab_custom_fields (
+            id INT NOT NULL AUTO_INCREMENT,
+            name VARCHAR(64) NOT NULL,
+            label VARCHAR(255) NOT NULL,
+            type VARCHAR(20) NOT NULL,
+            options TEXT,
+            required TINYINT(1) NOT NULL DEFAULT 0,
+            status VARCHAR(20) NOT NULL DEFAULT 'active',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY name (name)
+        ) $charset_collate;";
+
+        $tables[] = "CREATE TABLE {$wpdb->prefix}kab_booking_meta (
+            id INT NOT NULL AUTO_INCREMENT,
+            booking_id INT NOT NULL,
+            field_id INT NOT NULL,
+            value TEXT,
+            PRIMARY KEY (id),
+            KEY booking_id (booking_id),
+            KEY field_id (field_id)
+        ) $charset_collate;";
 
 		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_tickets (
 			id INT NOT NULL AUTO_INCREMENT,

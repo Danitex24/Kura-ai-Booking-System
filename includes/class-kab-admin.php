@@ -53,6 +53,13 @@ class KAB_Admin {
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-finance' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'finance' ? 'active' : ''; ?>"><?php echo esc_html__( 'Finance', 'kura-ai-booking-free' ); ?></a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-invoices' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'invoices' ? 'active' : ''; ?>"><?php echo esc_html__( 'Invoices', 'kura-ai-booking-free' ); ?></a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'settings' ? 'active' : ''; ?>"><?php echo esc_html__( 'Settings', 'kura-ai-booking-free' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-calendar' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'calendar' ? 'active' : ''; ?>"><?php echo esc_html__( 'Calendar', 'kura-ai-booking-free' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-appointments' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'appointments' ? 'active' : ''; ?>"><?php echo esc_html__( 'Appointments', 'kura-ai-booking-free' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-employees' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'employees' ? 'active' : ''; ?>"><?php echo esc_html__( 'Employees', 'kura-ai-booking-free' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-locations' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'locations' ? 'active' : ''; ?>"><?php echo esc_html__( 'Locations', 'kura-ai-booking-free' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-notifications' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'notifications' ? 'active' : ''; ?>"><?php echo esc_html__( 'Notifications', 'kura-ai-booking-free' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customize' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'customize' ? 'active' : ''; ?>"><?php echo esc_html__( 'Customize', 'kura-ai-booking-free' ); ?></a>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-custom-fields' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'custom-fields' ? 'active' : ''; ?>"><?php echo esc_html__( 'Custom Fields', 'kura-ai-booking-free' ); ?></a>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-validation' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'validation' ? 'active' : ''; ?>"><?php echo esc_html__( 'Validation', 'kura-ai-booking-free' ); ?></a>
 				</nav>
 			</div>
@@ -144,6 +151,15 @@ class KAB_Admin {
             'kab-validation',
             array( $this, 'render_validation_page' )
         );
+
+        // Additional menus
+        add_submenu_page( 'kab-dashboard', __( 'Calendar', 'kura-ai-booking-free' ), __( 'Calendar', 'kura-ai-booking-free' ), 'manage_options', 'kab-calendar', array( $this, 'render_calendar_page' ) );
+        add_submenu_page( 'kab-dashboard', __( 'Appointments', 'kura-ai-booking-free' ), __( 'Appointments', 'kura-ai-booking-free' ), 'manage_options', 'kab-appointments', array( $this, 'render_appointments_page' ) );
+        add_submenu_page( 'kab-dashboard', __( 'Employees', 'kura-ai-booking-free' ), __( 'Employees', 'kura-ai-booking-free' ), 'manage_options', 'kab-employees', array( $this, 'render_employees_page' ) );
+        add_submenu_page( 'kab-dashboard', __( 'Locations', 'kura-ai-booking-free' ), __( 'Locations', 'kura-ai-booking-free' ), 'manage_options', 'kab-locations', array( $this, 'render_locations_page' ) );
+        add_submenu_page( 'kab-dashboard', __( 'Notifications', 'kura-ai-booking-free' ), __( 'Notifications', 'kura-ai-booking-free' ), 'manage_options', 'kab-notifications', array( $this, 'render_notifications_page' ) );
+        add_submenu_page( 'kab-dashboard', __( 'Customize', 'kura-ai-booking-free' ), __( 'Customize', 'kura-ai-booking-free' ), 'manage_options', 'kab-customize', array( $this, 'render_customize_page' ) );
+        add_submenu_page( 'kab-dashboard', __( 'Custom Fields', 'kura-ai-booking-free' ), __( 'Custom Fields', 'kura-ai-booking-free' ), 'manage_options', 'kab-custom-fields', array( $this, 'render_custom_fields_page' ) );
 	}
 
 	/**
@@ -637,6 +653,9 @@ class KAB_Admin {
             case 'view':
                 $this->render_event_view( $event_id );
                 break;
+            case 'attendees':
+                $this->render_event_attendees( $event_id );
+                break;
             default:
                 $this->render_events_list();
                 break;
@@ -655,19 +674,61 @@ class KAB_Admin {
             <?php $this->render_static_header( 'events' ); ?>
             
             <div class="kab-card">
-                <div class="kab-card-header">
+                <div class="kab-card-header" style="display:flex;justify-content:space-between;align-items:center;">
                     <h2><?php echo esc_html__( 'Events', 'kura-ai-booking-free' ); ?></h2>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events&action=add' ) ); ?>" class="kab-btn kab-btn-primary">
                         <span class="dashicons dashicons-plus"></span>
-                        <?php echo esc_html__( 'Add New', 'kura-ai-booking-free' ); ?>
+                        <?php echo esc_html__( 'New Event', 'kura-ai-booking-free' ); ?>
                     </a>
                 </div>
                 <div class="kab-card-body">
-                    <form method="post">
-                        <?php
-                        $events_table->display();
-                        ?>
+                    <?php
+                    require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-events.php';
+                    $events_model = new KAB_Events();
+                    $df = isset( $_GET['date_from'] ) ? sanitize_text_field( $_GET['date_from'] ) : '';
+                    $dt = isset( $_GET['date_to'] ) ? sanitize_text_field( $_GET['date_to'] ) : '';
+                    $search = isset( $_GET['search'] ) ? sanitize_text_field( $_GET['search'] ) : '';
+                    $args = array( 'number' => 200, 'offset' => 0, 'orderby' => 'event_date', 'order' => 'ASC' );
+                    $items = $events_model->get_events( $args );
+                    if ( $df ) { $items = array_filter( $items, function($e) use ($df){ return $e['event_date'] >= $df; }); }
+                    if ( $dt ) { $items = array_filter( $items, function($e) use ($dt){ return $e['event_date'] <= $dt; }); }
+                    if ( $search ) { $s = mb_strtolower( $search ); $items = array_filter( $items, function($e) use ($s){ return strpos( mb_strtolower( $e['name'] ), $s ) !== false || strpos( mb_strtolower( $e['location'] ), $s ) !== false; }); }
+                    ?>
+                    <form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="kab-filter-row" style="margin-bottom:10px;">
+                        <input type="hidden" name="page" value="kab-events" />
+                        <div class="kab-filter-group"><label class="kab-filter-label"><?php esc_html_e('Date From','kura-ai-booking-free'); ?></label><input type="date" name="date_from" class="kab-filter-input" value="<?php echo esc_attr( $df ); ?>" /></div>
+                        <div class="kab-filter-group"><label class="kab-filter-label"><?php esc_html_e('Date To','kura-ai-booking-free'); ?></label><input type="date" name="date_to" class="kab-filter-input" value="<?php echo esc_attr( $dt ); ?>" /></div>
+                        <div class="kab-filter-group"><label class="kab-filter-label"><?php esc_html_e('Search','kura-ai-booking-free'); ?></label><input type="text" name="search" class="kab-filter-input" placeholder="<?php esc_attr_e('Search Events','kura-ai-booking-free'); ?>" value="<?php echo esc_attr( $search ); ?>" /></div>
+                        <div class="kab-filter-group" style="align-self:flex-end"><button class="kab-btn kab-btn-primary" type="submit"><?php esc_html_e('Filter','kura-ai-booking-free'); ?></button></div>
                     </form>
+                    <?php
+                    $grouped = array();
+                    foreach ( $items as $it ) { $grouped[ $it['event_date'] ][] = $it; }
+                    ksort( $grouped );
+                    global $wpdb;
+                    foreach ( $grouped as $date => $rows ) {
+                        echo '<div style="margin:10px 0 6px;color:#24321a;font-weight:600;">' . esc_html( date_i18n( get_option('date_format'), strtotime($date) ) ) . '</div>';
+                        echo '<table class="kab-table" style="margin-bottom:20px;"><thead><tr><th>' . esc_html__('Time','kura-ai-booking-free') . '</th><th>' . esc_html__('Name','kura-ai-booking-free') . '</th><th>' . esc_html__('Organizer','kura-ai-booking-free') . '</th><th>' . esc_html__('Booked','kura-ai-booking-free') . '</th><th>' . esc_html__('Booking Opens','kura-ai-booking-free') . '</th><th>' . esc_html__('Booking Closes','kura-ai-booking-free') . '</th><th>' . esc_html__('Status','kura-ai-booking-free') . '</th><th>' . esc_html__('Actions','kura-ai-booking-free') . '</th></tr></thead><tbody>';
+                        foreach ( $rows as $e ) {
+                            $booked = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}kab_bookings WHERE booking_type='event' AND event_id=%d", $e['id'] ) );
+                            $status = ( strtotime( $e['event_date'] . ' ' . $e['event_time'] ) > time() ) ? esc_html__('Opened','kura-ai-booking-free') : esc_html__('Closed','kura-ai-booking-free');
+                            $edit_url = admin_url( 'admin.php?page=kab-events&action=edit&event_id=' . intval( $e['id'] ) );
+                            echo '<tr>';
+                            $timerange = $e['event_time'] . ( ! empty( $e['event_end_time'] ) ? ' - ' . $e['event_end_time'] : '' );
+                            echo '<td>' . esc_html( $timerange ) . '</td>';
+                            echo '<td>' . esc_html( $e['name'] ) . ' ' . ( ! empty( $e['tags'] ) ? '<small style="color:#6b7a5a">(' . esc_html( $e['tags'] ) . ')</small>' : '' ) . '</td>';
+                            echo '<td>' . esc_html( $e['organizer'] ) . '</td>';
+                            echo '<td>' . esc_html( $booked . ' / ' . (int) $e['capacity'] ) . '</td>';
+                            echo '<td>' . esc_html( $e['booking_open'] ? date_i18n( get_option('date_format').' @ g:i a', strtotime( $e['booking_open'] ) ) : '—' ) . '</td>';
+                            echo '<td>' . esc_html( $e['booking_close'] ? date_i18n( get_option('date_format').' @ g:i a', strtotime( $e['booking_close'] ) ) : '—' ) . '</td>';
+                            echo '<td>' . esc_html( $status ) . '</td>';
+                            $att_url = admin_url( 'admin.php?page=kab-events&action=attendees&event_id=' . intval( $e['id'] ) );
+                            echo '<td><a href="' . esc_url( $att_url ) . '" class="kab-btn kab-btn-secondary kab-btn-sm">' . esc_html__('Attendees','kura-ai-booking-free') . '</a> <a href="' . esc_url( $edit_url ) . '" class="kab-btn kab-btn-primary kab-btn-sm">' . esc_html__('Edit','kura-ai-booking-free') . '</a></td>';
+                            echo '</tr>';
+                        }
+                        echo '</tbody></table>';
+                    }
+                    ?>
                 </div>
             </div>
             <script>(function(){function waitSwal(cb){if(window.Swal){cb(window.Swal);return;}var i=setInterval(function(){if(window.Swal){clearInterval(i);cb(window.Swal);}},50);}document.querySelectorAll('.kab-delete-event').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var href=a.getAttribute('href');var name=a.getAttribute('data-event-name');waitSwal(function(Swal){Swal.fire({title:'<?php echo esc_js( __( 'Delete event?', 'kura-ai-booking-free' ) ); ?>',text:name||'',icon:'warning',showCancelButton:true,confirmButtonText:'<?php echo esc_js( __( 'Delete', 'kura-ai-booking-free' ) ); ?>'}).then(function(r){if(r.isConfirmed){window.location.href=href;}});});});});var params=new URLSearchParams(window.location.search);if(params.has('success')){var code=params.get('success');var msg='';if(code==='4'){msg='<?php echo esc_js( __( 'Event created successfully', 'kura-ai-booking-free' ) ); ?>';}else if(code==='5'){msg='<?php echo esc_js( __( 'Event updated successfully', 'kura-ai-booking-free' ) ); ?>';}else if(code==='6'){msg='<?php echo esc_js( __( 'Event deleted successfully', 'kura-ai-booking-free' ) ); ?>';}if(msg){waitSwal(function(Swal){Swal.fire({title:msg,icon:'success'});});}}})();</script>
@@ -758,10 +819,14 @@ class KAB_Admin {
                             <tr><td><?php esc_html_e( 'Name', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['name'] ); ?></td></tr>
                             <tr><td><?php esc_html_e( 'Description', 'kura-ai-booking-free' ); ?></td><td><?php echo nl2br( esc_html( $event['description'] ) ); ?></td></tr>
                             <tr><td><?php esc_html_e( 'Date', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['event_date'] ); ?></td></tr>
-                            <tr><td><?php esc_html_e( 'Time', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['event_time'] ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Time', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['event_time'] . ( $event['event_end_time'] ? ' - ' . $event['event_end_time'] : '' ) ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Organizer', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['organizer'] ); ?></td></tr>
                             <tr><td><?php esc_html_e( 'Location', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['location'] ); ?></td></tr>
                             <tr><td><?php esc_html_e( 'Price', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( kab_format_currency( (float) $event['price'], kab_currency_symbol( 'USD' ) ) ); ?></td></tr>
                             <tr><td><?php esc_html_e( 'Capacity', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['capacity'] ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Booking Opens', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['booking_open'] ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Booking Closes', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['booking_close'] ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Tags', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['tags'] ); ?></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -822,8 +887,16 @@ class KAB_Admin {
                                     <input type="date" name="event_date" id="event_date" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['event_date'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'YYYY-MM-DD', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
                                 <div class="kab-form-group">
-                                    <label for="event_time" class="kab-form-label"><?php esc_html_e( 'Time', 'kura-ai-booking-free' ); ?></label>
+                                    <label for="event_time" class="kab-form-label"><?php esc_html_e( 'Start Time', 'kura-ai-booking-free' ); ?></label>
                                     <input type="time" name="event_time" id="event_time" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['event_time'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'HH:MM', 'kura-ai-booking-free' ); ?>" required>
+                                </div>
+                                <div class="kab-form-group">
+                                    <label for="event_end_time" class="kab-form-label"><?php esc_html_e( 'End Time', 'kura-ai-booking-free' ); ?></label>
+                                    <input type="time" name="event_end_time" id="event_end_time" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['event_end_time'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'HH:MM', 'kura-ai-booking-free' ); ?>">
+                                </div>
+                                <div class="kab-form-group">
+                                    <label for="organizer" class="kab-form-label"><?php esc_html_e( 'Organizer', 'kura-ai-booking-free' ); ?></label>
+                                    <input type="text" name="organizer" id="organizer" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['organizer'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'Organizer name', 'kura-ai-booking-free' ); ?>">
                                 </div>
                                 <div class="kab-form-group">
                                     <label for="location" class="kab-form-label"><?php esc_html_e( 'Location', 'kura-ai-booking-free' ); ?></label>
@@ -873,9 +946,14 @@ class KAB_Admin {
             'description' => sanitize_textarea_field( $_POST['description'] ),
             'event_date'  => sanitize_text_field( $_POST['event_date'] ),
             'event_time'  => sanitize_text_field( $_POST['event_time'] ),
+            'event_end_time' => sanitize_text_field( $_POST['event_end_time'] ?? '' ),
+            'organizer'   => sanitize_text_field( $_POST['organizer'] ?? '' ),
             'location'    => sanitize_text_field( $_POST['location'] ),
             'price'       => floatval( $_POST['price'] ),
             'capacity'    => intval( $_POST['capacity'] ),
+            'booking_open'=> sanitize_text_field( $_POST['booking_open'] ?? '' ),
+            'booking_close'=> sanitize_text_field( $_POST['booking_close'] ?? '' ),
+            'tags'        => sanitize_text_field( $_POST['tags'] ?? '' ),
         );
 
         $event_id = $events_model->create_event( $event_data );
@@ -910,9 +988,14 @@ class KAB_Admin {
             'description' => sanitize_textarea_field( $_POST['description'] ),
             'event_date'  => sanitize_text_field( $_POST['event_date'] ),
             'event_time'  => sanitize_text_field( $_POST['event_time'] ),
+            'event_end_time' => sanitize_text_field( $_POST['event_end_time'] ?? '' ),
+            'organizer'   => sanitize_text_field( $_POST['organizer'] ?? '' ),
             'location'    => sanitize_text_field( $_POST['location'] ),
             'price'       => floatval( $_POST['price'] ),
             'capacity'    => intval( $_POST['capacity'] ),
+            'booking_open'=> sanitize_text_field( $_POST['booking_open'] ?? '' ),
+            'booking_close'=> sanitize_text_field( $_POST['booking_close'] ?? '' ),
+            'tags'        => sanitize_text_field( $_POST['tags'] ?? '' ),
         );
 
         $result = $events_model->update_event( $event_id, $event_data );
@@ -1608,11 +1691,343 @@ class KAB_Admin {
 			</div>
 		</div>
 		<?php
-	}
+    }
 
-	/**
-	 * Show admin notices
-	 */
+    // Placeholder pages
+    public function render_calendar_page() {
+        $this->render_static_header( 'calendar' );
+        $view  = isset( $_GET['view'] ) ? sanitize_key( $_GET['view'] ) : 'month';
+        $year  = isset( $_GET['year'] ) ? intval( $_GET['year'] ) : intval( date('Y') );
+        $month = isset( $_GET['month'] ) ? intval( $_GET['month'] ) : intval( date('n') );
+        $day   = isset( $_GET['day'] ) ? intval( $_GET['day'] ) : intval( date('j') );
+
+        // Date range based on view
+        if ( $view === 'week' ) {
+            $ts = mktime(0,0,0,$month,$day,$year);
+            $start = date('Y-m-d', strtotime('last monday', $ts));
+            $end   = date('Y-m-d', strtotime('+6 days', strtotime($start)));
+        } elseif ( $view === 'day' ) {
+            $start = sprintf('%04d-%02d-%02d', $year, $month, $day);
+            $end   = $start;
+        } else { // month
+            $start = sprintf('%04d-%02d-01', $year, $month);
+            $end   = date('Y-m-t', strtotime($start));
+        }
+
+        global $wpdb;
+        // Fetch events in range
+        $events = $wpdb->get_results( $wpdb->prepare("SELECT * FROM {$wpdb->prefix}kab_events WHERE status='active' AND event_date BETWEEN %s AND %s ORDER BY event_date, event_time", $start, $end ), ARRAY_A );
+        // Fetch service appointments in range
+        $appointments = $wpdb->get_results( $wpdb->prepare("SELECT * FROM {$wpdb->prefix}kab_bookings WHERE booking_type='service' AND booking_date BETWEEN %s AND %s ORDER BY booking_date, booking_time", $start, $end ), ARRAY_A );
+
+        // Group by date
+        $by_date = array();
+        foreach ( $events as $e ) { $d = $e['event_date']; $by_date[$d]['events'][] = $e; }
+        foreach ( $appointments as $a ) { $d = $a['booking_date']; $by_date[$d]['appointments'][] = $a; }
+
+        // Header controls
+        $base = admin_url('admin.php?page=kab-calendar');
+        $prev = $next = array();
+        if ( $view === 'month' ) {
+            $prev = array('view'=>'month','year'=> $month===1 ? $year-1 : $year, 'month'=> $month===1 ? 12 : $month-1);
+            $next = array('view'=>'month','year'=> $month===12? $year+1 : $year, 'month'=> $month===12? 1 : $month+1);
+            $title = date_i18n('F Y', strtotime($start));
+        } elseif ( $view === 'week' ) {
+            $prev_ts = strtotime('-7 days', strtotime($start));
+            $next_ts = strtotime('+7 days', strtotime($start));
+            $prev = array('view'=>'week','year'=>date('Y',$prev_ts),'month'=>date('n',$prev_ts),'day'=>date('j',$prev_ts));
+            $next = array('view'=>'week','year'=>date('Y',$next_ts),'month'=>date('n',$next_ts),'day'=>date('j',$next_ts));
+            $title = date_i18n('M j, Y', strtotime($start)) . ' – ' . date_i18n('M j, Y', strtotime($end));
+        } else {
+            $prev_ts = strtotime('-1 day', strtotime($start));
+            $next_ts = strtotime('+1 day', strtotime($start));
+            $prev = array('view'=>'day','year'=>date('Y',$prev_ts),'month'=>date('n',$prev_ts),'day'=>date('j',$prev_ts));
+            $next = array('view'=>'day','year'=>date('Y',$next_ts),'month'=>date('n',$next_ts),'day'=>date('j',$next_ts));
+            $title = date_i18n('M j, Y', strtotime($start));
+        }
+
+        ?>
+        <div class="kab-card" style="margin-top:10px;">
+            <div class="kab-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <a class="kab-btn" href="<?php echo esc_url( add_query_arg($prev, $base) ); ?>">&larr; <?php esc_html_e('Prev','kura-ai-booking-free'); ?></a>
+                    <a class="kab-btn" href="<?php echo esc_url( add_query_arg(array('view'=>$view,'year'=>date('Y'),'month'=>date('n'),'day'=>date('j')), $base) ); ?>"><?php esc_html_e('Today','kura-ai-booking-free'); ?></a>
+                    <a class="kab-btn" href="<?php echo esc_url( add_query_arg($next, $base) ); ?>"><?php esc_html_e('Next','kura-ai-booking-free'); ?> &rarr;</a>
+                </div>
+                <h2 class="kab-card-title" style="margin:0;"><?php echo esc_html( $title ); ?></h2>
+                <div>
+                    <a class="kab-btn <?php echo $view==='month'?'kab-btn-primary':''; ?>" href="<?php echo esc_url( add_query_arg(array('view'=>'month','year'=>$year,'month'=>$month), $base) ); ?>"><?php esc_html_e('Month','kura-ai-booking-free'); ?></a>
+                    <a class="kab-btn <?php echo $view==='week'?'kab-btn-primary':''; ?>" href="<?php echo esc_url( add_query_arg(array('view'=>'week','year'=>$year,'month'=>$month,'day'=>$day), $base) ); ?>"><?php esc_html_e('Week','kura-ai-booking-free'); ?></a>
+                    <a class="kab-btn <?php echo $view==='day'?'kab-btn-primary':''; ?>" href="<?php echo esc_url( add_query_arg(array('view'=>'day','year'=>$year,'month'=>$month,'day'=>$day), $base) ); ?>"><?php esc_html_e('Day','kura-ai-booking-free'); ?></a>
+                    <a class="kab-btn <?php echo $view==='list'?'kab-btn-primary':''; ?>" href="<?php echo esc_url( add_query_arg(array('view'=>'list','year'=>$year,'month'=>$month), $base) ); ?>"><?php esc_html_e('List','kura-ai-booking-free'); ?></a>
+                </div>
+            </div>
+            <div class="kab-card-body">
+                <?php if ( $view === 'list' ) { $this->render_calendar_list( $by_date ); } else { $this->render_calendar_grid( $view, $year, $month, $day, $by_date ); } ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    private function render_calendar_list( $by_date ) {
+        ksort( $by_date );
+        echo '<table class="kab-table"><thead><tr><th>'.esc_html__('Date','kura-ai-booking-free').'</th><th>'.esc_html__('Items','kura-ai-booking-free').'</th></tr></thead><tbody>';
+        foreach ( $by_date as $date => $data ) {
+            $items = array();
+            foreach ( (array)($data['events'] ?? array()) as $e ) { $items[] = '<span class="kab-cal-tag kab-cal-event">'.esc_html($e['event_time']).' • '.esc_html($e['name']).'</span>'; }
+            foreach ( (array)($data['appointments'] ?? array()) as $a ) { $items[] = '<span class="kab-cal-tag kab-cal-service">'.esc_html($a['booking_time']).' • '.esc_html__('Appointment','kura-ai-booking-free').'</span>'; }
+            echo '<tr><td>'.esc_html( date_i18n( get_option('date_format'), strtotime($date) ) ).'</td><td>'.implode('<br>', $items).'</td></tr>';
+        }
+        echo '</tbody></table>';
+    }
+
+    private function render_calendar_grid( $view, $year, $month, $day, $by_date ) {
+        if ( $view === 'week' ) {
+            $start = date('Y-m-d', strtotime('last monday', mktime(0,0,0,$month,$day,$year)));
+            $days = array(); for($i=0;$i<7;$i++){ $days[] = date('Y-m-d', strtotime("+{$i} days", strtotime($start))); }
+            echo '<div class="kab-cal-grid kab-cal-week">';
+            foreach ( $days as $d ) { $this->render_calendar_cell( $d, $by_date ); }
+            echo '</div>';
+        } elseif ( $view === 'day' ) {
+            $d = sprintf('%04d-%02d-%02d',$year,$month,$day);
+            echo '<div class="kab-cal-grid kab-cal-day">'; $this->render_calendar_cell( $d, $by_date ); echo '</div>';
+        } else {
+            $first = mktime(0,0,0,$month,1,$year); $start_w = date('N',$first); $days_in = date('t',$first);
+            $cells = array();
+            // Previous month padding
+            for($i=1;$i<$start_w;$i++){ $cells[] = null; }
+            for($d=1;$d<=$days_in;$d++){ $cells[] = sprintf('%04d-%02d-%02d',$year,$month,$d); }
+            // Build grid
+            echo '<div class="kab-cal-grid kab-cal-month">';
+            foreach ( $cells as $d ) { $this->render_calendar_cell( $d, $by_date ); }
+            echo '</div>';
+        }
+    }
+
+    private function render_calendar_cell( $date, $by_date ) {
+        $label = $date ? date('j', strtotime($date)) : '';
+        echo '<div class="kab-cal-cell">';
+        echo '<div class="kab-cal-date">'.esc_html($label).'</div>';
+        if ( $date && isset( $by_date[$date] ) ) {
+            foreach ( (array)($by_date[$date]['events'] ?? array()) as $e ) {
+                echo '<div class="kab-cal-item kab-cal-event"><div class="kab-cal-item-title">'.esc_html( $e['name'] ).'</div><div class="kab-cal-item-time">'.esc_html( $e['event_time'] . ( !empty($e['event_end_time']) ? ' - '.$e['event_end_time'] : '' ) ).'</div></div>';
+            }
+            foreach ( (array)($by_date[$date]['appointments'] ?? array()) as $a ) {
+                echo '<div class="kab-cal-item kab-cal-service"><div class="kab-cal-item-title">'.esc_html__( 'Appointment', 'kura-ai-booking-free' ).'</div><div class="kab-cal-item-time">'.esc_html( $a['booking_time'] ).'</div></div>';
+            }
+        }
+        echo '</div>';
+    }
+    public function render_appointments_page() {
+        require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-bookings.php';
+        require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-services.php';
+        $this->render_static_header( 'appointments' );
+        $status = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
+        $df     = isset( $_GET['date_from'] ) ? sanitize_text_field( $_GET['date_from'] ) : '';
+        $dt     = isset( $_GET['date_to'] ) ? sanitize_text_field( $_GET['date_to'] ) : '';
+        global $wpdb;
+        $q = "SELECT * FROM {$wpdb->prefix}kab_bookings WHERE booking_type='service'";
+        $w = array(); if ( $status ) { $w[] = $wpdb->prepare( 'status=%s', $status ); }
+        if ( $df ) { $w[] = $wpdb->prepare( 'booking_date>=%s', $df ); }
+        if ( $dt ) { $w[] = $wpdb->prepare( 'booking_date<=%s', $dt ); }
+        if ( $w ) { $q .= ' AND ' . implode( ' AND ', $w ); }
+        $q .= ' ORDER BY booking_date DESC, booking_time DESC';
+        $rows = $wpdb->get_results( $q, ARRAY_A );
+        ?>
+        <div class="kab-card" style="margin-top:10px;">
+            <div class="kab-card-header"><h2 class="kab-card-title"><?php esc_html_e( 'Appointments', 'kura-ai-booking-free' ); ?></h2></div>
+            <div class="kab-card-body">
+                <form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="kab-filter-row" style="margin-bottom:10px;">
+                    <input type="hidden" name="page" value="kab-appointments" />
+                    <div class="kab-filter-group"><label class="kab-filter-label"><?php esc_html_e('Date From','kura-ai-booking-free'); ?></label><input type="date" name="date_from" class="kab-filter-input" value="<?php echo esc_attr( $df ); ?>" /></div>
+                    <div class="kab-filter-group"><label class="kab-filter-label"><?php esc_html_e('Date To','kura-ai-booking-free'); ?></label><input type="date" name="date_to" class="kab-filter-input" value="<?php echo esc_attr( $dt ); ?>" /></div>
+                    <div class="kab-filter-group"><label class="kab-filter-label"><?php esc_html_e('Status','kura-ai-booking-free'); ?></label><select name="status" class="kab-filter-input"><option value=""><?php esc_html_e('All','kura-ai-booking-free'); ?></option><option value="pending" <?php selected($status,'pending'); ?>><?php esc_html_e('Pending','kura-ai-booking-free'); ?></option><option value="completed" <?php selected($status,'completed'); ?>><?php esc_html_e('Completed','kura-ai-booking-free'); ?></option><option value="cancelled" <?php selected($status,'cancelled'); ?>><?php esc_html_e('Cancelled','kura-ai-booking-free'); ?></option></select></div>
+                    <div class="kab-filter-group" style="align-self:flex-end"><button class="kab-btn kab-btn-primary" type="submit"><?php esc_html_e('Filter','kura-ai-booking-free'); ?></button></div>
+                </form>
+                <table class="kab-table"><thead><tr><th><?php esc_html_e('Date','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Time','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Customer','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Service','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Status','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Actions','kura-ai-booking-free'); ?></th></tr></thead><tbody>
+                <?php foreach ( $rows as $r ) { $u = get_user_by('id',$r['user_id']); $svc = $wpdb->get_row( $wpdb->prepare("SELECT name FROM {$wpdb->prefix}kab_services WHERE id=%d", $r['service_id']), ARRAY_A ); $cname = $u ? $u->display_name : '—'; $status_label = ucfirst($r['status']); $complete_url = wp_nonce_url( admin_url('admin-post.php?action=kab_update_booking&booking_id='.$r['id'].'&state=completed'), 'kab_update_booking_'.$r['id']); $cancel_url = wp_nonce_url( admin_url('admin-post.php?action=kab_update_booking&booking_id='.$r['id'].'&state=cancelled'), 'kab_update_booking_'.$r['id']); echo '<tr><td>'.esc_html($r['booking_date']).'</td><td>'.esc_html($r['booking_time']).'</td><td>'.esc_html($cname).'</td><td>'.esc_html($svc['name']??'').'</td><td>'.esc_html($status_label).'</td><td>'; if($r['status']!=='completed'){ echo '<a class="kab-btn kab-btn-success kab-btn-sm" href="'.esc_url($complete_url).'">'.esc_html__('Complete','kura-ai-booking-free').'</a> '; } if($r['status']!=='cancelled'){ echo '<a class="kab-btn kab-btn-danger kab-btn-sm" href="'.esc_url($cancel_url).'">'.esc_html__('Cancel','kura-ai-booking-free').'</a>'; } echo '</td></tr>'; } ?>
+                </tbody></table>
+            </div>
+        </div>
+        <?php
+    }
+    public function render_employees_page() {
+        $action = isset( $_GET['action'] ) ? sanitize_key( $_GET['action'] ) : 'list';
+        $employee_id = isset( $_GET['employee_id'] ) ? intval( $_GET['employee_id'] ) : 0;
+        switch ( $action ) {
+            case 'add': $this->render_employee_form(); break;
+            case 'edit': $this->render_employee_form( $employee_id ); break;
+            default:
+                require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-employees.php';
+                $model = new KAB_Employees();
+                $view  = isset( $_GET['view'] ) && $_GET['view'] === 'grid' ? 'grid' : 'list';
+                $search = isset( $_GET['search'] ) ? sanitize_text_field( $_GET['search'] ) : '';
+                $service_id = isset( $_GET['service_id'] ) ? intval( $_GET['service_id'] ) : 0;
+                $location = isset( $_GET['location'] ) ? sanitize_text_field( $_GET['location'] ) : '';
+                $order = isset( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
+                $paged = isset( $_GET['paged'] ) ? max(1,intval($_GET['paged'])) : 1; $per_page = 12; $offset = ($paged-1)*$per_page;
+                $args = compact('search','service_id','location','order'); $args['number']=$per_page; $args['offset']=$offset;
+                $rows = $model->get_employees( $args ); $total = $model->count_employees( $args );
+                $this->render_static_header( 'employees' );
+                echo '<div class="kab-card"><div class="kab-card-header" style="display:flex;justify-content:space-between;align-items:center;">';
+                echo '<h2 class="kab-card-title">' . esc_html__( 'Employees', 'kura-ai-booking-free' ) . ' <span style="font-weight:400;color:#6b7a5a">' . esc_html( $total ) . ' ' . esc_html__( 'Total', 'kura-ai-booking-free' ) . '</span></h2>';
+                echo '<a href="' . esc_url( admin_url( 'admin.php?page=kab-employees&action=add' ) ) . '" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-plus"></span> ' . esc_html__( 'Add Employee', 'kura-ai-booking-free' ) . '</a>';
+                echo '</div><div class="kab-card-body">';
+                echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '" class="kab-filter-row" style="margin-bottom:12px;">';
+                echo '<input type="hidden" name="page" value="kab-employees" />';
+                echo '<div class="kab-filter-group"><label class="kab-filter-label">' . esc_html__( 'Search Employees', 'kura-ai-booking-free' ) . '</label><input type="text" name="search" class="kab-filter-input" value="' . esc_attr( $search ) . '" placeholder="' . esc_attr__( 'Search…', 'kura-ai-booking-free' ) . '" /></div>';
+                echo '<div class="kab-filter-group"><label class="kab-filter-label">' . esc_html__( 'Services', 'kura-ai-booking-free' ) . '</label><select name="service_id" class="kab-filter-input"><option value="">' . esc_html__( 'All Services', 'kura-ai-booking-free' ) . '</option>';
+                global $wpdb; $svcs = $wpdb->get_results("SELECT id,name FROM {$wpdb->prefix}kab_services WHERE status='active' ORDER BY name",ARRAY_A); foreach($svcs as $s){ echo '<option value="'.$s['id'].'" '.selected($service_id,$s['id'],false).'>' . esc_html($s['name']) . '</option>'; }
+                echo '</select></div>';
+                echo '<div class="kab-filter-group"><label class="kab-filter-label">' . esc_html__( 'Location', 'kura-ai-booking-free' ) . '</label><input type="text" name="location" class="kab-filter-input" value="' . esc_attr( $location ) . '" /></div>';
+                echo '<div class="kab-filter-group"><label class="kab-filter-label">' . esc_html__( 'Sort', 'kura-ai-booking-free' ) . '</label><select name="order" class="kab-filter-input"><option value="ASC" '.selected($order,'ASC',false).'>' . esc_html__( 'Name Ascending', 'kura-ai-booking-free' ) . '</option><option value="DESC" '.selected($order,'DESC',false).'>' . esc_html__( 'Name Descending', 'kura-ai-booking-free' ) . '</option></select></div>';
+                echo '<div class="kab-filter-group" style="align-self:flex-end"><button class="kab-btn kab-btn-primary" type="submit">' . esc_html__( 'Filter', 'kura-ai-booking-free' ) . '</button></div>';
+                echo '</form>';
+                echo '<div style="margin-bottom:10px;display:flex;gap:6px;">';
+                $base = admin_url('admin.php?page=kab-employees');
+                echo '<a class="kab-btn ' . ( $view==='list' ? 'kab-btn-primary' : '' ) . '" href="' . esc_url( add_query_arg( array_merge($_GET,['view'=>'list']), $base ) ) . '">' . esc_html__( 'List', 'kura-ai-booking-free' ) . '</a>';
+                echo '<a class="kab-btn ' . ( $view==='grid' ? 'kab-btn-primary' : '' ) . '" href="' . esc_url( add_query_arg( array_merge($_GET,['view'=>'grid']), $base ) ) . '">' . esc_html__( 'Grid', 'kura-ai-booking-free' ) . '</a>';
+                echo '</div>';
+                if ( $view === 'grid' ) {
+                    echo '<div class="kab-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">';
+                    foreach($rows as $r){ $name = $r['first_name'].' '.$r['last_name']; $badge = $r['status']; echo '<div class="kab-card" style="padding:12px;">'; echo '<div style="display:flex;justify-content:space-between;align-items:center;"><div class="kab-card-title" style="margin:0;">'.esc_html($name).'</div><span class="kab-status-badge">'.esc_html(ucfirst($badge)).'</span></div>'; echo '<div style="color:#6b7a5a;margin-top:6px;">'.esc_html($r['email']).'<br>'.esc_html($r['phone']).'</div>'; echo '<div style="margin-top:10px;"><a class="kab-btn kab-btn-secondary kab-btn-sm" href="'.esc_url(admin_url('admin.php?page=kab-employees&action=edit&employee_id='.$r['id'])).'">'.esc_html__('Edit','kura-ai-booking-free').'</a> <a class="kab-btn kab-btn-danger kab-btn-sm" href="'.esc_url(wp_nonce_url(admin_url('admin-post.php?action=kab_delete_employee&employee_id='.$r['id']),'kab_delete_employee_'.$r['id'])).'">'.esc_html__('Delete','kura-ai-booking-free').'</a> <a class="kab-btn kab-btn-sm" href="'.esc_url(wp_nonce_url(admin_url('admin-post.php?action=kab_hide_employee&employee_id='.$r['id']),'kab_hide_employee_'.$r['id'])).'">'.esc_html__('Hide','kura-ai-booking-free').'</a> <a class="kab-btn kab-btn-sm" href="'.esc_url(wp_nonce_url(admin_url('admin-post.php?action=kab_duplicate_employee&employee_id='.$r['id']),'kab_duplicate_employee_'.$r['id'])).'">'.esc_html__('Duplicate','kura-ai-booking-free').'</a></div>'; echo '</div>'; }
+                    echo '</div>';
+                } else {
+                    echo '<table class="kab-table"><thead><tr><th></th><th>'.esc_html__('Status','kura-ai-booking-free').'</th><th>'.esc_html__('Employee','kura-ai-booking-free').'</th><th>'.esc_html__('Email','kura-ai-booking-free').'</th><th>'.esc_html__('Phone','kura-ai-booking-free').'</th><th>'.esc_html__('Actions','kura-ai-booking-free').'</th></tr></thead><tbody>';
+                    foreach($rows as $r){ $name = $r['first_name'].' '.$r['last_name']; echo '<tr><td><input type="checkbox"/></td><td><span class="kab-status-badge">'.esc_html(ucfirst($r['status'])).'</span></td><td>'.esc_html($name).'</td><td>'.esc_html($r['email']).'</td><td>'.esc_html($r['phone']).'</td><td><a class="kab-btn kab-btn-secondary kab-btn-sm" href="'.esc_url(admin_url('admin.php?page=kab-employees&action=edit&employee_id='.$r['id'])).'">'.esc_html__('Edit','kura-ai-booking-free').'</a> <a class="kab-btn kab-btn-danger kab-btn-sm" href="'.esc_url(wp_nonce_url(admin_url('admin-post.php?action=kab_delete_employee&employee_id='.$r['id']),'kab_delete_employee_'.$r['id'])).'">'.esc_html__('Delete','kura-ai-booking-free').'</a> <a class="kab-btn kab-btn-sm" href="'.esc_url(wp_nonce_url(admin_url('admin-post.php?action=kab_hide_employee&employee_id='.$r['id']),'kab_hide_employee_'.$r['id'])).'">'.esc_html__('Hide','kura-ai-booking-free').'</a> <a class="kab-btn kab-btn-sm" href="'.esc_url(wp_nonce_url(admin_url('admin-post.php?action=kab_duplicate_employee&employee_id='.$r['id']),'kab_duplicate_employee_'.$r['id'])).'">'.esc_html__('Duplicate','kura-ai-booking-free').'</a></td></tr>'; }
+                    echo '</tbody></table>';
+                }
+                $pages = max(1, ceil($total/$per_page)); echo '<div class="kab-pagination"><span class="kab-page-info">'.esc_html(sprintf(__('Showing %d to %d of %d employees','kura-ai-booking-free'), $offset+1, min($offset+$per_page,$total), $total)).'</span>'; if($paged>1){ echo '<a class="kab-btn" href="'.esc_url(add_query_arg(array_merge($_GET,['paged'=>$paged-1]), $base)).'">&larr;</a>'; } if($paged<$pages){ echo ' <a class="kab-btn" href="'.esc_url(add_query_arg(array_merge($_GET,['paged'=>$paged+1]), $base)).'">&rarr;</a>'; } echo '</div>';
+                echo '</div></div>';
+                break;
+        }
+    }
+
+    private function render_employee_form( $employee_id = 0 ) {
+        require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-employees.php'; $model = new KAB_Employees(); $emp = $employee_id ? $model->get_employee($employee_id) : null;
+        $title = $employee_id ? __( 'Edit Employee', 'kura-ai-booking-free' ) : __( 'Add Employee', 'kura-ai-booking-free' );
+        $action = $employee_id ? 'kab_edit_employee' : 'kab_add_employee'; $nonce = $employee_id ? 'kab_edit_employee_'.$employee_id : 'kab_add_employee';
+        $this->render_static_header( 'employees' );
+        echo '<div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title">'.$title.'</h2></div><div class="kab-card-body">';
+        echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">'; echo '<input type="hidden" name="action" value="'.$action.'" />'; if($employee_id){ echo '<input type="hidden" name="employee_id" value="'.esc_attr($employee_id).'" />'; }
+        wp_nonce_field( $nonce );
+        echo '<div style="display:flex;gap:12px;margin-bottom:12px;">';
+        echo '<a class="kab-btn kab-btn-primary" href="#" onclick="return kabSwitchTab(event,\'details\')">'.esc_html__('Details','kura-ai-booking-free').'</a>';
+        echo '<a class="kab-btn" href="#" onclick="return kabSwitchTab(event,\'services\')">'.esc_html__('Assigned Services','kura-ai-booking-free').'</a>';
+        echo '<a class="kab-btn" href="#" onclick="return kabSwitchTab(event,\'workhours\')">'.esc_html__('Work Hours','kura-ai-booking-free').'</a>';
+        echo '<a class="kab-btn" href="#" onclick="return kabSwitchTab(event,\'daysoff\')">'.esc_html__('Days Off','kura-ai-booking-free').'</a>';
+        echo '<a class="kab-btn" href="#" onclick="return kabSwitchTab(event,\'special\')">'.esc_html__('Special Days','kura-ai-booking-free').'</a>';
+        echo '</div>';
+        echo '<div id="kab-tab-details">';
+        echo '<div class="kab-form-grid"><div class="kab-col">';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('First Name','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="first_name" value="'.esc_attr($emp['first_name']??'').'" required placeholder="'.esc_attr__('First name','kura-ai-booking-free').'"/></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Last Name','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="last_name" value="'.esc_attr($emp['last_name']??'').'" required placeholder="'.esc_attr__('Last name','kura-ai-booking-free').'"/></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Email','kura-ai-booking-free').'</label><input class="kab-form-control" type="email" name="email" value="'.esc_attr($emp['email']??'').'" required placeholder="'.esc_attr__('email@example.com','kura-ai-booking-free').'"/></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Phone','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="phone" value="'.esc_attr($emp['phone']??'').'" placeholder="'.esc_attr__('+123456789','kura-ai-booking-free').'"/></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Location','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="location" value="'.esc_attr($emp['location']??'').'"/></div>';
+        echo '</div><div class="kab-col">';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('WordPress User','kura-ai-booking-free').'</label><select class="kab-form-control" name="wp_user_id"><option value="">'.esc_html__('None','kura-ai-booking-free').'</option>'; $users=get_users(array('fields'=>array('ID','display_name'))); foreach($users as $u){ echo '<option value="'.$u->ID.'" '.selected(intval($emp['wp_user_id']??0),$u->ID,false).'>'.$u->display_name.'</option>'; } echo '</select></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Timezone','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="timezone" value="'.esc_attr($emp['timezone']??'').'" placeholder="'.esc_attr__('e.g. Europe/Athens','kura-ai-booking-free').'"/></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Badge','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="badge" value="'.esc_attr($emp['badge']??'').'"/></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Status','kura-ai-booking-free').'</label><select class="kab-form-control" name="status">'; foreach(array('available','busy','away','on_break') as $st){ echo '<option value="'.$st.'" '.selected(($emp['status']??'available'),$st,false).'>'.esc_html(ucfirst($st)).'</option>'; } echo '</select></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label"><input type="checkbox" name="show_on_site" '.checked(intval($emp['show_on_site']??0),1,false).' /> '.esc_html__('Show employee on site','kura-ai-booking-free').'</label></div>';
+        echo '</div></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Description','kura-ai-booking-free').'</label><textarea class="kab-form-control" name="description" rows="4" placeholder="'.esc_attr__('Short bio…','kura-ai-booking-free').'">'.esc_textarea($emp['description']??'').'</textarea></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Internal Note','kura-ai-booking-free').'</label><textarea class="kab-form-control" name="internal_note" rows="3">'.esc_textarea($emp['internal_note']??'').'</textarea></div>';
+        echo '</div>';
+
+        // Assigned Services
+        echo '<div id="kab-tab-services" style="display:none;">';
+        global $wpdb; $services = $wpdb->get_results("SELECT id,name,price FROM {$wpdb->prefix}kab_services WHERE status='active' ORDER BY name",ARRAY_A); $assigned = $employee_id ? $model->get_employee_services($employee_id) : array(); $map = array(); foreach($assigned as $a){ $map[$a['service_id']]=$a; }
+        echo '<table class="kab-table"><thead><tr><th>'.esc_html__('Assign','kura-ai-booking-free').'</th><th>'.esc_html__('Service','kura-ai-booking-free').'</th><th>'.esc_html__('Price','kura-ai-booking-free').'</th><th>'.esc_html__('Capacity','kura-ai-booking-free').'</th></tr></thead><tbody>';
+        foreach($services as $s){ $chk = isset($map[$s['id']]); $price = $chk ? $map[$s['id']]['price'] : ''; $cap = $chk ? $map[$s['id']]['capacity'] : ''; echo '<tr><td><input type="checkbox" name="emp_services['.$s['id'].'][enable]" '.checked($chk,true,false).' /></td><td>'.esc_html($s['name']).'</td><td><input type="number" step="0.01" name="emp_services['.$s['id'].'][price]" value="'.esc_attr($price).'" placeholder="'.esc_attr__('inherit','kura-ai-booking-free').'" class="kab-form-control" /></td><td><input type="number" name="emp_services['.$s['id'].'][capacity]" value="'.esc_attr($cap).'" placeholder="'.esc_attr__('inherit','kura-ai-booking-free').'" class="kab-form-control" /></td></tr>'; }
+        echo '</tbody></table>';
+        echo '</div>';
+
+        // Work Hours
+        $work = $employee_id ? $model->get_workhours($employee_id) : array();
+        echo '<div id="kab-tab-workhours" style="display:none;">';
+        echo '<table class="kab-table"><thead><tr><th>'.esc_html__('Weekday','kura-ai-booking-free').'</th><th>'.esc_html__('Start','kura-ai-booking-free').'</th><th>'.esc_html__('End','kura-ai-booking-free').'</th></tr></thead><tbody id="kab-wh-rows">';
+        foreach( $work as $wh ){ echo '<tr><td><select name="workhours[][weekday]" class="kab-form-control">'; for($i=1;$i<=7;$i++){ echo '<option value="'.$i.'" '.selected($wh['weekday'],$i,false).'>'.$i.'</option>'; } echo '</select></td><td><input type="time" name="workhours[][start_time]" value="'.esc_attr($wh['start_time']).'" class="kab-form-control"/></td><td><input type="time" name="workhours[][end_time]" value="'.esc_attr($wh['end_time']).'" class="kab-form-control"/></td></tr>'; }
+        echo '</tbody></table><button type="button" class="kab-btn" id="kab-add-wh">+'.esc_html__('Add Row','kura-ai-booking-free').'</button>';
+        echo '</div>';
+
+        // Days Off
+        $offs = $employee_id ? $model->get_daysoff($employee_id) : array();
+        echo '<div id="kab-tab-daysoff" style="display:none;">';
+        echo '<table class="kab-table"><thead><tr><th>'.esc_html__('Date','kura-ai-booking-free').'</th><th>'.esc_html__('Reason','kura-ai-booking-free').'</th></tr></thead><tbody id="kab-do-rows">';
+        foreach($offs as $o){ echo '<tr><td><input type="date" name="daysoff[][day_off]" value="'.esc_attr($o['day_off']).'" class="kab-form-control"/></td><td><input type="text" name="daysoff[][reason]" value="'.esc_attr($o['reason']).'" class="kab-form-control"/></td></tr>'; }
+        echo '</tbody></table><button type="button" class="kab-btn" id="kab-add-do">+'.esc_html__('Add Row','kura-ai-booking-free').'</button>';
+        echo '</div>';
+
+        // Special Days
+        $spec = $employee_id ? $model->get_specialdays($employee_id) : array();
+        echo '<div id="kab-tab-special" style="display:none;">';
+        echo '<table class="kab-table"><thead><tr><th>'.esc_html__('Date','kura-ai-booking-free').'</th><th>'.esc_html__('Start','kura-ai-booking-free').'</th><th>'.esc_html__('End','kura-ai-booking-free').'</th></tr></thead><tbody id="kab-sp-rows">';
+        foreach($spec as $sp){ echo '<tr><td><input type="date" name="specialdays[][special_date]" value="'.esc_attr($sp['special_date']).'" class="kab-form-control"/></td><td><input type="time" name="specialdays[][start_time]" value="'.esc_attr($sp['start_time']).'" class="kab-form-control"/></td><td><input type="time" name="specialdays[][end_time]" value="'.esc_attr($sp['end_time']).'" class="kab-form-control"/></td></tr>'; }
+        echo '</tbody></table><button type="button" class="kab-btn" id="kab-add-sp">+'.esc_html__('Add Row','kura-ai-booking-free').'</button>';
+        echo '</div>';
+
+        echo '<div class="kab-form-group" style="margin-top:12px;"><button class="kab-btn kab-btn-primary" type="submit">'.esc_html__('Save','kura-ai-booking-free').'</button> <a class="kab-btn" href="'.esc_url(admin_url('admin.php?page=kab-employees')).'">'.esc_html__('Cancel','kura-ai-booking-free').'</a></div>';
+        echo '</form></div></div>';
+        echo '<script>(function(){window.kabSwitchTab=function(e,id){e.preventDefault();["details","services","workhours","daysoff","special"].forEach(function(k){var el=document.getElementById("kab-tab-"+k);if(el)el.style.display=(k===id?"block":"none");});};var wh=document.getElementById("kab-add-wh");if(wh){wh.addEventListener("click",function(){var tbody=document.getElementById("kab-wh-rows");var tr=document.createElement("tr");var opts="";for(var i=1;i<=7;i++){opts+=`<option value=${i}>${i}</option>`}tr.innerHTML=`<td><select name=\"workhours[][weekday]\" class=\"kab-form-control\">${opts}</select></td><td><input type=\"time\" name=\"workhours[][start_time]\" class=\"kab-form-control\"/></td><td><input type=\"time\" name=\"workhours[][end_time]\" class=\"kab-form-control\"/></td>`;tbody.appendChild(tr);});}
+var add=function(btnId,tbodyId,html){var b=document.getElementById(btnId);if(b){b.addEventListener("click",function(){var tb=document.getElementById(tbodyId);var tr=document.createElement("tr");tr.innerHTML=html;tb.appendChild(tr);});}};add("kab-add-do","kab-do-rows","<td><input type=\"date\" name=\"daysoff[][day_off]\" class=\"kab-form-control\"/></td><td><input type=\"text\" name=\"daysoff[][reason]\" class=\"kab-form-control\"/></td>");add("kab-add-sp","kab-sp-rows","<td><input type=\"date\" name=\"specialdays[][special_date]\" class=\"kab-form-control\"/></td><td><input type=\"time\" name=\"specialdays[][start_time]\" class=\"kab-form-control\"/></td><td><input type=\"time\" name=\"specialdays[][end_time]\" class=\"kab-form-control\"/></td>");})();</script>';
+    }
+    public function render_locations_page() {
+        $this->render_static_header( 'locations' );
+        global $wpdb; $rows = $wpdb->get_results( "SELECT location, COUNT(*) AS cnt FROM {$wpdb->prefix}kab_events WHERE status='active' GROUP BY location ORDER BY cnt DESC", ARRAY_A );
+        ?>
+        <div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title"><?php esc_html_e('Locations','kura-ai-booking-free'); ?></h2></div><div class="kab-card-body"><table class="kab-table"><thead><tr><th><?php esc_html_e('Location','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Events','kura-ai-booking-free'); ?></th></tr></thead><tbody><?php foreach($rows as $r){ echo '<tr><td>'.esc_html($r['location']).'</td><td>'.esc_html($r['cnt']).'</td></tr>'; } ?></tbody></table></div></div>
+        <?php
+    }
+    public function render_notifications_page() {
+        $this->render_static_header( 'notifications' );
+        $admin_email = get_option( 'admin_email' );
+        $send_url = wp_nonce_url( admin_url('admin-post.php?action=kab_send_test_email'), 'kab_send_test_email' );
+        ?>
+        <div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title"><?php esc_html_e('Notifications','kura-ai-booking-free'); ?></h2></div><div class="kab-card-body"><p><?php esc_html_e('Send a test email to verify your mail settings.','kura-ai-booking-free'); ?></p><p><strong><?php esc_html_e('Admin Email:','kura-ai-booking-free'); ?></strong> <?php echo esc_html( $admin_email ); ?></p><a class="kab-btn kab-btn-primary" href="<?php echo esc_url($send_url); ?>"><?php esc_html_e('Send Test Email','kura-ai-booking-free'); ?></a></div></div>
+        <?php
+    }
+    public function render_customize_page() {
+        $this->render_static_header( 'customize' );
+        $opts = get_option( 'kab_settings', array() );
+        echo '<div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title">'.esc_html__( 'Customize', 'kura-ai-booking-free' ).'</h2></div><div class="kab-card-body">';
+        echo '<form method="post" action="'.esc_url( admin_url( 'options.php' ) ).'">';
+        settings_fields( 'kab-settings-group' );
+        echo '<div class="kab-form-grid"><div class="kab-col">';
+        $p = isset($opts['brand_primary'])?$opts['brand_primary']:'#E67E22';
+        $s = isset($opts['brand_secondary'])?$opts['brand_secondary']:'#628141';
+        $l = isset($opts['brand_light'])?$opts['brand_light']:'#EBD5AB';
+        $a = isset($opts['brand_accent'])?$opts['brand_accent']:'#8BAE66';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Primary Color','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="kab_settings[brand_primary]" value="'.esc_attr($p).'"/></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Secondary Color','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="kab_settings[brand_secondary]" value="'.esc_attr($s).'"/></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Light Color','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="kab_settings[brand_light]" value="'.esc_attr($l).'"/></div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Accent Color','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="kab_settings[brand_accent]" value="'.esc_attr($a).'"/></div>';
+        echo '</div><div class="kab-col">';
+        $tz = ! empty($opts['show_client_tz']);
+        echo '<div class="kab-form-group"><label class="kab-form-label"><input type="checkbox" name="kab_settings[show_client_tz]" value="1" '.checked($tz,1,false).'/> '.esc_html__('Show booking slots in client time zone','kura-ai-booking-free').'</label></div>';
+        echo '</div></div><div class="kab-form-group"><button class="kab-btn kab-btn-primary" type="submit">'.esc_html__('Save','kura-ai-booking-free').'</button></div>';
+        echo '</form></div></div>';
+    }
+
+    public function render_custom_fields_page() {
+        $action = isset($_GET['action'])?sanitize_key($_GET['action']):'list'; $field_id = isset($_GET['field_id'])?intval($_GET['field_id']):0;
+        require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-custom-fields.php'; $model = new KAB_Custom_Fields();
+        if($action==='add' || $action==='edit'){ $f = $field_id ? $model->get_field($field_id) : null; $title = $field_id?__('Edit Field','kura-ai-booking-free'):__('Add Field','kura-ai-booking-free'); $act = $field_id?'kab_update_field':'kab_create_field'; $nonce = $field_id?('kab_update_field_'.$field_id):'kab_create_field'; $this->render_static_header('custom-fields'); echo '<div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title">'.$title.'</h2></div><div class="kab-card-body">'; echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">'; echo '<input type="hidden" name="action" value="'.$act.'"/>'; if($field_id){ echo '<input type="hidden" name="field_id" value="'.esc_attr($field_id).'"/>'; } wp_nonce_field($nonce); echo '<div class="kab-form-grid"><div class="kab-col">'; echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Name','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="name" value="'.esc_attr($f['name']??'').'" '.($field_id?'readonly':'').' required/></div>'; echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Label','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="label" value="'.esc_attr($f['label']??'').'" required/></div>'; echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Type','kura-ai-booking-free').'</label><select class="kab-form-control" name="type">'; foreach(['text','number','textarea','select','checkbox','date'] as $t){ echo '<option value="'.$t.'" '.selected($f['type']??'text',$t,false).'>'.$t.'</option>'; } echo '</select></div>'; echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Options (comma separated for select)','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="options" value="'.esc_attr($f['options']??'').'"/></div>'; echo '<div class="kab-form-group"><label class="kab-form-label"><input type="checkbox" name="required" '.checked(intval($f['required']??0),1,false).'/> '.esc_html__('Required','kura-ai-booking-free').'</label></div>'; echo '</div></div><div class="kab-form-group"><button class="kab-btn kab-btn-primary" type="submit">'.esc_html__('Save','kura-ai-booking-free').'</button> <a class="kab-btn" href="'.esc_url(admin_url('admin.php?page=kab-custom-fields')).'">'.esc_html__('Cancel','kura-ai-booking-free').'</a></div>'; echo '</form></div></div>'; } else { $this->render_static_header('custom-fields'); $rows = $model->get_fields(); echo '<div class="kab-card"><div class="kab-card-header" style="display:flex;justify-content:space-between;align-items:center;"><h2 class="kab-card-title">'.esc_html__('Custom Fields','kura-ai-booking-free').'</h2><a class="kab-btn kab-btn-primary" href="'.esc_url(admin_url('admin.php?page=kab-custom-fields&action=add')).'"><span class="dashicons dashicons-plus"></span> '.esc_html__('Add Field','kura-ai-booking-free').'</a></div><div class="kab-card-body">'; echo '<table class="kab-table"><thead><tr><th>'.esc_html__('Name','kura-ai-booking-free').'</th><th>'.esc_html__('Label','kura-ai-booking-free').'</th><th>'.esc_html__('Type','kura-ai-booking-free').'</th><th>'.esc_html__('Required','kura-ai-booking-free').'</th><th>'.esc_html__('Actions','kura-ai-booking-free').'</th></tr></thead><tbody>'; foreach($rows as $r){ $del = wp_nonce_url(admin_url('admin-post.php?action=kab_delete_field&field_id='.$r['id']),'kab_delete_field_'.$r['id']); echo '<tr><td>'.esc_html($r['name']).'</td><td>'.esc_html($r['label']).'</td><td>'.esc_html($r['type']).'</td><td>'.(intval($r['required'])?esc_html__('Yes','kura-ai-booking-free'):esc_html__('No','kura-ai-booking-free')).'</td><td><a class="kab-btn kab-btn-secondary kab-btn-sm" href="'.esc_url(admin_url('admin.php?page=kab-custom-fields&action=edit&field_id='.$r['id'])).'">'.esc_html__('Edit','kura-ai-booking-free').'</a> <a class="kab-btn kab-btn-danger kab-btn-sm" href="'.esc_url($del).'">'.esc_html__('Delete','kura-ai-booking-free').'</a></td></tr>'; } echo '</tbody></table></div></div>'; }
+    }
+
+    private function render_placeholder_page( $active, $title ) {
+        ?>
+        <div class="kab-admin-wrapper">
+            <?php $this->render_static_header( $active ); ?>
+            <div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title"><?php echo esc_html( $title ); ?></h2></div><div class="kab-card-body"><p><?php echo esc_html__( 'This section is under development.', 'kura-ai-booking-free' ); ?></p></div></div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Show admin notices
+     */
 	public function show_admin_notices() {
 		if ( ! isset( $_GET['success'] ) ) {
 			return;
@@ -1633,5 +2048,17 @@ class KAB_Admin {
 		} elseif ( $success_code === 0 ) {
 			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'An error occurred.', 'kura-ai-booking-free' ) . '</p></div>';
 		}
-	}
+    }
+    private function render_event_attendees( $event_id ) {
+        require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-events.php';
+        $events_model = new KAB_Events(); $event = $events_model->get_event( $event_id );
+        if ( ! $event ) { wp_die( __( 'Event not found', 'kura-ai-booking-free' ) ); }
+        global $wpdb; $rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_bookings WHERE booking_type='event' AND event_id=%d ORDER BY created_at DESC", $event_id ), ARRAY_A );
+        ?>
+        <div class="kab-admin-wrapper">
+            <?php $this->render_static_header( 'events' ); ?>
+            <div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title"><?php echo esc_html( sprintf( __( 'Attendees • %s', 'kura-ai-booking-free' ), $event['name'] ) ); ?></h2><div><a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events' ) ); ?>" class="kab-btn">&larr; <?php esc_html_e('Back','kura-ai-booking-free'); ?></a></div></div><div class="kab-card-body"><table class="kab-table"><thead><tr><th><?php esc_html_e('Customer','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Date','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Ticket','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Status','kura-ai-booking-free'); ?></th></tr></thead><tbody><?php foreach($rows as $r){ $u=get_user_by('id',$r['user_id']); echo '<tr><td>'.esc_html($u?$u->display_name:'—').'</td><td>'.esc_html($r['created_at']).'</td><td>'.esc_html($r['ticket_id']).'</td><td>'.esc_html(ucfirst($r['status'])).'</td></tr>'; } ?></tbody></table></div></div>
+        </div>
+        <?php
+    }
 }

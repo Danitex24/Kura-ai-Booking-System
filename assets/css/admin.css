@@ -146,6 +146,26 @@
 .kab-settings-card.accent-danger { border-left-color: var(--kab-danger); }
 .kab-settings-card .kab-card-title { color: #24321a; }
 
+/* ===== Filters ===== */
+.kab-filter-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.kab-filter-group { display: flex; flex-direction: column; gap: 6px; }
+.kab-filter-label { font-size: 12px; color: #3b4a2b; }
+.kab-filter-input { height: 36px; padding: 6px 10px; border: 1px solid var(--kab-border); border-radius: 6px; }
+@media (max-width: 900px) { .kab-filter-row { grid-template-columns: repeat(2, 1fr); } }
+
+/* ===== Calendar ===== */
+.kab-cal-grid { display: grid; gap: 8px; }
+.kab-cal-month { grid-template-columns: repeat(7, 1fr); }
+.kab-cal-week { grid-template-columns: repeat(7, 1fr); }
+.kab-cal-day { grid-template-columns: 1fr; }
+.kab-cal-cell { min-height: 120px; border: 1px solid var(--kab-border); border-radius: 6px; background: #fff; padding: 6px; position: relative; }
+.kab-cal-date { position: absolute; top: 6px; right: 8px; font-size: 12px; color: #6b7a5a; }
+.kab-cal-item { margin-top: 18px; padding: 6px; border-radius: 6px; color: #24321a; font-size: 12px; }
+.kab-cal-event { background: #EBD5AB; border-left: 4px solid #E67E22; }
+.kab-cal-service { background: #C9DFB0; border-left: 4px solid #8BAE66; }
+.kab-cal-item-title { font-weight: 600; }
+.kab-cal-item-time { font-size: 11px; opacity: 0.8; }
+
 /* ===== Dashboard Widgets ===== */
 .kab-dashboard-widgets {
     display: grid;
@@ -215,6 +235,7 @@
 }
 .kab-btn-sm { padding: 4px 8px; font-size: 0.75rem; }
 .kab-row-actions { display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; }
+.kab-status-badge { display:inline-block; padding:3px 6px; border-radius:12px; font-size:11px; background:#e9f5e1; color:#2c5a1c; }
 
 .kab-btn-primary {
     background: var(--kab-primary);

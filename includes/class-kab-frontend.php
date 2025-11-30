@@ -85,9 +85,10 @@ class KAB_Frontend {
 			'customer_name' => sanitize_text_field( $_POST['customer_name'] ),
 			'customer_email' => sanitize_email( $_POST['customer_email'] ),
 			'customer_phone' => sanitize_text_field( $_POST['customer_phone'] ),
-			'service_id' => isset( $_POST['service_id'] ) ? intval( $_POST['service_id'] ) : 0,
-			'event_id' => isset( $_POST['event_id'] ) ? intval( $_POST['event_id'] ) : 0
-		);
+            'service_id' => isset( $_POST['service_id'] ) ? intval( $_POST['service_id'] ) : 0,
+            'employee_id'=> isset( $_POST['employee_id'] ) ? intval( $_POST['employee_id'] ) : 0,
+            'event_id' => isset( $_POST['event_id'] ) ? intval( $_POST['event_id'] ) : 0
+        );
 		
 		// Validate required fields
 		if ( empty( $booking_data['booking_type'] ) || empty( $booking_data['booking_date'] ) || 
@@ -99,12 +100,15 @@ class KAB_Frontend {
 			// Create booking using the bookings class
 			$booking_id = KAB_Bookings::create_booking( $booking_data );
 			
-			if ( $booking_id ) {
-				wp_send_json_success( array(
-					'message' => __( 'Booking successful!', 'kura-ai-booking-free' ),
-					'booking_id' => $booking_id
-				));
-			} else {
+            if ( $booking_id ) {
+                if ( isset( $_POST['cf'] ) && is_array( $_POST['cf'] ) ) {
+                    global $wpdb; foreach ( $_POST['cf'] as $fid => $val ) { $wpdb->insert( $wpdb->prefix.'kab_booking_meta', array( 'booking_id' => intval( $booking_id ), 'field_id' => intval( $fid ), 'value' => is_array( $val ) ? wp_json_encode( $val ) : sanitize_text_field( $val ) ), array('%d','%d','%s') ); }
+                }
+                wp_send_json_success( array(
+                    'message' => __( 'Booking successful!', 'kura-ai-booking-free' ),
+                    'booking_id' => $booking_id
+                ));
+            } else {
 				wp_send_json_error( __( 'Sorry, the selected time slot is not available.', 'kura-ai-booking-free' ) );
 			}
 		} catch ( Exception $e ) {

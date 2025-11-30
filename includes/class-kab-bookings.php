@@ -21,7 +21,8 @@ class KAB_Bookings {
 		$booking_type = sanitize_text_field( $data['booking_type'] );
 		$booking_date = sanitize_text_field( $data['booking_date'] );
 		$booking_time = sanitize_text_field( $data['booking_time'] );
-		$service_id   = isset( $data['service_id'] ) ? intval( $data['service_id'] ) : null;
+        $service_id   = isset( $data['service_id'] ) ? intval( $data['service_id'] ) : null;
+        $employee_id  = isset( $data['employee_id'] ) ? intval( $data['employee_id'] ) : null;
 		$event_id     = isset( $data['event_id'] ) ? intval( $data['event_id'] ) : null;
 
 		// Prevent double booking for same slot
@@ -39,11 +40,11 @@ class KAB_Bookings {
 		}
 
 		// Check service availability for service bookings
-		if ( $booking_type === 'service' && $service_id ) {
-			if ( ! self::is_service_available( $service_id, $booking_date, $booking_time ) ) {
-				return false; // Service not available at requested time
-			}
-		}
+        if ( $booking_type === 'service' && $service_id ) {
+            if ( ! self::is_service_available( $service_id, $booking_date, $booking_time, $employee_id ) ) {
+                return false; // Service not available at requested time
+            }
+        }
 
 		// Check event capacity
 		if ( $booking_type === 'event' && $event_id ) {
@@ -55,21 +56,22 @@ class KAB_Bookings {
 		}
 
 		$ticket_id = uniqid( 'kab_' );
-		$wpdb->insert(
-			$wpdb->prefix . 'kab_bookings',
-			array(
-				'user_id'      => $user_id,
-				'service_id'   => $service_id,
-				'event_id'     => $event_id,
-				'booking_type' => $booking_type,
-				'booking_date' => $booking_date,
-				'booking_time' => $booking_time,
-				'status'       => $status,
-				'ticket_id'    => $ticket_id,
-				'created_at'   => current_time( 'mysql' ),
-			),
-			array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
-		);
+        $wpdb->insert(
+            $wpdb->prefix . 'kab_bookings',
+            array(
+                'user_id'      => $user_id,
+                'employee_id'  => $employee_id,
+                'service_id'   => $service_id,
+                'event_id'     => $event_id,
+                'booking_type' => $booking_type,
+                'booking_date' => $booking_date,
+                'booking_time' => $booking_time,
+                'status'       => $status,
+                'ticket_id'    => $ticket_id,
+                'created_at'   => current_time( 'mysql' ),
+            ),
+            array( '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
+        );
 		$booking_id = $wpdb->insert_id;
 		if ( $booking_id ) {
 			require_once plugin_dir_path( __FILE__ ) . 'class-kab-tickets.php';
@@ -105,8 +107,8 @@ class KAB_Bookings {
 	 * @param string $booking_time Booking time (HH:MM)
 	 * @return bool True if available, false otherwise
 	 */
-	public static function is_service_available( $service_id, $booking_date, $booking_time ) {
-		global $wpdb;
+    public static function is_service_available( $service_id, $booking_date, $booking_time, $employee_id = null ) {
+        global $wpdb;
 
 		// Check if the service exists and is active
 		$service = $wpdb->get_row(
@@ -127,29 +129,69 @@ class KAB_Bookings {
 			return false; // Cannot book in the past
 		}
 
-		// Check for overlapping bookings for the same service at the same time
-		$overlapping_bookings = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}kab_bookings 
-				WHERE service_id = %d 
-				AND booking_date = %s 
-				AND booking_time = %s 
-				AND status NOT IN ('cancelled', 'completed')",
-				$service_id,
-				$booking_date,
-				$booking_time
-			)
-		);
+        // Check for overlapping bookings for the same service (and employee if provided) at the same time
+        $overlapping_bookings = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}kab_bookings 
+                WHERE service_id = %d 
+                AND (employee_id IS NULL OR employee_id = %d)
+                AND booking_date = %s 
+                AND booking_time = %s 
+                AND status NOT IN ('cancelled', 'completed')",
+                $service_id,
+                $employee_id,
+                $booking_date,
+                $booking_time
+            )
+        );
 
-		// For services, we typically allow only one booking per time slot
-		if ( $overlapping_bookings > 0 ) {
-			return false; // Time slot already booked
-		}
+        // Capacity handling: default 1, allow employee-specific overrides
+        $capacity = 1;
+        if ( $employee_id ) {
+            $cap_row = $wpdb->get_row( $wpdb->prepare( "SELECT capacity FROM {$wpdb->prefix}kab_employee_services WHERE employee_id=%d AND service_id=%d", $employee_id, $service_id ), ARRAY_A );
+            if ( $cap_row && isset( $cap_row['capacity'] ) && $cap_row['capacity'] !== null ) {
+                $capacity = max( 1, intval( $cap_row['capacity'] ) );
+            }
+        }
+        if ( $overlapping_bookings >= $capacity ) {
+            return false; // Slot full based on capacity
+        }
 
-		// Additional validation: check business hours and day of week
-		return self::validate_business_hours( $booking_date, $booking_time ) &&
-				self::validate_day_of_week( $booking_date );
-	}
+        // Employee availability
+        if ( $employee_id ) {
+            if ( ! self::is_employee_available( $employee_id, $booking_date, $booking_time ) ) { return false; }
+        }
+
+        // Additional validation: check business hours and day of week
+        return self::validate_business_hours( $booking_date, $booking_time ) &&
+                self::validate_day_of_week( $booking_date );
+    }
+
+    private static function is_employee_available( $employee_id, $booking_date, $booking_time ) {
+        global $wpdb;
+        // Check days off
+        $off = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}kab_employee_daysoff WHERE employee_id=%d AND day_off=%s", $employee_id, $booking_date ) );
+        if ( $off > 0 ) return false;
+        // Special days (override hours)
+        $special = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_employee_specialdays WHERE employee_id=%d AND special_date=%s", $employee_id, $booking_date ), ARRAY_A );
+        if ( $special && ( ! empty( $special['start_time'] ) || ! empty( $special['end_time'] ) ) ) {
+            $ts = strtotime( $booking_date . ' ' . $booking_time );
+            $s  = strtotime( $booking_date . ' ' . ( $special['start_time'] ?: '00:00' ) );
+            $e  = strtotime( $booking_date . ' ' . ( $special['end_time'] ?: '23:59' ) );
+            return $ts >= $s && $ts <= $e;
+        }
+        // Work hours
+        $weekday = date( 'N', strtotime( $booking_date ) );
+        $rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_employee_workhours WHERE employee_id=%d AND weekday=%d", $employee_id, $weekday ), ARRAY_A );
+        if ( ! $rows ) return false;
+        $ts = strtotime( $booking_date . ' ' . $booking_time );
+        foreach ( $rows as $r ) {
+            $s = strtotime( $booking_date . ' ' . $r['start_time'] );
+            $e = strtotime( $booking_date . ' ' . $r['end_time'] );
+            if ( $ts >= $s && $ts <= $e ) return true;
+        }
+        return false;
+    }
 
 	/**
 	 * Validate booking against business hours

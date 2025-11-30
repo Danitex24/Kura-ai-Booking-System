@@ -120,11 +120,11 @@ class KAB_Invoice_Admin extends KAB_Admin {
 		if ( $invoices ) {
             echo '<table class="wp-list-table widefat fixed striped kab-invoices-table">';
             echo '<thead><tr>';
+            echo '<th>' . esc_html__( 'Issue Date', 'kura-ai-booking-free' ) . '</th>';
             echo '<th>' . esc_html__( 'Invoice', 'kura-ai-booking-free' ) . '</th>';
+            echo '<th>' . esc_html__( 'Total', 'kura-ai-booking-free' ) . '</th>';
             echo '<th>' . esc_html__( 'Customer', 'kura-ai-booking-free' ) . '</th>';
-            echo '<th>' . esc_html__( 'Item', 'kura-ai-booking-free' ) . '</th>';
-            echo '<th>' . esc_html__( 'Date', 'kura-ai-booking-free' ) . '</th>';
-            echo '<th>' . esc_html__( 'Amount', 'kura-ai-booking-free' ) . '</th>';
+            echo '<th>' . esc_html__( 'Service/Event', 'kura-ai-booking-free' ) . '</th>';
             echo '<th>' . esc_html__( 'Status', 'kura-ai-booking-free' ) . '</th>';
             echo '<th>' . esc_html__( 'Actions', 'kura-ai-booking-free' ) . '</th>';
             echo '</tr></thead>';
@@ -132,7 +132,10 @@ class KAB_Invoice_Admin extends KAB_Admin {
 			foreach ( $invoices as $invoice ) {
                 $status_class = 'kab-status-' . sanitize_key( $invoice['payment_status'] );
                 echo '<tr>';
+                echo '<td>' . esc_html( date_i18n( get_option( 'date_format' ), strtotime( $invoice['invoice_date'] ) ) ) . '</td>';
                 echo '<td>' . esc_html( $invoice['invoice_number'] ) . '</td>';
+                $sym = kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' );
+                echo '<td>' . esc_html( kab_format_currency( $invoice['total_amount'], $sym ) ) . '</td>';
                 echo '<td>' . esc_html( $invoice['customer_name'] ) . '<br><small>' . esc_html( $invoice['customer_email'] ) . '</small></td>';
                 $item_cell = '';
                 if ( ! empty( $invoice['item_name'] ) ) {
@@ -148,9 +151,6 @@ class KAB_Invoice_Admin extends KAB_Admin {
                     }
                 }
                 echo '<td>' . $item_cell . '</td>';
-                echo '<td>' . esc_html( date_i18n( get_option( 'date_format' ), strtotime( $invoice['invoice_date'] ) ) ) . '</td>';
-                $sym = kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' );
-                echo '<td>' . esc_html( kab_format_currency( $invoice['total_amount'], $sym ) ) . '</td>';
                 echo '<td><span class="kab-status-badge ' . esc_attr( $status_class ) . '">' . esc_html( ucfirst( $invoice['payment_status'] ) ) . '</span></td>';
                 echo '<td class="kab-invoice-actions">';
                 echo '<a href="' . esc_url( admin_url( 'admin.php?page=kab-invoice-details&invoice_id=' . $invoice['id'] ) ) . '" class="kab-btn kab-btn-primary kab-btn-sm">' . esc_html__( 'View', 'kura-ai-booking-free' ) . '</a> ';
@@ -199,6 +199,30 @@ class KAB_Invoice_Admin extends KAB_Admin {
         echo '<div class="kab-filter-group">';
         echo '<label class="kab-filter-label">' . esc_html__( 'Date To', 'kura-ai-booking-free' ) . '</label>';
         echo '<input type="date" name="date_to" class="kab-filter-input" value="' . esc_attr( $filters['date_to'] ?? '' ) . '">';
+        echo '</div>';
+        echo '<div class="kab-filter-group">';
+        echo '<label class="kab-filter-label">' . esc_html__( 'Customer', 'kura-ai-booking-free' ) . '</label>';
+        echo '<select name="customer_id" class="kab-filter-input">';
+        echo '<option value="">' . esc_html__( 'All Customers', 'kura-ai-booking-free' ) . '</option>';
+        $users = get_users( array( 'number' => 100, 'fields' => array( 'ID', 'display_name' ) ) );
+        foreach ( $users as $u ) { echo '<option value="' . esc_attr( $u->ID ) . '" ' . selected( intval( $filters['customer_id'] ?? 0 ), $u->ID, false ) . '>' . esc_html( $u->display_name ) . '</option>'; }
+        echo '</select>';
+        echo '</div>';
+        echo '<div class="kab-filter-group">';
+        echo '<label class="kab-filter-label">' . esc_html__( 'Services', 'kura-ai-booking-free' ) . '</label>';
+        echo '<select name="service_id" class="kab-filter-input">';
+        echo '<option value="">' . esc_html__( 'All Services', 'kura-ai-booking-free' ) . '</option>';
+        global $wpdb; $services = $wpdb->get_results( "SELECT id,name FROM {$wpdb->prefix}kab_services WHERE status='active' ORDER BY name ASC", ARRAY_A );
+        foreach ( $services as $s ) { echo '<option value="' . esc_attr( $s['id'] ) . '" ' . selected( intval( $filters['service_id'] ?? 0 ), intval( $s['id'] ), false ) . '>' . esc_html( $s['name'] ) . '</option>'; }
+        echo '</select>';
+        echo '</div>';
+        echo '<div class="kab-filter-group">';
+        echo '<label class="kab-filter-label">' . esc_html__( 'Events', 'kura-ai-booking-free' ) . '</label>';
+        echo '<select name="event_id" class="kab-filter-input">';
+        echo '<option value="">' . esc_html__( 'All Events', 'kura-ai-booking-free' ) . '</option>';
+        $events = $wpdb->get_results( "SELECT id,name,event_date FROM {$wpdb->prefix}kab_events WHERE status='active' ORDER BY event_date DESC", ARRAY_A );
+        foreach ( $events as $ev ) { $lbl = $ev['name'] . ' (' . date_i18n( get_option('date_format'), strtotime( $ev['event_date'] ) ) . ')'; echo '<option value="' . esc_attr( $ev['id'] ) . '" ' . selected( intval( $filters['event_id'] ?? 0 ), intval( $ev['id'] ), false ) . '>' . esc_html( $lbl ) . '</option>'; }
+        echo '</select>';
         echo '</div>';
         echo '<div class="kab-filter-group">';
         echo '<label class="kab-filter-label">' . esc_html__( 'Payment Status', 'kura-ai-booking-free' ) . '</label>';
