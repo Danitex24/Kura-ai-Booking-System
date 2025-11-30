@@ -1286,6 +1286,20 @@ class KAB_Admin {
             'kab_general_settings_section'
         );
         add_settings_field(
+            'kab_stripe_public',
+            __( 'Stripe Public Key', 'kura-ai-booking-free' ),
+            array( $this, 'render_stripe_public_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_stripe_webhook_secret',
+            __( 'Stripe Webhook Secret', 'kura-ai-booking-free' ),
+            array( $this, 'render_stripe_webhook_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
             'kab_mollie_enabled',
             __( 'Enable Mollie', 'kura-ai-booking-free' ),
             array( $this, 'render_mollie_enabled_field' ),
@@ -1328,6 +1342,13 @@ class KAB_Admin {
             'kab_general_settings_section'
         );
         add_settings_field(
+            'kab_razor_webhook_secret',
+            __( 'Razorpay Webhook Secret', 'kura-ai-booking-free' ),
+            array( $this, 'render_razor_webhook_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
             'kab_paystack_enabled',
             __( 'Enable Paystack', 'kura-ai-booking-free' ),
             array( $this, 'render_paystack_enabled_field' ),
@@ -1349,6 +1370,20 @@ class KAB_Admin {
             'kab_general_settings_section'
         );
         add_settings_field(
+            'kab_paystack_public',
+            __( 'Paystack Public Key', 'kura-ai-booking-free' ),
+            array( $this, 'render_paystack_public_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_paystack_webhook_secret',
+            __( 'Paystack Webhook Secret', 'kura-ai-booking-free' ),
+            array( $this, 'render_paystack_webhook_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
             'kab_flutter_enabled',
             __( 'Enable Flutterwave', 'kura-ai-booking-free' ),
             array( $this, 'render_flutter_enabled_field' ),
@@ -1366,6 +1401,27 @@ class KAB_Admin {
             'kab_flutter_secret',
             __( 'Flutterwave Secret Key', 'kura-ai-booking-free' ),
             array( $this, 'render_flutter_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_flutter_public',
+            __( 'Flutterwave Public Key', 'kura-ai-booking-free' ),
+            array( $this, 'render_flutter_public_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_flutter_encryption_key',
+            __( 'Flutterwave Encryption Key', 'kura-ai-booking-free' ),
+            array( $this, 'render_flutter_encryption_key_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_flutter_webhook_secret',
+            __( 'Flutterwave Webhook Secret', 'kura-ai-booking-free' ),
+            array( $this, 'render_flutter_webhook_secret_field' ),
             'kab-settings',
             'kab_general_settings_section'
         );
@@ -1405,7 +1461,7 @@ class KAB_Admin {
 	 * Sanitize settings
 	 */
     public function sanitize_settings( $input ) {
-        $sanitized = array();
+        $sanitized = get_option( 'kab_settings', array() );
 
 		if ( isset( $input['company_name'] ) ) {
 			$sanitized['company_name'] = sanitize_text_field( $input['company_name'] );
@@ -1431,18 +1487,26 @@ class KAB_Admin {
         $sanitized['stripe_enabled']   = isset( $input['stripe_enabled'] ) ? absint( $input['stripe_enabled'] ) : 0;
         $sanitized['stripe_testmode']  = isset( $input['stripe_testmode'] ) ? absint( $input['stripe_testmode'] ) : 0;
         if ( isset( $input['stripe_secret'] ) ) { $sanitized['stripe_secret'] = sanitize_text_field( $input['stripe_secret'] ); }
+        if ( isset( $input['stripe_public'] ) ) { $sanitized['stripe_public'] = sanitize_text_field( $input['stripe_public'] ); }
+        if ( isset( $input['stripe_webhook_secret'] ) ) { $sanitized['stripe_webhook_secret'] = sanitize_text_field( $input['stripe_webhook_secret'] ); }
         $sanitized['mollie_enabled']   = isset( $input['mollie_enabled'] ) ? absint( $input['mollie_enabled'] ) : 0;
         if ( isset( $input['mollie_key'] ) ) { $sanitized['mollie_key'] = sanitize_text_field( $input['mollie_key'] ); }
         $sanitized['razor_enabled']    = isset( $input['razor_enabled'] ) ? absint( $input['razor_enabled'] ) : 0;
         $sanitized['razor_testmode']   = isset( $input['razor_testmode'] ) ? absint( $input['razor_testmode'] ) : 0;
         if ( isset( $input['razor_key_id'] ) ) { $sanitized['razor_key_id'] = sanitize_text_field( $input['razor_key_id'] ); }
         if ( isset( $input['razor_key_secret'] ) ) { $sanitized['razor_key_secret'] = sanitize_text_field( $input['razor_key_secret'] ); }
+        if ( isset( $input['razor_webhook_secret'] ) ) { $sanitized['razor_webhook_secret'] = sanitize_text_field( $input['razor_webhook_secret'] ); }
         $sanitized['paystack_enabled'] = isset( $input['paystack_enabled'] ) ? absint( $input['paystack_enabled'] ) : 0;
         $sanitized['paystack_testmode']= isset( $input['paystack_testmode'] ) ? absint( $input['paystack_testmode'] ) : 0;
         if ( isset( $input['paystack_secret'] ) ) { $sanitized['paystack_secret'] = sanitize_text_field( $input['paystack_secret'] ); }
+        if ( isset( $input['paystack_public'] ) ) { $sanitized['paystack_public'] = sanitize_text_field( $input['paystack_public'] ); }
+        if ( isset( $input['paystack_webhook_secret'] ) ) { $sanitized['paystack_webhook_secret'] = sanitize_text_field( $input['paystack_webhook_secret'] ); }
         $sanitized['flutter_enabled']  = isset( $input['flutter_enabled'] ) ? absint( $input['flutter_enabled'] ) : 0;
         $sanitized['flutter_testmode'] = isset( $input['flutter_testmode'] ) ? absint( $input['flutter_testmode'] ) : 0;
         if ( isset( $input['flutter_secret'] ) ) { $sanitized['flutter_secret'] = sanitize_text_field( $input['flutter_secret'] ); }
+        if ( isset( $input['flutter_public'] ) ) { $sanitized['flutter_public'] = sanitize_text_field( $input['flutter_public'] ); }
+        if ( isset( $input['flutter_encryption_key'] ) ) { $sanitized['flutter_encryption_key'] = sanitize_text_field( $input['flutter_encryption_key'] ); }
+        if ( isset( $input['flutter_webhook_secret'] ) ) { $sanitized['flutter_webhook_secret'] = sanitize_text_field( $input['flutter_webhook_secret'] ); }
 
         // Taxes
         $sanitized['tax_enabled'] = isset( $input['tax_enabled'] ) ? absint( $input['tax_enabled'] ) : 0;
@@ -1478,24 +1542,24 @@ class KAB_Admin {
 	/**
 	 * Render company name field
 	 */
-	public function render_company_name_field() {
-		$options = get_option( 'kab_settings' );
-		$value = isset( $options['company_name'] ) ? $options['company_name'] : '';
-		?>
-		<input type="text" name="kab_settings[company_name]" value="<?php echo esc_attr( $value ); ?>" class="regular-text" />
-		<?php
-	}
+    public function render_company_name_field() {
+        $options = get_option( 'kab_settings' );
+        $value = isset( $options['company_name'] ) ? $options['company_name'] : '';
+        ?>
+        <input type="text" name="kab_settings[company_name]" value="<?php echo esc_attr( $value ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Company name', 'kura-ai-booking-free' ); ?>" />
+        <?php
+    }
 
 	/**
 	 * Render support email field
 	 */
-	public function render_support_email_field() {
-		$options = get_option( 'kab_settings' );
-		$value = isset( $options['support_email'] ) ? $options['support_email'] : '';
-		?>
-		<input type="email" name="kab_settings[support_email]" value="<?php echo esc_attr( $value ); ?>" class="regular-text" />
-		<?php
-	}
+    public function render_support_email_field() {
+        $options = get_option( 'kab_settings' );
+        $value = isset( $options['support_email'] ) ? $options['support_email'] : '';
+        ?>
+        <input type="email" name="kab_settings[support_email]" value="<?php echo esc_attr( $value ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'support@example.com', 'kura-ai-booking-free' ); ?>" />
+        <?php
+    }
 
 	/**
 	 * Render enable tickets field
@@ -1614,6 +1678,16 @@ class KAB_Admin {
         <input type="text" name="kab_settings[stripe_secret]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'sk_test_... or sk_live_...', 'kura-ai-booking-free' ); ?>" />
         <?php
     }
+    public function render_stripe_public_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['stripe_public'] ) ? $options['stripe_public'] : '';
+        echo '<input type="text" name="kab_settings[stripe_public]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="pk_test_... or pk_live_..." />';
+    }
+    public function render_stripe_webhook_secret_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['stripe_webhook_secret'] ) ? $options['stripe_webhook_secret'] : '';
+        $url = home_url( '/wp-json/kuraai/v1/webhook/stripe' );
+        echo '<input type="text" name="kab_settings[stripe_webhook_secret]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="whsec_..." />';
+        echo '<p class="description">' . esc_html__( 'Webhook URL:', 'kura-ai-booking-free' ) . ' ' . esc_html( $url ) . '</p>';
+    }
     public function render_mollie_enabled_field() {
         $options = get_option( 'kab_settings' );
         $val = isset( $options['mollie_enabled'] ) ? absint( $options['mollie_enabled'] ) : 0;
@@ -1627,6 +1701,12 @@ class KAB_Admin {
         ?>
         <input type="text" name="kab_settings[mollie_key]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'test_xxx or live_xxx', 'kura-ai-booking-free' ); ?>" />
         <?php
+    }
+    public function render_razor_webhook_secret_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['razor_webhook_secret'] ) ? $options['razor_webhook_secret'] : '';
+        $url = home_url( '/wp-json/kuraai/v1/webhook/razorpay' );
+        echo '<input type="text" name="kab_settings[razor_webhook_secret]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="Webhook Secret" />';
+        echo '<p class="description">' . esc_html__( 'Webhook URL:', 'kura-ai-booking-free' ) . ' ' . esc_html( $url ) . '</p>';
     }
     public function render_razor_enabled_field() {
         $options = get_option( 'kab_settings' );
@@ -1677,6 +1757,16 @@ class KAB_Admin {
         <input type="text" name="kab_settings[paystack_secret]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'sk_test_... or sk_live_...', 'kura-ai-booking-free' ); ?>" />
         <?php
     }
+    public function render_paystack_public_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['paystack_public'] ) ? $options['paystack_public'] : '';
+        echo '<input type="text" name="kab_settings[paystack_public]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="pk_test_... or pk_live_..." />';
+    }
+    public function render_paystack_webhook_secret_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['paystack_webhook_secret'] ) ? $options['paystack_webhook_secret'] : '';
+        $url = home_url( '/wp-json/kuraai/v1/webhook/paystack' );
+        echo '<input type="text" name="kab_settings[paystack_webhook_secret]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="Webhook Secret" />';
+        echo '<p class="description">' . esc_html__( 'Webhook URL:', 'kura-ai-booking-free' ) . ' ' . esc_html( $url ) . '</p>';
+    }
     public function render_flutter_enabled_field() {
         $options = get_option( 'kab_settings' );
         $val = isset( $options['flutter_enabled'] ) ? absint( $options['flutter_enabled'] ) : 0;
@@ -1697,6 +1787,20 @@ class KAB_Admin {
         ?>
         <input type="text" name="kab_settings[flutter_secret]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'FLWSECK-...', 'kura-ai-booking-free' ); ?>" />
         <?php
+    }
+    public function render_flutter_public_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['flutter_public'] ) ? $options['flutter_public'] : '';
+        echo '<input type="text" name="kab_settings[flutter_public]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="FLWPUBK-..." />';
+    }
+    public function render_flutter_encryption_key_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['flutter_encryption_key'] ) ? $options['flutter_encryption_key'] : '';
+        echo '<input type="text" name="kab_settings[flutter_encryption_key]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="Encryption Key" />';
+    }
+    public function render_flutter_webhook_secret_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['flutter_webhook_secret'] ) ? $options['flutter_webhook_secret'] : '';
+        $url = home_url( '/wp-json/kuraai/v1/webhook/flutterwave' );
+        echo '<input type="text" name="kab_settings[flutter_webhook_secret]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="Webhook Secret" />';
+        echo '<p class="description">' . esc_html__( 'Webhook URL:', 'kura-ai-booking-free' ) . ' ' . esc_html( $url ) . '</p>';
     }
 
     // Taxes fields
@@ -1746,118 +1850,174 @@ class KAB_Admin {
         ?>
         <div class="kab-admin-wrapper">
             <?php $this->render_static_header( 'settings' ); ?>
-            <form method="post" action="options.php">
-                <?php settings_fields( 'kab-settings-group' ); ?>
+                <div class="kab-settings-nav">
+                    <a class="kab-pill" href="#general"><span class="dashicons dashicons-admin-generic"></span> <?php echo esc_html__( 'General', 'kura-ai-booking-free' ); ?></a>
+                    <a class="kab-pill" href="#payments-general"><span class="dashicons dashicons-cart"></span> <?php echo esc_html__( 'Payments', 'kura-ai-booking-free' ); ?></a>
+                    <a class="kab-pill" href="#taxes"><span class="dashicons dashicons-money"></span> <?php echo esc_html__( 'Taxes', 'kura-ai-booking-free' ); ?></a>
+                    <a class="kab-pill" href="#paypal"><span class="dashicons dashicons-admin-site"></span> PayPal</a>
+                    <a class="kab-pill" href="#mollie"><span class="dashicons dashicons-networking"></span> Mollie</a>
+                    <a class="kab-pill" href="#google-calendar"><span class="dashicons dashicons-calendar"></span> Google</a>
+                    <a class="kab-pill" href="#razorpay"><span class="dashicons dashicons-lock"></span> Razorpay</a>
+                    <a class="kab-pill" href="#stripe"><span class="dashicons dashicons-shield"></span> Stripe</a>
+                    <a class="kab-pill" href="#paystack"><span class="dashicons dashicons-admin-network"></span> Paystack</a>
+                    <a class="kab-pill" href="#flutterwave"><span class="dashicons dashicons-admin-plugins"></span> Flutterwave</a>
+                    <a class="kab-pill" href="#zoom"><span class="dashicons dashicons-video-alt3"></span> Zoom</a>
+                </div>
                 <div class="kab-settings-grid">
-                    <div class="kab-card kab-settings-card accent-secondary">
+                    <div id="general" class="kab-card kab-settings-card accent-secondary">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-admin-users"></span> <?php echo esc_html__( 'Company', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
-                            <?php $this->render_company_name_field(); ?>
-                            <?php $this->render_support_email_field(); ?>
-                        </div>
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
+                                <?php $this->render_company_name_field(); ?>
+                                <?php $this->render_support_email_field(); ?>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-success">
+                    <div id="taxes" class="kab-card kab-settings-card accent-success">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-money"></span> <?php echo esc_html__( 'Taxes', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
-                            <?php $this->render_tax_enabled_field(); ?>
-                            <?php $this->render_tax_mode_field(); ?>
-                            <?php $this->render_tax_type_field(); ?>
-                            <?php $this->render_tax_value_field(); ?>
-                        </div>
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
+                                <?php $this->render_tax_enabled_field(); ?>
+                                <?php $this->render_tax_mode_field(); ?>
+                                <?php $this->render_tax_type_field(); ?>
+                                <?php $this->render_tax_value_field(); ?>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-primary">
+                    <div id="payments-general" class="kab-card kab-settings-card accent-primary">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-cart"></span> <?php echo esc_html__( 'Payments (General)', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
-                            <?php $this->render_payment_default_field(); ?>
-                            <?php $this->render_enable_tickets_field(); ?>
-                        </div>
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
+                                <?php $this->render_payment_default_field(); ?>
+                                <?php $this->render_enable_tickets_field(); ?>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-info">
+                    <div id="google-calendar" class="kab-card kab-settings-card accent-info">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-calendar"></span> <?php echo esc_html__( 'Google Calendar', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
-                            <?php $this->render_google_client_id_field(); ?>
-                            <?php $this->render_google_client_secret_field(); ?>
-                            <?php $this->render_google_remove_busy_field(); ?>
-                        </div>
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
+                                <?php $this->render_google_client_id_field(); ?>
+                                <?php $this->render_google_client_secret_field(); ?>
+                                <?php $this->render_google_remove_busy_field(); ?>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-warning">
+                    <div id="zoom" class="kab-card kab-settings-card accent-warning">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-video-alt3"></span> <?php echo esc_html__( 'Zoom', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
-                            <?php $this->render_zoom_enabled_field(); ?>
-                            <?php $this->render_zoom_account_id_field(); ?>
-                            <?php $this->render_zoom_client_id_field(); ?>
-                            <?php $this->render_zoom_client_secret_field(); ?>
-                            <?php $this->render_zoom_meeting_title_field(); ?>
-                            <?php $this->render_zoom_meeting_agenda_field(); ?>
-                            <?php $this->render_zoom_create_pending_field(); ?>
-                        </div>
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
+                                <?php $this->render_zoom_enabled_field(); ?>
+                                <?php $this->render_zoom_account_id_field(); ?>
+                                <?php $this->render_zoom_client_id_field(); ?>
+                                <?php $this->render_zoom_client_secret_field(); ?>
+                                <?php $this->render_zoom_meeting_title_field(); ?>
+                                <?php $this->render_zoom_meeting_agenda_field(); ?>
+                                <?php $this->render_zoom_create_pending_field(); ?>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-primary">
+                    <div id="paypal" class="kab-card kab-settings-card accent-primary">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-admin-site"></span> <?php echo esc_html__( 'PayPal', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
                             <?php $this->render_paypal_enabled_field(); ?>
                             <?php $this->render_paypal_sandbox_field(); ?>
                             <?php $this->render_paypal_merchant_field(); ?>
-                        </div>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-primary">
+                    <div id="stripe" class="kab-card kab-settings-card accent-primary">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-shield"></span> <?php echo esc_html__( 'Stripe', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
                             <?php $this->render_stripe_enabled_field(); ?>
                             <?php $this->render_stripe_testmode_field(); ?>
                             <?php $this->render_stripe_secret_field(); ?>
-                        </div>
+                            <?php $this->render_stripe_public_field(); ?>
+                            <?php $this->render_stripe_webhook_secret_field(); ?>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-primary">
+                    <div id="mollie" class="kab-card kab-settings-card accent-primary">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-networking"></span> <?php echo esc_html__( 'Mollie', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
                             <?php $this->render_mollie_enabled_field(); ?>
                             <?php $this->render_mollie_key_field(); ?>
-                        </div>
+                            <p class="description"><?php echo esc_html__( 'Webhook URL:', 'kura-ai-booking-free' ) . ' ' . esc_html( home_url( '/wp-json/kuraai/v1/webhook/mollie' ) ); ?></p>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-primary">
+                    <div id="razorpay" class="kab-card kab-settings-card accent-primary">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'Razorpay', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
                             <?php $this->render_razor_enabled_field(); ?>
                             <?php $this->render_razor_testmode_field(); ?>
                             <?php $this->render_razor_key_id_field(); ?>
                             <?php $this->render_razor_key_secret_field(); ?>
-                        </div>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-primary">
+                    <div id="paystack" class="kab-card kab-settings-card accent-primary">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-admin-network"></span> <?php echo esc_html__( 'Paystack', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
                             <?php $this->render_paystack_enabled_field(); ?>
                             <?php $this->render_paystack_testmode_field(); ?>
                             <?php $this->render_paystack_secret_field(); ?>
-                        </div>
+                            <?php $this->render_paystack_public_field(); ?>
+                            <?php $this->render_paystack_webhook_secret_field(); ?>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
 
-                    <div class="kab-card kab-settings-card accent-primary">
+                    <div id="flutterwave" class="kab-card kab-settings-card accent-primary">
                         <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-admin-plugins"></span> <?php echo esc_html__( 'Flutterwave', 'kura-ai-booking-free' ); ?></h2></div>
-                        <div class="kab-card-body">
+                        <form method="post" action="options.php">
+                            <?php settings_fields( 'kab-settings-group' ); ?>
+                            <div class="kab-card-body">
                             <?php $this->render_flutter_enabled_field(); ?>
                             <?php $this->render_flutter_testmode_field(); ?>
                             <?php $this->render_flutter_secret_field(); ?>
-                        </div>
+                            <?php $this->render_flutter_public_field(); ?>
+                            <?php $this->render_flutter_encryption_key_field(); ?>
+                            <?php $this->render_flutter_webhook_secret_field(); ?>
+                            </div>
+                            <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
+                        </form>
                     </div>
                 </div>
-                <div class="kab-card-footer">
-                    <button type="submit" class="kab-btn kab-btn-primary">
-                        <span class="dashicons dashicons-yes"></span>
-                        <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?>
-                    </button>
-                </div>
-            </form>
         </div>
         <?php
     }

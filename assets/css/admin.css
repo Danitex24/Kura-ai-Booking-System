@@ -149,14 +149,36 @@
 }
 
 /* ===== Settings Grid ===== */
-.kab-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.kab-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; grid-auto-flow: dense; }
 .kab-settings-card { border-left: 4px solid var(--kab-primary); }
-.kab-settings-card .kab-card-header { background: linear-gradient(135deg, #F5E9D2 0%, #C9DFB0 50%, #A1C08C 100%); }
+.kab-settings-card .kab-card-header { background: linear-gradient(135deg, #F5E9D2 0%, #C9DFB0 50%, #A1C08C 100%); padding: 1rem; }
 .kab-settings-card.accent-primary { border-left-color: var(--kab-primary); }
 .kab-settings-card.accent-secondary { border-left-color: var(--kab-secondary); }
 .kab-settings-card.accent-success { border-left-color: var(--kab-success); }
 .kab-settings-card.accent-danger { border-left-color: var(--kab-danger); }
+.kab-settings-card.accent-warning { border-left-color: var(--kab-warning); }
+.kab-settings-card.accent-info { border-left-color: var(--kab-primary-dark); }
 .kab-settings-card .kab-card-title { color: #24321a; }
+.kab-settings-card .kab-card-body { padding: 1rem; }
+.kab-settings-card .kab-card-body > * { margin-bottom: 12px; }
+.kab-settings-card .kab-card-body > *:last-child { margin-bottom: 0; }
+.kab-settings-card .kab-card-body label { display: flex; align-items: center; gap: 8px; }
+.kab-settings-card .kab-card-body input[type="text"],
+.kab-settings-card .kab-card-body input[type="email"],
+.kab-settings-card .kab-card-body input[type="number"],
+.kab-settings-card .kab-card-body input[type="password"],
+.kab-settings-card .kab-card-body input[type="date"],
+.kab-settings-card .kab-card-body input[type="time"],
+.kab-settings-card .kab-card-body select,
+.kab-settings-card .kab-card-body textarea,
+.kab-settings-card .kab-card-body .regular-text { width: 100%; padding: 0.75rem 1rem; border: 2px solid var(--kab-border); border-radius: var(--kab-radius); box-sizing: border-box; }
+.kab-settings-card .kab-card-body .description { margin-top: -6px; margin-bottom: 16px; color: #6b7a5a; }
+.kab-settings-card .kab-card-footer { padding: 0.75rem 1rem; }
+
+/* Settings quick nav */
+.kab-settings-nav { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; position: sticky; top: 0; background: #fff; padding: 8px; z-index: 5; border-bottom: 1px solid var(--kab-border); box-shadow: 0 6px 8px -6px rgba(0,0,0,0.08); }
+.kab-pill { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius: 9999px; border:1px solid var(--kab-border); color:#24321a; text-decoration:none; background:#fafafa; transition: var(--kab-transition); }
+.kab-pill:hover { background:#fff; border-color: var(--kab-primary); color: var(--kab-primary-dark); transform: translateY(-1px); }
 
 /* ===== Filters ===== */
 .kab-filter-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }

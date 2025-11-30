@@ -109,4 +109,40 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.kab-nav-group.open').forEach(g => g.classList.remove('open'));
         }
     });
+
+    // Settings forms SweetAlert confirmation
+    const settingForms = document.querySelectorAll('.kab-settings-card form');
+    settingForms.forEach(form => {
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            const titleEl = form.closest('.kab-settings-card').querySelector('.kab-card-title');
+            const section = titleEl ? titleEl.textContent.trim() : 'Settings';
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const proceed = () => { if (submitBtn) submitBtn.classList.add('kab-loading'); form.submit(); };
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Save ' + section + '?',
+                    text: 'Apply changes to ' + section + ' now.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Save',
+                    cancelButtonText: 'Cancel',
+                    customClass: { confirmButton: 'kab-btn kab-btn-primary', cancelButton: 'kab-btn kab-btn-outline' },
+                    buttonsStyling: false
+                }).then(res => { if (res.isConfirmed) proceed(); });
+            } else {
+                proceed();
+            }
+        });
+    });
+
+    // Settings success notice
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('settings-updated') === 'true' || params.get('settings-updated') === '1') {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ title: 'Settings saved', icon: 'success', timer: 1800, showConfirmButton: false });
+            }
+        }
+    } catch (err) {}
 });

@@ -1093,3 +1093,17 @@ add_action( 'admin_post_kab_edit_employee', function() {
 add_action( 'admin_post_kab_hide_employee', function(){ if( ! current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_GET['employee_id']??0); $n=sanitize_text_field($_GET['_wpnonce']??''); if( ! $id || ! wp_verify_nonce($n,'kab_hide_employee_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-employees.php'; (new KAB_Employees())->hide_employee($id); wp_redirect(admin_url('admin.php?page=kab-employees&success=1')); exit; });
 add_action( 'admin_post_kab_duplicate_employee', function(){ if( ! current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_GET['employee_id']??0); $n=sanitize_text_field($_GET['_wpnonce']??''); if( ! $id || ! wp_verify_nonce($n,'kab_duplicate_employee_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-employees.php'; (new KAB_Employees())->duplicate_employee($id); wp_redirect(admin_url('admin.php?page=kab-employees&success=1')); exit; });
 add_action( 'admin_post_kab_delete_employee', function(){ if( ! current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_GET['employee_id']??0); $n=sanitize_text_field($_GET['_wpnonce']??''); if( ! $id || ! wp_verify_nonce($n,'kab_delete_employee_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-employees.php'; (new KAB_Employees())->delete_employee($id); wp_redirect(admin_url('admin.php?page=kab-employees&success=1')); exit; });
+add_action( 'rest_api_init', function() {
+    register_rest_route( 'kuraai/v1', '/webhook/stripe', array( 'methods' => 'POST', 'callback' => 'kab_webhook_stripe' ) );
+    register_rest_route( 'kuraai/v1', '/webhook/mollie', array( 'methods' => 'POST', 'callback' => 'kab_webhook_mollie' ) );
+    register_rest_route( 'kuraai/v1', '/webhook/razorpay', array( 'methods' => 'POST', 'callback' => 'kab_webhook_razorpay' ) );
+    register_rest_route( 'kuraai/v1', '/webhook/paystack', array( 'methods' => 'POST', 'callback' => 'kab_webhook_paystack' ) );
+    register_rest_route( 'kuraai/v1', '/webhook/flutterwave', array( 'methods' => 'POST', 'callback' => 'kab_webhook_flutterwave' ) );
+} );
+
+function kab_webhook_basic_ok() { return new WP_REST_Response( array( 'ok' => true ), 200 ); }
+function kab_webhook_stripe( WP_REST_Request $req ) { return kab_webhook_basic_ok(); }
+function kab_webhook_mollie( WP_REST_Request $req ) { return kab_webhook_basic_ok(); }
+function kab_webhook_razorpay( WP_REST_Request $req ) { return kab_webhook_basic_ok(); }
+function kab_webhook_paystack( WP_REST_Request $req ) { return kab_webhook_basic_ok(); }
+function kab_webhook_flutterwave( WP_REST_Request $req ) { return kab_webhook_basic_ok(); }
