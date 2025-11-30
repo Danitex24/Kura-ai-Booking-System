@@ -45,23 +45,42 @@ class KAB_Admin {
 					<span class="kab-logo-icon dashicons dashicons-calendar-alt"></span>
 					<span class="kab-logo-text"><?php echo esc_html__( 'Kura-ai Booking', 'kura-ai-booking-free' ); ?></span>
 				</div>
-				<nav class="kab-header-nav">
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-dashboard' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'dashboard' ? 'active' : ''; ?>"><?php echo esc_html__( 'Dashboard', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'services' ? 'active' : ''; ?>"><?php echo esc_html__( 'Services', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'events' ? 'active' : ''; ?>"><?php echo esc_html__( 'Events', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customers' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'customers' ? 'active' : ''; ?>"><?php echo esc_html__( 'Customers', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-finance' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'finance' ? 'active' : ''; ?>"><?php echo esc_html__( 'Finance', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-invoices' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'invoices' ? 'active' : ''; ?>"><?php echo esc_html__( 'Invoices', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'settings' ? 'active' : ''; ?>"><?php echo esc_html__( 'Settings', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-calendar' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'calendar' ? 'active' : ''; ?>"><?php echo esc_html__( 'Calendar', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-appointments' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'appointments' ? 'active' : ''; ?>"><?php echo esc_html__( 'Appointments', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-employees' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'employees' ? 'active' : ''; ?>"><?php echo esc_html__( 'Employees', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-locations' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'locations' ? 'active' : ''; ?>"><?php echo esc_html__( 'Locations', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-notifications' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'notifications' ? 'active' : ''; ?>"><?php echo esc_html__( 'Notifications', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customize' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'customize' ? 'active' : ''; ?>"><?php echo esc_html__( 'Customize', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-custom-fields' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'custom-fields' ? 'active' : ''; ?>"><?php echo esc_html__( 'Custom Fields', 'kura-ai-booking-free' ); ?></a>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-validation' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'validation' ? 'active' : ''; ?>"><?php echo esc_html__( 'Validation', 'kura-ai-booking-free' ); ?></a>
-				</nav>
+                <nav class="kab-header-nav">
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-dashboard' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'dashboard' ? 'active' : ''; ?>"><?php echo esc_html__( 'Dashboard', 'kura-ai-booking-free' ); ?></a>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'services' ? 'active' : ''; ?>"><?php echo esc_html__( 'Services', 'kura-ai-booking-free' ); ?></a>
+
+                    <div class="kab-nav-group">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('events','calendar','appointments'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Events', 'kura-ai-booking-free' ); ?></a>
+                        <div class="kab-dropdown">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'events' ? 'active' : ''; ?>"><?php echo esc_html__( 'Manage Events', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-calendar' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'calendar' ? 'active' : ''; ?>"><?php echo esc_html__( 'Calendar', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-appointments' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'appointments' ? 'active' : ''; ?>"><?php echo esc_html__( 'Appointments', 'kura-ai-booking-free' ); ?></a>
+                        </div>
+                    </div>
+
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-employees' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'employees' ? 'active' : ''; ?>"><?php echo esc_html__( 'Employees', 'kura-ai-booking-free' ); ?></a>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-locations' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'locations' ? 'active' : ''; ?>"><?php echo esc_html__( 'Locations', 'kura-ai-booking-free' ); ?></a>
+
+                    <div class="kab-nav-group">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-finance' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('finance','invoices','customers'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Finance', 'kura-ai-booking-free' ); ?></a>
+                        <div class="kab-dropdown">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-finance' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'finance' ? 'active' : ''; ?>"><?php echo esc_html__( 'Overview', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-invoices' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'invoices' ? 'active' : ''; ?>"><?php echo esc_html__( 'Invoices', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customers' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'customers' ? 'active' : ''; ?>"><?php echo esc_html__( 'Customers', 'kura-ai-booking-free' ); ?></a>
+                        </div>
+                    </div>
+
+                    <div class="kab-nav-group">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('settings','notifications','customize','custom-fields','validation'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Settings', 'kura-ai-booking-free' ); ?></a>
+                        <div class="kab-dropdown">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'settings' ? 'active' : ''; ?>"><?php echo esc_html__( 'General', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-notifications' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'notifications' ? 'active' : ''; ?>"><?php echo esc_html__( 'Notifications', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customize' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'customize' ? 'active' : ''; ?>"><?php echo esc_html__( 'Customize', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-custom-fields' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'custom-fields' ? 'active' : ''; ?>"><?php echo esc_html__( 'Custom Fields', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-validation' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'validation' ? 'active' : ''; ?>"><?php echo esc_html__( 'Validation', 'kura-ai-booking-free' ); ?></a>
+                        </div>
+                    </div>
+                </nav>
 			</div>
 		</div>
 		<?php

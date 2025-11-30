@@ -89,4 +89,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
     }
+
+    // Header dropdowns (click/touch friendly)
+    const navGroups = document.querySelectorAll('.kab-nav-group');
+    navGroups.forEach(group => {
+        const trigger = group.querySelector('.kab-nav-link');
+        if (!trigger) return;
+        trigger.addEventListener('click', function (e) {
+            // Toggle dropdown instead of navigating
+            e.preventDefault();
+            const isOpen = group.classList.contains('open');
+            document.querySelectorAll('.kab-nav-group.open').forEach(g => g.classList.remove('open'));
+            if (!isOpen) group.classList.add('open');
+        });
+    });
+    document.addEventListener('click', function (e) {
+        const inside = e.target.closest('.kab-nav-group');
+        if (!inside) {
+            document.querySelectorAll('.kab-nav-group.open').forEach(g => g.classList.remove('open'));
+        }
+    });
 });

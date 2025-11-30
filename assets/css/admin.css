@@ -27,9 +27,10 @@
 }
 
 .kab-admin-header-inner {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr;
     align-items: center;
-    justify-content: space-between;
+    width: 100%;
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -38,6 +39,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    flex: 0 0 auto;
 }
 
 .kab-logo-icon {
@@ -62,7 +64,17 @@
     display: flex;
     gap: 1rem;
     align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    white-space: nowrap;
 }
+
+.kab-nav-group { position: relative; }
+.kab-dropdown { display: none; position: absolute; top: 110%; left: 0; background: rgba(255,255,255,0.95); color: #24321a; min-width: 180px; border-radius: 8px; box-shadow: var(--kab-shadow); padding: 8px; z-index: 10; }
+.kab-dropdown-link { display: block; padding: 8px 10px; border-radius: 6px; color: #24321a; text-decoration: none; }
+.kab-dropdown-link:hover { background: #f3f4f6; }
+.kab-nav-group:hover .kab-dropdown { display: block; }
+.kab-nav-group.open .kab-dropdown { display: block; }
 
 .kab-nav-link {
     color: rgba(255, 255, 255, 0.9);
