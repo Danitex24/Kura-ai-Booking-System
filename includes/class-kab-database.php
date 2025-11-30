@@ -80,6 +80,10 @@ class KAB_Database {
             internal_note TEXT,
             status VARCHAR(20) NOT NULL DEFAULT 'available',
             show_on_site TINYINT(1) NOT NULL DEFAULT 0,
+            google_access_token TEXT,
+            google_refresh_token TEXT,
+            google_calendar_id VARCHAR(255),
+            google_token_expires DATETIME,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             UNIQUE KEY email (email)

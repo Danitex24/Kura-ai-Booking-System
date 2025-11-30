@@ -57,49 +57,51 @@ class KAB_Events {
 	 */
 	public function create_event( $data ) {
 		global $wpdb;
-		$wpdb->insert(
-			$wpdb->prefix . 'kab_events',
-			array(
-				'name'        => sanitize_text_field( $data['name'] ),
-				'description' => sanitize_textarea_field( $data['description'] ),
-				'event_date'  => sanitize_text_field( $data['event_date'] ),
-				'event_time'  => sanitize_text_field( $data['event_time'] ),
-				'event_end_time' => isset( $data['event_end_time'] ) ? sanitize_text_field( $data['event_end_time'] ) : null,
-				'organizer'   => isset( $data['organizer'] ) ? sanitize_text_field( $data['organizer'] ) : null,
-				'location'    => sanitize_text_field( $data['location'] ),
-				'price'       => floatval( $data['price'] ),
-				'capacity'    => intval( $data['capacity'] ),
-				'booking_open'=> isset( $data['booking_open'] ) ? sanitize_text_field( $data['booking_open'] ) : null,
-				'booking_close'=> isset( $data['booking_close'] ) ? sanitize_text_field( $data['booking_close'] ) : null,
-				'tags'        => isset( $data['tags'] ) ? sanitize_text_field( $data['tags'] ) : null,
-			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%d', '%s', '%s', '%s' )
-		);
+        $wpdb->insert(
+            $wpdb->prefix . 'kab_events',
+            array(
+                'name'        => sanitize_text_field( $data['name'] ),
+                'description' => sanitize_textarea_field( $data['description'] ),
+                'event_date'  => sanitize_text_field( $data['event_date'] ),
+                'event_time'  => sanitize_text_field( $data['event_time'] ),
+                'event_end_time' => isset( $data['event_end_time'] ) ? sanitize_text_field( $data['event_end_time'] ) : null,
+                'organizer'   => isset( $data['organizer'] ) ? sanitize_text_field( $data['organizer'] ) : null,
+                'location'    => sanitize_text_field( $data['location'] ),
+                'price'       => floatval( $data['price'] ),
+                'capacity'    => intval( $data['capacity'] ),
+                'booking_open'=> isset( $data['booking_open'] ) ? sanitize_text_field( $data['booking_open'] ) : null,
+                'booking_close'=> isset( $data['booking_close'] ) ? sanitize_text_field( $data['booking_close'] ) : null,
+                'tags'        => isset( $data['tags'] ) ? sanitize_text_field( $data['tags'] ) : null,
+                'zoom_user_id' => isset( $data['zoom_user_id'] ) ? sanitize_text_field( $data['zoom_user_id'] ) : null,
+            ),
+            array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%d', '%s', '%s', '%s', '%s' )
+        );
 		return $wpdb->insert_id;
 	}
 
 	public function update_event( $id, $data ) {
 		global $wpdb;
-		return $wpdb->update(
-			$wpdb->prefix . 'kab_events',
-			array(
-				'name'        => sanitize_text_field( $data['name'] ),
-				'description' => sanitize_textarea_field( $data['description'] ),
-				'event_date'  => sanitize_text_field( $data['event_date'] ),
-				'event_time'  => sanitize_text_field( $data['event_time'] ),
-				'event_end_time' => isset( $data['event_end_time'] ) ? sanitize_text_field( $data['event_end_time'] ) : null,
-				'organizer'   => isset( $data['organizer'] ) ? sanitize_text_field( $data['organizer'] ) : null,
-				'location'    => sanitize_text_field( $data['location'] ),
-				'price'       => floatval( $data['price'] ),
-				'capacity'    => intval( $data['capacity'] ),
-				'booking_open'=> isset( $data['booking_open'] ) ? sanitize_text_field( $data['booking_open'] ) : null,
-				'booking_close'=> isset( $data['booking_close'] ) ? sanitize_text_field( $data['booking_close'] ) : null,
-				'tags'        => isset( $data['tags'] ) ? sanitize_text_field( $data['tags'] ) : null,
-			),
-			array( 'id' => intval( $id ) ),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%d', '%s', '%s', '%s' ),
-			array( '%d' )
-		);
+        return $wpdb->update(
+            $wpdb->prefix . 'kab_events',
+            array(
+                'name'        => sanitize_text_field( $data['name'] ),
+                'description' => sanitize_textarea_field( $data['description'] ),
+                'event_date'  => sanitize_text_field( $data['event_date'] ),
+                'event_time'  => sanitize_text_field( $data['event_time'] ),
+                'event_end_time' => isset( $data['event_end_time'] ) ? sanitize_text_field( $data['event_end_time'] ) : null,
+                'organizer'   => isset( $data['organizer'] ) ? sanitize_text_field( $data['organizer'] ) : null,
+                'location'    => sanitize_text_field( $data['location'] ),
+                'price'       => floatval( $data['price'] ),
+                'capacity'    => intval( $data['capacity'] ),
+                'booking_open'=> isset( $data['booking_open'] ) ? sanitize_text_field( $data['booking_open'] ) : null,
+                'booking_close'=> isset( $data['booking_close'] ) ? sanitize_text_field( $data['booking_close'] ) : null,
+                'tags'        => isset( $data['tags'] ) ? sanitize_text_field( $data['tags'] ) : null,
+                'zoom_user_id' => isset( $data['zoom_user_id'] ) ? sanitize_text_field( $data['zoom_user_id'] ) : null,
+            ),
+            array( 'id' => intval( $id ) ),
+            array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%d', '%s', '%s', '%s', '%s' ),
+            array( '%d' )
+        );
 	}
 
     public function delete_event( $id ) {

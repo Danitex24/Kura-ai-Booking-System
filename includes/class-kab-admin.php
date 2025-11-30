@@ -846,6 +846,8 @@ class KAB_Admin {
                             <tr><td><?php esc_html_e( 'Booking Opens', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['booking_open'] ); ?></td></tr>
                             <tr><td><?php esc_html_e( 'Booking Closes', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['booking_close'] ); ?></td></tr>
                             <tr><td><?php esc_html_e( 'Tags', 'kura-ai-booking-free' ); ?></td><td><?php echo esc_html( $event['tags'] ); ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Zoom Host URL', 'kura-ai-booking-free' ); ?></td><td><?php echo !empty($event['zoom_host_url'])?'<a href="'.esc_url($event['zoom_host_url']).'" target="_blank">'.esc_html__('Open','kura-ai-booking-free').'</a>':'—'; ?></td></tr>
+                            <tr><td><?php esc_html_e( 'Zoom Join URL', 'kura-ai-booking-free' ); ?></td><td><?php echo !empty($event['zoom_join_url'])?'<a href="'.esc_url($event['zoom_join_url']).'" target="_blank">'.esc_html__('Open','kura-ai-booking-free').'</a>':'—'; ?></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -881,13 +883,13 @@ class KAB_Admin {
                 <div class="kab-card-header">
                     <h2><?php echo esc_html( $page_title ); ?></h2>
                 </div>
-                <div class="kab-card-body">
-                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-                        <input type="hidden" name="action" value="<?php echo $event_id ? 'kab_edit_event' : 'kab_add_event'; ?>" />
-                        <?php if ( $event_id ) : ?>
-                            <input type="hidden" name="event_id" value="<?php echo esc_attr( $event_id ); ?>" />
-                        <?php endif; ?>
-                        <?php wp_nonce_field( $nonce_action, $nonce_name ); ?>
+        <div class="kab-card-body">
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                <input type="hidden" name="action" value="<?php echo $event_id ? 'kab_edit_event' : 'kab_add_event'; ?>" />
+                <?php if ( $event_id ) : ?>
+                    <input type="hidden" name="event_id" value="<?php echo esc_attr( $event_id ); ?>" />
+                <?php endif; ?>
+                <?php wp_nonce_field( $nonce_action, $nonce_name ); ?>
 
                         <div class="kab-form-grid">
                             <div class="kab-col">
@@ -929,6 +931,10 @@ class KAB_Admin {
                                     <label for="capacity" class="kab-form-label"><?php esc_html_e( 'Capacity', 'kura-ai-booking-free' ); ?></label>
                                     <input type="number" name="capacity" id="capacity" class="kab-form-control" value="<?php echo $event ? esc_attr( $event['capacity'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'e.g. 20', 'kura-ai-booking-free' ); ?>" required>
                                 </div>
+                                <div class="kab-form-group">
+                                    <label class="kab-form-label"><?php esc_html_e( 'Zoom User', 'kura-ai-booking-free' ); ?></label>
+                                    <?php if ( function_exists('kab_zoom_list_users') ) { $users = kab_zoom_list_users(); $current = $event ? ($event['zoom_user_id'] ?? '') : ''; echo '<select class="kab-form-control" name="zoom_user_id">'; echo '<option value="">'.esc_html__('None','kura-ai-booking-free').'</option>'; foreach($users as $u){ $id=$u['id']??''; $name=($u['first_name']??'').' '.($u['last_name']??''); $email=$u['email']??''; $label=trim($name)?$name:$email; echo '<option value="'.esc_attr($id).'" '.selected($current,$id,false).'>'.esc_html($label).' ('.esc_html($email).')</option>'; } echo '</select>'; } else { echo '<div class="description">'.esc_html__('Enable Zoom in Settings to load users','kura-ai-booking-free').'</div>'; } ?>
+                                </div>
                             </div>
                         </div>
 
@@ -937,6 +943,7 @@ class KAB_Admin {
                                 <span class="dashicons dashicons-yes"></span>
                                 <?php echo esc_html( $button_text ); ?>
                             </button>
+                            <?php if ( $event_id && ! empty( $event['zoom_join_url'] ) ) { echo '<a href="'.esc_url($event['zoom_join_url']).'" target="_blank" class="kab-btn">'.esc_html__('Join Zoom','kura-ai-booking-free').'</a>'; } ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events' ) ); ?>" class="kab-btn kab-btn-outline">
                                 <span class="dashicons dashicons-no"></span>
                                 <?php esc_html_e( 'Cancel', 'kura-ai-booking-free' ); ?>
@@ -973,9 +980,23 @@ class KAB_Admin {
             'booking_open'=> sanitize_text_field( $_POST['booking_open'] ?? '' ),
             'booking_close'=> sanitize_text_field( $_POST['booking_close'] ?? '' ),
             'tags'        => sanitize_text_field( $_POST['tags'] ?? '' ),
+            'zoom_user_id'=> sanitize_text_field( $_POST['zoom_user_id'] ?? '' ),
         );
 
         $event_id = $events_model->create_event( $event_data );
+        if ( $event_id && function_exists('kab_get_zoom_settings') ) {
+            $z = kab_get_zoom_settings(); if ( ! empty( $z['enabled'] ) ) {
+                $evt = $events_model->get_event( $event_id );
+                if ( ! empty( $evt['zoom_user_id'] ) ) {
+                    $start_ts = strtotime( $evt['event_date'] . ' ' . $evt['event_time'] ); $end_ts = !empty($evt['event_end_time']) ? strtotime( $evt['event_date'] . ' ' . $evt['event_end_time'] ) : ($start_ts + 3600);
+                    $duration = max( 15, intval( ($end_ts - $start_ts)/60 ) );
+                    $topic = str_replace( array('%event_name%'), array($evt['name']), $z['meeting_title'] );
+                    $agenda = str_replace( array('%event_description%'), array($evt['description']), $z['meeting_agenda'] );
+                    $res = function_exists('kab_zoom_create_meeting') ? kab_zoom_create_meeting( $evt['zoom_user_id'], $topic, $agenda, date('c',$start_ts), $duration ) : false;
+                    if ( $res ) { global $wpdb; $wpdb->update( $wpdb->prefix.'kab_events', array( 'zoom_meeting_id'=>$res['id'], 'zoom_host_url'=>$res['host_url'], 'zoom_join_url'=>$res['join_url'] ), array('id'=>$event_id), array('%s','%s','%s'), array('%d') ); }
+                }
+            }
+        }
 
         $redirect_url = add_query_arg(
             array(
@@ -1015,9 +1036,25 @@ class KAB_Admin {
             'booking_open'=> sanitize_text_field( $_POST['booking_open'] ?? '' ),
             'booking_close'=> sanitize_text_field( $_POST['booking_close'] ?? '' ),
             'tags'        => sanitize_text_field( $_POST['tags'] ?? '' ),
+            'zoom_user_id'=> sanitize_text_field( $_POST['zoom_user_id'] ?? '' ),
         );
 
         $result = $events_model->update_event( $event_id, $event_data );
+        if ( $result && function_exists('kab_get_zoom_settings') ) {
+            $z = kab_get_zoom_settings(); if ( ! empty( $z['enabled'] ) ) {
+                $evt = $events_model->get_event( $event_id );
+                if ( ! empty( $evt['zoom_user_id'] ) ) {
+                    $start_ts = strtotime( $evt['event_date'] . ' ' . $evt['event_time'] ); $end_ts = !empty($evt['event_end_time']) ? strtotime( $evt['event_date'] . ' ' . $evt['event_end_time'] ) : ($start_ts + 3600);
+                    $duration = max( 15, intval( ($end_ts - $start_ts)/60 ) );
+                    $topic = str_replace( array('%event_name%'), array($evt['name']), $z['meeting_title'] );
+                    $agenda = str_replace( array('%event_description%'), array($evt['description']), $z['meeting_agenda'] );
+                    if ( empty( $evt['zoom_meeting_id'] ) ) {
+                        $res = function_exists('kab_zoom_create_meeting') ? kab_zoom_create_meeting( $evt['zoom_user_id'], $topic, $agenda, date('c',$start_ts), $duration ) : false;
+                        if ( $res ) { global $wpdb; $wpdb->update( $wpdb->prefix.'kab_events', array( 'zoom_meeting_id'=>$res['id'], 'zoom_host_url'=>$res['host_url'], 'zoom_join_url'=>$res['join_url'] ), array('id'=>$event_id), array('%s','%s','%s'), array('%d') ); }
+                    }
+                }
+            }
+        }
 
         $redirect_url = add_query_arg(
             array(
@@ -1131,6 +1168,78 @@ class KAB_Admin {
             'kab_payment_default',
             __( 'Default Payment Method', 'kura-ai-booking-free' ),
             array( $this, 'render_payment_default_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        // Google Calendar
+        add_settings_field(
+            'kab_google_client_id',
+            __( 'Google Client ID', 'kura-ai-booking-free' ),
+            array( $this, 'render_google_client_id_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_google_client_secret',
+            __( 'Google Client Secret', 'kura-ai-booking-free' ),
+            array( $this, 'render_google_client_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_google_remove_busy',
+            __( 'Remove Google Busy Slots', 'kura-ai-booking-free' ),
+            array( $this, 'render_google_remove_busy_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        // Zoom
+        add_settings_field(
+            'kab_zoom_enabled',
+            __( 'Enable Zoom (Server-to-Server OAuth)', 'kura-ai-booking-free' ),
+            array( $this, 'render_zoom_enabled_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_zoom_account_id',
+            __( 'Zoom Account ID', 'kura-ai-booking-free' ),
+            array( $this, 'render_zoom_account_id_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_zoom_client_id',
+            __( 'Zoom Client ID', 'kura-ai-booking-free' ),
+            array( $this, 'render_zoom_client_id_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_zoom_client_secret',
+            __( 'Zoom Client Secret', 'kura-ai-booking-free' ),
+            array( $this, 'render_zoom_client_secret_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_zoom_meeting_title',
+            __( 'Zoom Meeting Title', 'kura-ai-booking-free' ),
+            array( $this, 'render_zoom_meeting_title_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_zoom_meeting_agenda',
+            __( 'Zoom Meeting Agenda', 'kura-ai-booking-free' ),
+            array( $this, 'render_zoom_meeting_agenda_field' ),
+            'kab-settings',
+            'kab_general_settings_section'
+        );
+        add_settings_field(
+            'kab_zoom_create_pending',
+            __( 'Create Meetings For Pending Appointments', 'kura-ai-booking-free' ),
+            array( $this, 'render_zoom_create_pending_field' ),
             'kab-settings',
             'kab_general_settings_section'
         );
@@ -1347,6 +1456,15 @@ class KAB_Admin {
             $sanitized['tax_value'] = floatval( $input['tax_value'] );
         }
 
+        // Zoom
+        $sanitized['zoom_enabled'] = isset( $input['zoom_enabled'] ) ? absint( $input['zoom_enabled'] ) : 0;
+        if ( isset( $input['zoom_account_id'] ) ) { $sanitized['zoom_account_id'] = sanitize_text_field( $input['zoom_account_id'] ); }
+        if ( isset( $input['zoom_client_id'] ) ) { $sanitized['zoom_client_id'] = sanitize_text_field( $input['zoom_client_id'] ); }
+        if ( isset( $input['zoom_client_secret'] ) ) { $sanitized['zoom_client_secret'] = sanitize_text_field( $input['zoom_client_secret'] ); }
+        if ( isset( $input['zoom_meeting_title'] ) ) { $sanitized['zoom_meeting_title'] = sanitize_text_field( $input['zoom_meeting_title'] ); }
+        if ( isset( $input['zoom_meeting_agenda'] ) ) { $sanitized['zoom_meeting_agenda'] = sanitize_textarea_field( $input['zoom_meeting_agenda'] ); }
+        $sanitized['zoom_create_pending'] = isset( $input['zoom_create_pending'] ) ? absint( $input['zoom_create_pending'] ) : 0;
+
         return $sanitized;
     }
 
@@ -1428,6 +1546,51 @@ class KAB_Admin {
         <input type="email" name="kab_settings[paypal_merchant]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'merchant@example.com', 'kura-ai-booking-free' ); ?>" />
         <p class="description"><?php esc_html_e( 'PayPal business/merchant email for Standard payments.', 'kura-ai-booking-free' ); ?></p>
         <?php
+    }
+
+    public function render_google_client_id_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['google_client_id'] ) ? $options['google_client_id'] : '';
+        echo '<input type="text" name="kab_settings[google_client_id]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="Client ID" />';
+        echo '<p class="description">' . esc_html__( 'Redirect URI:', 'kura-ai-booking-free' ) . ' ' . esc_html( admin_url( 'admin-post.php?action=kab_google_oauth_callback' ) ) . '</p>';
+    }
+
+    // Zoom fields
+    public function render_zoom_enabled_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['zoom_enabled'] ) ? absint( $options['zoom_enabled'] ) : 0;
+        echo '<label><input type="checkbox" name="kab_settings[zoom_enabled]" value="1" ' . checked( $val, 1, false ) . ' /> ' . esc_html__( 'Enable Server-to-Server OAuth integration', 'kura-ai-booking-free' ) . '</label>';
+        echo '<p class="description">' . esc_html__( 'Use Zoom App Marketplace → Build App → Server-to-Server OAuth.', 'kura-ai-booking-free' ) . '</p>';
+    }
+    public function render_zoom_account_id_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['zoom_account_id'] ) ? $options['zoom_account_id'] : '';
+        echo '<input type="text" name="kab_settings[zoom_account_id]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="Account ID" />';
+    }
+    public function render_zoom_client_id_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['zoom_client_id'] ) ? $options['zoom_client_id'] : '';
+        echo '<input type="text" name="kab_settings[zoom_client_id]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="Client ID" />';
+    }
+    public function render_zoom_client_secret_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['zoom_client_secret'] ) ? $options['zoom_client_secret'] : '';
+        echo '<input type="text" name="kab_settings[zoom_client_secret]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="Client Secret" />';
+    }
+    public function render_zoom_meeting_title_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['zoom_meeting_title'] ) ? $options['zoom_meeting_title'] : '%service_name%';
+        echo '<input type="text" name="kab_settings[zoom_meeting_title]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="%service_name%" />';
+    }
+    public function render_zoom_meeting_agenda_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['zoom_meeting_agenda'] ) ? $options['zoom_meeting_agenda'] : '%service_description%';
+        echo '<textarea name="kab_settings[zoom_meeting_agenda]" rows="3" class="regular-text" placeholder="%service_description%">' . esc_textarea( $val ) . '</textarea>';
+    }
+    public function render_zoom_create_pending_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['zoom_create_pending'] ) ? absint( $options['zoom_create_pending'] ) : 0;
+        echo '<label><input type="checkbox" name="kab_settings[zoom_create_pending]" value="1" ' . checked( $val, 1, false ) . ' /> ' . esc_html__( 'Also create Zoom meetings for Pending appointments', 'kura-ai-booking-free' ) . '</label>';
+    }
+    public function render_google_client_secret_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['google_client_secret'] ) ? $options['google_client_secret'] : '';
+        echo '<input type="text" name="kab_settings[google_client_secret]" value="' . esc_attr( $val ) . '" class="regular-text" placeholder="Client Secret" />';
+    }
+    public function render_google_remove_busy_field() {
+        $options = get_option( 'kab_settings' ); $val = isset( $options['google_remove_busy'] ) ? absint( $options['google_remove_busy'] ) : 0;
+        echo '<label><input type="checkbox" name="kab_settings[google_remove_busy]" value="1" ' . checked( $val, 1, false ) . ' /> ' . esc_html__( 'Block busy Google Calendar slots', 'kura-ai-booking-free' ) . '</label>';
     }
 
     public function render_stripe_enabled_field() {
@@ -1609,6 +1772,28 @@ class KAB_Admin {
                         <div class="kab-card-body">
                             <?php $this->render_payment_default_field(); ?>
                             <?php $this->render_enable_tickets_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-info">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-calendar"></span> <?php echo esc_html__( 'Google Calendar', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_google_client_id_field(); ?>
+                            <?php $this->render_google_client_secret_field(); ?>
+                            <?php $this->render_google_remove_busy_field(); ?>
+                        </div>
+                    </div>
+
+                    <div class="kab-card kab-settings-card accent-warning">
+                        <div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-video-alt3"></span> <?php echo esc_html__( 'Zoom', 'kura-ai-booking-free' ); ?></h2></div>
+                        <div class="kab-card-body">
+                            <?php $this->render_zoom_enabled_field(); ?>
+                            <?php $this->render_zoom_account_id_field(); ?>
+                            <?php $this->render_zoom_client_id_field(); ?>
+                            <?php $this->render_zoom_client_secret_field(); ?>
+                            <?php $this->render_zoom_meeting_title_field(); ?>
+                            <?php $this->render_zoom_meeting_agenda_field(); ?>
+                            <?php $this->render_zoom_create_pending_field(); ?>
                         </div>
                     </div>
 
@@ -1950,6 +2135,38 @@ class KAB_Admin {
         echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Badge','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="badge" value="'.esc_attr($emp['badge']??'').'"/></div>';
         echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Status','kura-ai-booking-free').'</label><select class="kab-form-control" name="status">'; foreach(array('available','busy','away','on_break') as $st){ echo '<option value="'.$st.'" '.selected(($emp['status']??'available'),$st,false).'>'.esc_html(ucfirst($st)).'</option>'; } echo '</select></div>';
         echo '<div class="kab-form-group"><label class="kab-form-label"><input type="checkbox" name="show_on_site" '.checked(intval($emp['show_on_site']??0),1,false).' /> '.esc_html__('Show employee on site','kura-ai-booking-free').'</label></div>';
+        // Google Calendar connect
+        $gc_connected = ! empty( $emp['google_refresh_token'] );
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Google Calendar','kura-ai-booking-free').'</label>';
+        if ( $employee_id ) {
+            if ( $gc_connected ) {
+                echo '<div>'.esc_html__('Connected','kura-ai-booking-free').'</div>';
+                echo '<a class="kab-btn" href="'.esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=kab_google_disconnect&employee_id='.$employee_id ), 'kab_google_disconnect_'.$employee_id ) ).'">'.esc_html__('Sign out from Google','kura-ai-booking-free').'</a>';
+            } else {
+                echo '<a class="kab-btn kab-btn-primary" href="'.esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=kab_google_oauth_start&employee_id='.$employee_id ), 'kab_google_oauth_start_'.$employee_id ) ).'">'.esc_html__('Connect Google','kura-ai-booking-free').'</a>';
+            }
+        } else {
+            echo '<div class="description">'.esc_html__('Save the employee first to connect Google Calendar.','kura-ai-booking-free').'</div>';
+        }
+        echo '</div>';
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Google Calendar ID','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="google_calendar_id" value="'.esc_attr($emp['google_calendar_id']??'').'" placeholder="'.esc_attr__('primary','kura-ai-booking-free').'" /></div>';
+        // Zoom user mapping
+        echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Zoom User','kura-ai-booking-free').'</label>';
+        if ( function_exists('kab_zoom_list_users') ) {
+            $users = kab_zoom_list_users();
+            echo '<select class="kab-form-control" name="zoom_user_id">';
+            echo '<option value="">'.esc_html__('None','kura-ai-booking-free').'</option>';
+            $currentZoom = $emp['zoom_user_id']??'';
+            foreach ( $users as $u ) {
+                $id = $u['id'] ?? ''; $name = ($u['first_name'] ?? '').' '.($u['last_name'] ?? ''); $email = $u['email'] ?? '';
+                $label = trim($name) ? $name : $email;
+                echo '<option value="'.esc_attr($id).'" '.selected($currentZoom,$id,false).'>'.esc_html($label).' ('.esc_html($email).')</option>';
+            }
+            echo '</select>';
+        } else {
+            echo '<div class="description">'.esc_html__('Enable Zoom in Settings to load users','kura-ai-booking-free').'</div>';
+        }
+        echo '</div>';
         echo '</div></div>';
         echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Description','kura-ai-booking-free').'</label><textarea class="kab-form-control" name="description" rows="4" placeholder="'.esc_attr__('Short bio…','kura-ai-booking-free').'">'.esc_textarea($emp['description']??'').'</textarea></div>';
         echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Internal Note','kura-ai-booking-free').'</label><textarea class="kab-form-control" name="internal_note" rows="3">'.esc_textarea($emp['internal_note']??'').'</textarea></div>';
@@ -2081,3 +2298,7 @@ var add=function(btnId,tbodyId,html){var b=document.getElementById(btnId);if(b){
         <?php
     }
 }
+        // Google Calendar
+        if ( isset( $input['google_client_id'] ) ) { $sanitized['google_client_id'] = sanitize_text_field( $input['google_client_id'] ); }
+        if ( isset( $input['google_client_secret'] ) ) { $sanitized['google_client_secret'] = sanitize_text_field( $input['google_client_secret'] ); }
+        $sanitized['google_remove_busy'] = isset( $input['google_remove_busy'] ) ? absint( $input['google_remove_busy'] ) : 0;

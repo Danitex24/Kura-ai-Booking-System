@@ -110,6 +110,207 @@ add_action( 'init', function() {
     $prefix = $wpdb->prefix;
     $wpdb->query("CREATE TABLE IF NOT EXISTS {$prefix}kab_custom_fields (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(64) NOT NULL, label VARCHAR(255) NOT NULL, type VARCHAR(20) NOT NULL, options TEXT, required TINYINT(1) NOT NULL DEFAULT 0, status VARCHAR(20) NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(id), UNIQUE KEY name (name))");
     $wpdb->query("CREATE TABLE IF NOT EXISTS {$prefix}kab_booking_meta (id INT NOT NULL AUTO_INCREMENT, booking_id INT NOT NULL, field_id INT NOT NULL, value TEXT, PRIMARY KEY(id), KEY booking_id (booking_id), KEY field_id (field_id))");
+    // Add Google columns to employees if missing
+    $emp = $wpdb->prefix . 'kab_employees';
+    $cols = array(
+        'google_access_token' => "ALTER TABLE {$emp} ADD COLUMN google_access_token TEXT",
+        'google_refresh_token' => "ALTER TABLE {$emp} ADD COLUMN google_refresh_token TEXT",
+        'google_calendar_id' => "ALTER TABLE {$emp} ADD COLUMN google_calendar_id VARCHAR(255)",
+        'google_token_expires' => "ALTER TABLE {$emp} ADD COLUMN google_token_expires DATETIME"
+    );
+    foreach ( $cols as $c => $sql ) {
+        $exists_c = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$emp} LIKE %s", $c ) );
+        if ( ! $exists_c ) { $wpdb->query( $sql ); }
+    }
+    // Add Zoom columns
+    $zoom_cols_emp = array(
+        'zoom_user_id' => "ALTER TABLE {$emp} ADD COLUMN zoom_user_id VARCHAR(64)"
+    );
+    foreach ( $zoom_cols_emp as $c => $sql ) {
+        $exists_c = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$emp} LIKE %s", $c ) );
+        if ( ! $exists_c ) { $wpdb->query( $sql ); }
+    }
+    $book = $wpdb->prefix . 'kab_bookings';
+    $zoom_cols_book = array(
+        'zoom_meeting_id' => "ALTER TABLE {$book} ADD COLUMN zoom_meeting_id VARCHAR(64)",
+        'zoom_host_url'   => "ALTER TABLE {$book} ADD COLUMN zoom_host_url TEXT",
+        'zoom_join_url'   => "ALTER TABLE {$book} ADD COLUMN zoom_join_url TEXT"
+    );
+    foreach ( $zoom_cols_book as $c => $sql ) {
+        $exists_c = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$book} LIKE %s", $c ) );
+        if ( ! $exists_c ) { $wpdb->query( $sql ); }
+    }
+    $events = $wpdb->prefix . 'kab_events';
+    $zoom_cols_evt = array(
+        'zoom_user_id'    => "ALTER TABLE {$events} ADD COLUMN zoom_user_id VARCHAR(64)",
+        'zoom_meeting_id' => "ALTER TABLE {$events} ADD COLUMN zoom_meeting_id VARCHAR(64)",
+        'zoom_host_url'   => "ALTER TABLE {$events} ADD COLUMN zoom_host_url TEXT",
+        'zoom_join_url'   => "ALTER TABLE {$events} ADD COLUMN zoom_join_url TEXT"
+    );
+    foreach ( $zoom_cols_evt as $c => $sql ) {
+        $exists_c = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$events} LIKE %s", $c ) );
+        if ( ! $exists_c ) { $wpdb->query( $sql ); }
+    }
+} );
+
+// ===== Google Calendar helpers =====
+function kab_get_google_settings() {
+    $opt = get_option( 'kab_settings', array() );
+    return array(
+        'client_id' => isset( $opt['google_client_id'] ) ? $opt['google_client_id'] : '',
+        'client_secret' => isset( $opt['google_client_secret'] ) ? $opt['google_client_secret'] : '',
+        'redirect_uri' => admin_url( 'admin-post.php?action=kab_google_oauth_callback' ),
+        'remove_busy' => ! empty( $opt['google_remove_busy'] ),
+    );
+}
+
+function kab_google_refresh_token( $employee_id ) {
+    global $wpdb; $emp = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_employees WHERE id=%d", $employee_id ), ARRAY_A );
+    if ( ! $emp || empty( $emp['google_refresh_token'] ) ) return false;
+    $settings = kab_get_google_settings(); if ( empty( $settings['client_id'] ) || empty( $settings['client_secret'] ) ) return false;
+    $body = array(
+        'client_id' => $settings['client_id'],
+        'client_secret' => $settings['client_secret'],
+        'refresh_token' => $emp['google_refresh_token'],
+        'grant_type' => 'refresh_token',
+    );
+    $resp = wp_remote_post( 'https://oauth2.googleapis.com/token', array( 'body' => $body ) );
+    if ( is_wp_error( $resp ) ) return false;
+    $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+    if ( ! empty( $data['access_token'] ) ) {
+        $expires = isset( $data['expires_in'] ) ? time() + intval( $data['expires_in'] ) : time() + 3600;
+        $wpdb->update( $wpdb->prefix.'kab_employees', array( 'google_access_token' => $data['access_token'], 'google_token_expires' => date( 'Y-m-d H:i:s', $expires ) ), array( 'id' => $employee_id ), array( '%s','%s' ), array( '%d' ) );
+        return $data['access_token'];
+    }
+    return false;
+}
+
+function kab_google_get_access_token( $employee_id ) {
+    global $wpdb; $emp = $wpdb->get_row( $wpdb->prepare( "SELECT google_access_token, google_token_expires FROM {$wpdb->prefix}kab_employees WHERE id=%d", $employee_id ), ARRAY_A );
+    if ( ! $emp ) return false;
+    if ( empty( $emp['google_access_token'] ) || ( ! empty( $emp['google_token_expires'] ) && strtotime( $emp['google_token_expires'] ) < time() + 60 ) ) {
+        return kab_google_refresh_token( $employee_id );
+    }
+    return $emp['google_access_token'];
+}
+
+function kab_google_create_event( $employee_id, $summary, $description, $start_iso, $end_iso ) {
+    global $wpdb; $cal = $wpdb->get_var( $wpdb->prepare( "SELECT google_calendar_id FROM {$wpdb->prefix}kab_employees WHERE id=%d", $employee_id ) );
+    if ( ! $cal ) $cal = 'primary';
+    $token = kab_google_get_access_token( $employee_id ); if ( ! $token ) return false;
+    $body = wp_json_encode( array( 'summary' => $summary, 'description' => $description, 'start' => array( 'dateTime' => $start_iso ), 'end' => array( 'dateTime' => $end_iso ) ) );
+    $resp = wp_remote_post( 'https://www.googleapis.com/calendar/v3/calendars/' . rawurlencode( $cal ) . '/events', array( 'headers' => array( 'Authorization' => 'Bearer ' . $token, 'Content-Type' => 'application/json' ), 'body' => $body ) );
+    return ! is_wp_error( $resp ) && wp_remote_retrieve_response_code( $resp ) < 300;
+}
+
+function kab_google_freebusy_busy( $employee_id, $time_min_iso, $time_max_iso ) {
+    global $wpdb; $cal = $wpdb->get_var( $wpdb->prepare( "SELECT google_calendar_id FROM {$wpdb->prefix}kab_employees WHERE id=%d", $employee_id ) );
+    if ( ! $cal ) $cal = 'primary';
+    $token = kab_google_get_access_token( $employee_id ); if ( ! $token ) return array();
+    $body = wp_json_encode( array( 'timeMin' => $time_min_iso, 'timeMax' => $time_max_iso, 'items' => array( array( 'id' => $cal ) ) ) );
+    $resp = wp_remote_post( 'https://www.googleapis.com/calendar/v3/freeBusy', array( 'headers' => array( 'Authorization' => 'Bearer ' . $token, 'Content-Type' => 'application/json' ), 'body' => $body ) );
+    if ( is_wp_error( $resp ) ) return array();
+    $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+    $busy = $data['calendars'][ $cal ]['busy'] ?? array();
+    return $busy;
+}
+
+// ===== Zoom helpers (Server-to-Server OAuth) =====
+function kab_get_zoom_settings() {
+    $opt = get_option( 'kab_settings', array() );
+    return array(
+        'enabled'        => ! empty( $opt['zoom_enabled'] ),
+        'account_id'     => isset( $opt['zoom_account_id'] ) ? $opt['zoom_account_id'] : '',
+        'client_id'      => isset( $opt['zoom_client_id'] ) ? $opt['zoom_client_id'] : '',
+        'client_secret'  => isset( $opt['zoom_client_secret'] ) ? $opt['zoom_client_secret'] : '',
+        'meeting_title'  => isset( $opt['zoom_meeting_title'] ) ? $opt['zoom_meeting_title'] : '%service_name%',
+        'meeting_agenda' => isset( $opt['zoom_meeting_agenda'] ) ? $opt['zoom_meeting_agenda'] : '%service_description%',
+        'create_pending' => ! empty( $opt['zoom_create_pending'] ),
+    );
+}
+
+function kab_zoom_get_access_token() {
+    $s = kab_get_zoom_settings(); if ( empty( $s['account_id'] ) || empty( $s['client_id'] ) || empty( $s['client_secret'] ) ) return false;
+    $auth = base64_encode( $s['client_id'] . ':' . $s['client_secret'] );
+    $resp = wp_remote_post( 'https://zoom.us/oauth/token?grant_type=account_credentials&account_id=' . rawurlencode( $s['account_id'] ), array( 'headers' => array( 'Authorization' => 'Basic ' . $auth ) ) );
+    if ( is_wp_error( $resp ) ) return false; $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+    return ! empty( $data['access_token'] ) ? $data['access_token'] : false;
+}
+
+function kab_zoom_list_users() {
+    $token = kab_zoom_get_access_token(); if ( ! $token ) return array();
+    $resp = wp_remote_get( 'https://api.zoom.us/v2/users', array( 'headers' => array( 'Authorization' => 'Bearer ' . $token ) ) );
+    if ( is_wp_error( $resp ) ) return array(); $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+    return isset( $data['users'] ) && is_array( $data['users'] ) ? $data['users'] : array();
+}
+
+function kab_zoom_create_meeting( $zoom_user_id, $topic, $agenda, $start_iso, $duration_min = 60, $timezone = '' ) {
+    $token = kab_zoom_get_access_token(); if ( ! $token || ! $zoom_user_id ) return false;
+    $body = wp_json_encode( array( 'type' => 2, 'topic' => $topic, 'agenda' => $agenda, 'start_time' => $start_iso, 'duration' => intval( $duration_min ), 'timezone' => $timezone ?: null ) );
+    $url = 'https://api.zoom.us/v2/users/' . rawurlencode( $zoom_user_id ) . '/meetings';
+    $resp = wp_remote_post( $url, array( 'headers' => array( 'Authorization' => 'Bearer ' . $token, 'Content-Type' => 'application/json' ), 'body' => $body ) );
+    if ( is_wp_error( $resp ) ) return false; $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+    if ( empty( $data['id'] ) ) return false;
+    return array( 'id' => $data['id'], 'host_url' => $data['start_url'] ?? '', 'join_url' => $data['join_url'] ?? '' );
+}
+
+// ===== Email placeholders (Zoom) =====
+function kab_get_zoom_placeholders_for_booking( $booking_id ) {
+    global $wpdb; $b = $wpdb->get_row( $wpdb->prepare( "SELECT zoom_host_url, zoom_join_url FROM {$wpdb->prefix}kab_bookings WHERE id=%d", $booking_id ), ARRAY_A );
+    return array(
+        '%zoom_host_url%' => $b['zoom_host_url'] ?? '',
+        '%zoom_join_url%' => $b['zoom_join_url'] ?? '',
+    );
+}
+function kab_get_zoom_placeholders_for_event( $event_id ) {
+    global $wpdb; $e = $wpdb->get_row( $wpdb->prepare( "SELECT zoom_host_url, zoom_join_url, event_date, event_time FROM {$wpdb->prefix}kab_events WHERE id=%d", $event_id ), ARRAY_A );
+    $date = isset($e['event_date']) ? $e['event_date'] : ''; $time = isset($e['event_time']) ? $e['event_time'] : '';
+    return array(
+        '%zoom_host_url_date%' => !empty($e['zoom_host_url']) ? ($e['zoom_host_url'].' | '.$date) : '',
+        '%zoom_host_url_date_time%' => !empty($e['zoom_host_url']) ? ($e['zoom_host_url'].' | '.$date.' '.$time) : '',
+        '%zoom_join_url_date%' => !empty($e['zoom_join_url']) ? ($e['zoom_join_url'].' | '.$date) : '',
+        '%zoom_join_url_date_time%' => !empty($e['zoom_join_url']) ? ($e['zoom_join_url'].' | '.$date.' '.$time) : '',
+    );
+}
+
+// ===== Google OAuth handlers =====
+add_action( 'admin_post_kab_google_oauth_start', function() {
+    if ( ! current_user_can( 'manage_options' ) ) wp_die( __( 'Insufficient permissions', 'kura-ai-booking-free' ) );
+    $employee_id = intval( $_GET['employee_id'] ?? 0 ); if ( ! $employee_id ) wp_die( __( 'Invalid employee', 'kura-ai-booking-free' ) );
+    $nonce = sanitize_text_field( $_GET['_wpnonce'] ?? '' ); if ( ! $nonce || ! wp_verify_nonce( $nonce, 'kab_google_oauth_start_' . $employee_id ) ) wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) );
+    $s = kab_get_google_settings(); if ( empty( $s['client_id'] ) || empty( $s['client_secret'] ) ) wp_die( __( 'Google API credentials missing', 'kura-ai-booking-free' ) );
+    $auth = add_query_arg( array(
+        'client_id' => $s['client_id'],
+        'redirect_uri' => $s['redirect_uri'],
+        'response_type' => 'code',
+        'scope' => 'https://www.googleapis.com/auth/calendar',
+        'access_type' => 'offline',
+        'prompt' => 'consent',
+        'state' => $employee_id . '|' . $nonce,
+    ), 'https://accounts.google.com/o/oauth2/v2/auth' );
+    wp_redirect( $auth ); exit;
+} );
+
+add_action( 'admin_post_kab_google_oauth_callback', function() {
+    if ( ! current_user_can( 'manage_options' ) ) wp_die( __( 'Insufficient permissions', 'kura-ai-booking-free' ) );
+    $code = sanitize_text_field( $_GET['code'] ?? '' ); $state = sanitize_text_field( $_GET['state'] ?? '' );
+    $parts = explode( '|', $state ); $employee_id = intval( $parts[0] ?? 0 ); $state_nonce = $parts[1] ?? '';
+    $s = kab_get_google_settings(); if ( ! $code || ! $employee_id || ! $state_nonce || ! wp_verify_nonce( $state_nonce, 'kab_google_oauth_start_' . $employee_id ) ) wp_die( __( 'Invalid response', 'kura-ai-booking-free' ) );
+    $resp = wp_remote_post( 'https://oauth2.googleapis.com/token', array( 'body' => array( 'code' => $code, 'client_id' => $s['client_id'], 'client_secret' => $s['client_secret'], 'redirect_uri' => $s['redirect_uri'], 'grant_type' => 'authorization_code' ) ) );
+    if ( is_wp_error( $resp ) ) wp_die( __( 'Token exchange failed', 'kura-ai-booking-free' ) );
+    $data = json_decode( wp_remote_retrieve_body( $resp ), true );
+    if ( empty( $data['access_token'] ) || empty( $data['refresh_token'] ) ) wp_die( __( 'Token missing', 'kura-ai-booking-free' ) );
+    global $wpdb; $expires = time() + intval( $data['expires_in'] ?? 3600 );
+    $wpdb->update( $wpdb->prefix.'kab_employees', array( 'google_access_token' => $data['access_token'], 'google_refresh_token' => $data['refresh_token'], 'google_token_expires' => date( 'Y-m-d H:i:s', $expires ), 'google_calendar_id' => 'primary' ), array( 'id' => $employee_id ), array( '%s','%s','%s','%s' ), array( '%d' ) );
+    wp_redirect( admin_url( 'admin.php?page=kab-employees&action=edit&employee_id=' . $employee_id . '&connected=1' ) ); exit;
+} );
+
+add_action( 'admin_post_kab_google_disconnect', function() {
+    if ( ! current_user_can( 'manage_options' ) ) wp_die( __( 'Insufficient permissions', 'kura-ai-booking-free' ) );
+    $employee_id = intval( $_GET['employee_id'] ?? 0 );
+    $nonce = sanitize_text_field( $_GET['_wpnonce'] ?? '' ); if ( ! $nonce || ! wp_verify_nonce( $nonce, 'kab_google_disconnect_' . $employee_id ) ) wp_die( __( 'Invalid request', 'kura-ai-booking-free' ) );
+    global $wpdb; $wpdb->update( $wpdb->prefix.'kab_employees', array( 'google_access_token' => null, 'google_refresh_token' => null, 'google_calendar_id' => null, 'google_token_expires' => null ), array( 'id' => $employee_id ), array( '%s','%s','%s','%s' ), array( '%d' ) );
+    wp_redirect( admin_url( 'admin.php?page=kab-employees&action=edit&employee_id=' . $employee_id . '&disconnected=1' ) ); exit;
 } );
 
 add_action( 'admin_post_kab_export_invoices', function() {

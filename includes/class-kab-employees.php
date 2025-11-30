@@ -48,7 +48,9 @@ class KAB_Employees {
             'internal_note'=> sanitize_textarea_field( $data['internal_note'] ?? '' ),
             'status'     => sanitize_text_field( $data['status'] ?? 'available' ),
             'show_on_site'=> isset( $data['show_on_site'] ) ? 1 : 0,
-        ), array('%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s','%s','%d') );
+            'google_calendar_id' => sanitize_text_field( $data['google_calendar_id'] ?? '' ),
+            'zoom_user_id' => sanitize_text_field( $data['zoom_user_id'] ?? '' ),
+        ), array('%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s','%s','%d','%s','%s') );
         return $wpdb->insert_id;
     }
 
@@ -66,7 +68,9 @@ class KAB_Employees {
             'internal_note'=> sanitize_textarea_field( $data['internal_note'] ?? '' ),
             'status'     => sanitize_text_field( $data['status'] ?? 'available' ),
             'show_on_site'=> isset( $data['show_on_site'] ) ? 1 : 0,
-        ), array( 'id' => intval( $id ) ), array('%s','%s','%s','%s','%d','%s','%s','%s','%s','%s','%s','%d'), array('%d') );
+            'google_calendar_id' => sanitize_text_field( $data['google_calendar_id'] ?? '' ),
+            'zoom_user_id' => sanitize_text_field( $data['zoom_user_id'] ?? '' ),
+        ), array( 'id' => intval( $id ) ), array('%s','%s','%s','%s','%d','%s','%s','%s','%s','%s','%s','%d','%s','%s'), array('%d') );
     }
 
     public function hide_employee( $id ) { global $wpdb; return $wpdb->update( $wpdb->prefix.'kab_employees', array('show_on_site'=>0), array('id'=>intval($id)), array('%d'), array('%d') ); }

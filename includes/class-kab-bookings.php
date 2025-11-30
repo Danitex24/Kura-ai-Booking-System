@@ -72,16 +72,64 @@ class KAB_Bookings {
             ),
             array( '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
         );
-		$booking_id = $wpdb->insert_id;
-		if ( $booking_id ) {
-			require_once plugin_dir_path( __FILE__ ) . 'class-kab-tickets.php';
-			KAB_Tickets::generate_and_send_ticket( $booking_id, $ticket_id, $data );
-			
-			// Generate invoice for the booking
-			do_action( 'kab_booking_completed', $booking_id, $data );
-		}
-		return $booking_id;
-	}
+        $booking_id = $wpdb->insert_id;
+        if ( $booking_id ) {
+            require_once plugin_dir_path( __FILE__ ) . 'class-kab-tickets.php';
+            KAB_Tickets::generate_and_send_ticket( $booking_id, $ticket_id, $data );
+            
+            // Generate invoice for the booking
+            do_action( 'kab_booking_completed', $booking_id, $data );
+
+            // Push to Google Calendar if employee connected
+            if ( $employee_id ) {
+                $summary = $booking_type === 'event' ? 'Event booking' : 'Service appointment';
+                $description = $booking_type === 'event' ? 'Event booking via Kura-ai Booking' : 'Service appointment via Kura-ai Booking';
+                // Calculate end time using service duration or +60 minutes default
+                $duration_min = 60;
+                if ( $booking_type === 'service' && $service_id ) {
+                    $svc = $wpdb->get_row( $wpdb->prepare( "SELECT duration FROM {$wpdb->prefix}kab_services WHERE id=%d", $service_id ), ARRAY_A );
+                    if ( $svc && intval( $svc['duration'] ) > 0 ) { $duration_min = intval( $svc['duration'] ); }
+                }
+                $start_ts = strtotime( $booking_date . ' ' . $booking_time );
+                $end_ts   = $start_ts + ( $duration_min * 60 );
+                $start_iso = date( 'c', $start_ts );
+                $end_iso   = date( 'c', $end_ts );
+                if ( function_exists( 'kab_google_create_event' ) ) { kab_google_create_event( $employee_id, $summary, $description, $start_iso, $end_iso ); }
+
+                // Create Zoom meeting if enabled and employee has Zoom user
+                if ( function_exists( 'kab_get_zoom_settings' ) ) {
+                    $z = kab_get_zoom_settings();
+                    if ( ! empty( $z['enabled'] ) && ( $z['create_pending'] || $status === 'approved' ) ) {
+                        $zoom_user_id = $wpdb->get_var( $wpdb->prepare( "SELECT zoom_user_id FROM {$wpdb->prefix}kab_employees WHERE id=%d", $employee_id ) );
+                        if ( $zoom_user_id ) {
+                            // Build topic and agenda using placeholders
+                            $topic = $z['meeting_title']; $agenda = $z['meeting_agenda'];
+                            if ( $booking_type === 'service' && $service_id ) {
+                                $svc = $wpdb->get_row( $wpdb->prepare( "SELECT name, description FROM {$wpdb->prefix}kab_services WHERE id=%d", $service_id ), ARRAY_A );
+                                if ( $svc ) {
+                                    $topic = str_replace( array('%service_name%'), array($svc['name']), $topic );
+                                    $agenda = str_replace( array('%service_description%'), array($svc['description']), $agenda );
+                                }
+                            }
+                            if ( $booking_type === 'event' && $event_id ) {
+                                $evt = $wpdb->get_row( $wpdb->prepare( "SELECT name, description FROM {$wpdb->prefix}kab_events WHERE id=%d", $event_id ), ARRAY_A );
+                                if ( $evt ) {
+                                    $topic = str_replace( array('%event_name%'), array($evt['name']), $topic );
+                                    $agenda = str_replace( array('%event_description%'), array($evt['description']), $agenda );
+                                }
+                            }
+                            $duration_min_zoom = $duration_min;
+                            $result = function_exists('kab_zoom_create_meeting') ? kab_zoom_create_meeting( $zoom_user_id, $topic, $agenda, date('c',$start_ts), $duration_min_zoom ) : false;
+                            if ( $result ) {
+                                $wpdb->update( $wpdb->prefix.'kab_bookings', array( 'zoom_meeting_id' => $result['id'], 'zoom_host_url' => $result['host_url'], 'zoom_join_url' => $result['join_url'] ), array( 'id' => $booking_id ), array('%s','%s','%s'), array('%d') );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $booking_id;
+    }
 
 	public static function cancel_booking( $booking_id, $user_id ) {
 		global $wpdb;
@@ -189,6 +237,22 @@ class KAB_Bookings {
             $s = strtotime( $booking_date . ' ' . $r['start_time'] );
             $e = strtotime( $booking_date . ' ' . $r['end_time'] );
             if ( $ts >= $s && $ts <= $e ) return true;
+        }
+        // Google busy slots blocking if enabled
+        if ( function_exists( 'kab_get_google_settings' ) ) {
+            $settings = kab_get_google_settings();
+            if ( ! empty( $settings['remove_busy'] ) ) {
+                $start_day = date( 'Y-m-d\\T00:00:00P', strtotime( $booking_date ) );
+                $end_day   = date( 'Y-m-d\\T23:59:59P', strtotime( $booking_date ) );
+                if ( function_exists( 'kab_google_freebusy_busy' ) ) {
+                    $busy = kab_google_freebusy_busy( $employee_id, $start_day, $end_day );
+                    foreach ( $busy as $b ) {
+                        $bs = strtotime( $b['start'] );
+                        $be = strtotime( $b['end'] );
+                        if ( $ts >= $bs && $ts < $be ) { return false; }
+                    }
+                }
+            }
         }
         return false;
     }
