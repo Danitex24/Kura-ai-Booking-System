@@ -606,6 +606,21 @@ function kab_free_init_plugin() {
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoice-pdf.php';
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-invoice-admin.php';
 
+	// Load new feature classes (v1.1.0)
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-recurring-events.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-reminders.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-waitlist.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-cancellations.php';
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-reviews.php';
+
+	// Load frontend forms
+	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-frontend-forms.php';
+
+	// Load admin menu handler for new features
+	if ( is_admin() ) {
+		require_once KAB_FREE_PLUGIN_DIR . 'includes/admin/class-kab-admin-menu.php';
+	}
+
 	// Instantiate the admin class to register menus.
     new KAB_Admin();
     new KAB_Invoices();

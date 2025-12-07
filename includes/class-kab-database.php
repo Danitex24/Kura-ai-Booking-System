@@ -26,6 +26,9 @@ class KAB_Database {
             price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
             currency VARCHAR(3) NOT NULL DEFAULT 'USD',
             payment_methods TEXT,
+            capacity INT NOT NULL DEFAULT 1,
+            avg_rating DECIMAL(3,2) NOT NULL DEFAULT 0.00,
+            review_count INT NOT NULL DEFAULT 0,
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id)
@@ -45,9 +48,15 @@ class KAB_Database {
 			booking_open DATETIME NULL,
 			booking_close DATETIME NULL,
 			tags TEXT,
+			featured TINYINT(1) NOT NULL DEFAULT 0,
+			image_url TEXT NULL,
+			avg_rating DECIMAL(3,2) NOT NULL DEFAULT 0.00,
+			review_count INT NOT NULL DEFAULT 0,
 			status VARCHAR(20) NOT NULL DEFAULT 'active',
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id)
+			PRIMARY KEY (id),
+			KEY featured (featured),
+			KEY event_date (event_date)
 		) $charset_collate;";
 
 		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_bookings (
@@ -184,6 +193,129 @@ class KAB_Database {
             KEY booking_id (booking_id),
             KEY user_id (user_id)
         ) $charset_collate;";
+
+		// NEW FEATURES TABLES (v1.1.0)
+
+		// Event Recurrence Patterns
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_event_recurrence (
+			id INT NOT NULL AUTO_INCREMENT,
+			event_id INT NOT NULL,
+			frequency VARCHAR(20) NOT NULL,
+			interval INT NOT NULL DEFAULT 1,
+			start_date DATE NOT NULL,
+			end_date DATE NULL,
+			occurrences INT NULL,
+			days_of_week VARCHAR(20) NULL,
+			day_of_month INT NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY event_id (event_id)
+		) $charset_collate;";
+
+		// Event Instances (generated from recurrence patterns)
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_event_instances (
+			id INT NOT NULL AUTO_INCREMENT,
+			recurrence_id INT NOT NULL,
+			event_id INT NOT NULL,
+			instance_date DATE NOT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'active',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY recurrence_id (recurrence_id),
+			KEY event_id (event_id),
+			KEY instance_date (instance_date)
+		) $charset_collate;";
+
+		// Email Reminders
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_reminders (
+			id INT NOT NULL AUTO_INCREMENT,
+			booking_id INT NOT NULL,
+			reminder_type VARCHAR(20) NOT NULL,
+			scheduled_time DATETIME NULL,
+			sent_at DATETIME NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'scheduled',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY booking_id (booking_id),
+			KEY status (status),
+			KEY scheduled_time (scheduled_time)
+		) $charset_collate;";
+
+		// Waitlist
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_waitlist (
+			id INT NOT NULL AUTO_INCREMENT,
+			item_type VARCHAR(20) NOT NULL,
+			item_id INT NOT NULL,
+			booking_date DATE NULL,
+			customer_name VARCHAR(255) NOT NULL,
+			customer_email VARCHAR(191) NOT NULL,
+			customer_phone VARCHAR(50) NULL,
+			priority INT NOT NULL DEFAULT 1,
+			status VARCHAR(20) NOT NULL DEFAULT 'active',
+			notified_at DATETIME NULL,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY item_type_id (item_type, item_id),
+			KEY status (status),
+			KEY priority (priority)
+		) $charset_collate;";
+
+		// Cancellations & Refunds
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_cancellations (
+			id INT NOT NULL AUTO_INCREMENT,
+			booking_id INT NOT NULL,
+			reason TEXT NULL,
+			cancelled_by VARCHAR(50) NOT NULL DEFAULT 'customer',
+			refund_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			refund_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+			refund_processed_at DATETIME NULL,
+			cancellation_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY booking_id (booking_id),
+			KEY refund_status (refund_status)
+		) $charset_collate;";
+
+		// Reviews & Ratings
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_reviews (
+			id INT NOT NULL AUTO_INCREMENT,
+			booking_id INT NOT NULL,
+			item_type VARCHAR(20) NOT NULL,
+			item_id INT NOT NULL,
+			customer_name VARCHAR(255) NOT NULL,
+			customer_email VARCHAR(191) NOT NULL,
+			rating TINYINT NOT NULL,
+			title VARCHAR(255) NULL,
+			comment TEXT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'approved',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY booking_id (booking_id),
+			KEY item_type_id (item_type, item_id),
+			KEY rating (rating),
+			KEY status (status)
+		) $charset_collate;";
+
+		// Event Categories
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_event_categories (
+			id INT NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255) NOT NULL,
+			slug VARCHAR(255) NOT NULL,
+			description TEXT NULL,
+			icon VARCHAR(50) NULL,
+			color VARCHAR(7) NULL,
+			status VARCHAR(20) NOT NULL DEFAULT 'active',
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY slug (slug)
+		) $charset_collate;";
+
+		// Event-Category Relationships
+		$tables[] = "CREATE TABLE {$wpdb->prefix}kab_event_category_relations (
+			event_id INT NOT NULL,
+			category_id INT NOT NULL,
+			PRIMARY KEY (event_id, category_id)
+		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		foreach ( $tables as $sql ) {
