@@ -127,8 +127,8 @@ add_action( 'init', function() {
         'zoom_user_id' => "ALTER TABLE {$emp} ADD COLUMN zoom_user_id VARCHAR(64)"
     );
     foreach ( $zoom_cols_emp as $c => $sql ) {
-        $exists_c = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$emp} LIKE %s", $c ) );
-        if ( ! $exists_c ) { $wpdb->query( $sql ); }
+        $column_exists = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s", $wpdb->dbname, $emp, $c ) );
+        if ( empty( $column_exists ) ) { $wpdb->query( $sql ); }
     }
     $book = $wpdb->prefix . 'kab_bookings';
     $zoom_cols_book = array(
@@ -137,8 +137,8 @@ add_action( 'init', function() {
         'zoom_join_url'   => "ALTER TABLE {$book} ADD COLUMN zoom_join_url TEXT"
     );
     foreach ( $zoom_cols_book as $c => $sql ) {
-        $exists_c = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$book} LIKE %s", $c ) );
-        if ( ! $exists_c ) { $wpdb->query( $sql ); }
+        $column_exists = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s", $wpdb->dbname, $book, $c ) );
+        if ( empty( $column_exists ) ) { $wpdb->query( $sql ); }
     }
     $events = $wpdb->prefix . 'kab_events';
     $zoom_cols_evt = array(
@@ -148,8 +148,8 @@ add_action( 'init', function() {
         'zoom_join_url'   => "ALTER TABLE {$events} ADD COLUMN zoom_join_url TEXT"
     );
     foreach ( $zoom_cols_evt as $c => $sql ) {
-        $exists_c = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$events} LIKE %s", $c ) );
-        if ( ! $exists_c ) { $wpdb->query( $sql ); }
+        $column_exists = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s", $wpdb->dbname, $events, $c ) );
+        if ( empty( $column_exists ) ) { $wpdb->query( $sql ); }
     }
 } );
 
