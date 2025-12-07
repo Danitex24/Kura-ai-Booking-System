@@ -49,7 +49,7 @@ class KAB_Setup_Wizard {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_setup_page' ) );
 		add_action( 'admin_post_kab_dismiss_setup', array( $this, 'handle_dismiss' ) );
-		add_action( 'admin_init', array( $this, 'handle_setup' ) );
+		add_action( 'admin_post_kab_setup_step', array( $this, 'handle_setup' ) );
 	}
 
 	/**
@@ -73,18 +73,16 @@ class KAB_Setup_Wizard {
 	 */
 	public function add_setup_page() {
 		// Only show setup wizard if not completed or user wants to rerun
-		if ( ! get_option( 'kab_setup_completed' ) || ( isset( $_GET['page'] ) && 'kab-setup' === $_GET['page'] ) ) {
+		if ( ! get_option( 'kab_setup_completed' ) || ( isset( $_GET['page'] ) && 'kab-setup-wizard' === $_GET['page'] ) ) {
+			// Register as a hidden page (null parent = no menu item)
 			add_submenu_page(
-				'kab-dashboard',
+				null,
 				__( 'Kura-ai Setup Wizard', 'kura-ai-booking-free' ),
 				__( 'Setup Wizard', 'kura-ai-booking-free' ),
 				'manage_options',
-				'kab-setup',
+				'kab-setup-wizard',
 				array( $this, 'render_setup_page' )
 			);
-			add_action( 'admin_menu', function() {
-				remove_submenu_page( 'kab-dashboard', 'kab-setup' );
-			}, 999 );
 		}
 	}
 
@@ -125,7 +123,7 @@ class KAB_Setup_Wizard {
 			$this->complete_setup();
 		} else {
 			// Redirect to next step
-			wp_redirect( admin_url( 'admin.php?page=kab-setup&step=' . $next_step ) );
+			wp_redirect( admin_url( 'admin.php?page=kab-setup-wizard&step=' . $next_step ) );
 			exit;
 		}
 	}
@@ -485,17 +483,18 @@ class KAB_Setup_Wizard {
 				</div>
 				
 				<div class="kab-content">
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=kab-setup' ) ); ?>">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="kab-wizard-form">
 					<?php wp_nonce_field( 'kab_setup_step_' . $this->current_step, 'kab_setup_nonce' ); ?>
+					<input type="hidden" name="action" value="kab_setup_step">
 					<input type="hidden" name="step" value="<?php echo $this->current_step; ?>">
-					
+
 					<?php $this->render_step_content(); ?>
 				</form>
 			</div>
-				
-				<div class="kab-footer">
-					<?php $this->render_footer_buttons(); ?>
-				</div>
+
+			<div class="kab-footer">
+				<?php $this->render_footer_buttons(); ?>
+			</div>
 			</div>
 		</body>
 		</html>
@@ -587,11 +586,11 @@ class KAB_Setup_Wizard {
 			echo '<span></span>'; // Empty span for flex spacing
 		}
 
-		// Next/Complete button
+		// Next/Complete button (submits the main form)
 		if ( $this->current_step < count( $this->setup_steps() ) ) {
-			echo '<button type="submit" class="kab-button kab-button-primary" id="kab-next-button">' . esc_html__( 'Next', 'kura-ai-booking-free' ) . '</button>';
+			echo '<button type="submit" form="kab-wizard-form" class="kab-button kab-button-primary" id="kab-next-button">' . esc_html__( 'Next', 'kura-ai-booking-free' ) . '</button>';
 		} else {
-			echo '<button type="submit" class="kab-button kab-button-primary" name="complete_setup" id="kab-complete-button">' . esc_html__( 'Complete Setup', 'kura-ai-booking-free' ) . '</button>';
+			echo '<button type="submit" form="kab-wizard-form" class="kab-button kab-button-primary" name="complete_setup" id="kab-complete-button">' . esc_html__( 'Complete Setup', 'kura-ai-booking-free' ) . '</button>';
 		}
 	}
 

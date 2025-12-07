@@ -18,7 +18,6 @@ class KAB_Deactivator {
 
 		// Clean up transients
 		delete_transient( 'kab_free_show_setup_wizard' );
-		delete_transient( 'kab_free_show_deactivation_modal' );
 
 		// Remove setup wizard data if user chose to uninstall
 		if ( isset( $_GET['delete_data'] ) && $_GET['delete_data'] == '1' ) {

@@ -215,92 +215,104 @@ class KAB_Admin {
 						<?php echo esc_html__( 'Dashboard Overview', 'kura-ai-booking-free' ); ?>
 					</h1>
 				</div>
-				<div class="kab-card-body">
-					<p><?php echo esc_html__( 'Welcome to your booking system dashboard. Manage your services, events, and customer bookings.', 'kura-ai-booking-free' ); ?></p>
-				</div>
-			</div>
+                <div class="kab-card-body">
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+                        <div class="kab-widget"><h2><span class="dashicons dashicons-calendar"></span><?php esc_html_e('Total Bookings','kura-ai-booking-free'); ?></h2><div id="kab-kpi-total">—</div></div>
+                        <div class="kab-widget"><h2><span class="dashicons dashicons-groups"></span><?php esc_html_e('Customers','kura-ai-booking-free'); ?></h2><div id="kab-kpi-customers">—</div></div>
+                        <div class="kab-widget"><h2><span class="dashicons dashicons-money"></span><?php esc_html_e('Revenue (30d)','kura-ai-booking-free'); ?></h2><div id="kab-kpi-revenue">—</div></div>
+                        <div class="kab-widget"><h2><span class="dashicons dashicons-clock"></span><?php esc_html_e('Upcoming','kura-ai-booking-free'); ?></h2><div id="kab-kpi-upcoming">—</div></div>
+                    </div>
+                    <div class="kab-mt-2" style="display:grid;grid-template-columns:2fr 1fr;gap:12px;align-items:start;">
+                        <div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-chart-line"></span><?php esc_html_e('Bookings (last 30 days)','kura-ai-booking-free'); ?></h2></div><div class="kab-card-body"><canvas id="kab-chart-bookings" width="600" height="200" style="max-width:100%"></canvas></div></div>
+                        <div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-chart-bar"></span><?php esc_html_e('Top Services','kura-ai-booking-free'); ?></h2></div><div class="kab-card-body"><canvas id="kab-chart-topservices" width="300" height="200" style="max-width:100%"></canvas></div></div>
+                    </div>
+                    <script>
+                    document.addEventListener('DOMContentLoaded',function(){
+                        fetch('<?php echo esc_url( rest_url('kuraai/v1/dashboard/metrics') ); ?>')
+                        .then(function(r){return r.json()})
+                        .then(function(d){
+                            var setText=function(id,val){var el=document.getElementById(id); if(el) el.textContent=val;};
+                            setText('kab-kpi-total', d.total_bookings);
+                            setText('kab-kpi-customers', d.customers);
+                            setText('kab-kpi-revenue', (d.revenue_last_30||0).toFixed(2));
+                            setText('kab-kpi-upcoming', d.upcoming);
+                            var drawLine=function(cv,labels,series){
+                                var ctx=cv.getContext('2d'); var W=cv.width, H=cv.height;
+                                ctx.clearRect(0,0,W,H);
+                                ctx.strokeStyle='#e0e0e0'; ctx.lineWidth=1;
+                                for(var i=0;i<=4;i++){ var y=H-20-(H-40)*i/4; ctx.beginPath(); ctx.moveTo(40,y); ctx.lineTo(W-10,y); ctx.stroke(); }
+                                var max=1; for(var j=0;j<series.length;j++){ if(series[j]>max) max=series[j]; }
+                                var scale=(H-40)/max; ctx.strokeStyle='#E67E22'; ctx.lineWidth=2; ctx.beginPath();
+                                for(var i=0;i<series.length;i++){ var x=40 + i*(W-60)/(series.length-1); var y=H-20 - series[i]*scale; if(i===0){ ctx.moveTo(x,y);} else { ctx.lineTo(x,y);} }
+                                ctx.stroke();
+                            };
+                            var drawBars=function(cv,labels,values){
+                                var ctx=cv.getContext('2d'); var W=cv.width, H=cv.height; ctx.clearRect(0,0,W,H);
+                                var max=1; for(var j=0;j<values.length;j++){ if(values[j]>max) max=values[j]; }
+                                var bw=(W-60)/labels.length;
+                                for(var i=0;i<labels.length;i++){ var val=values[i]; var h=(H-40)*(val/max); var x=40+i*bw; var y=H-20-h; ctx.fillStyle='#8BAE66'; ctx.fillRect(x,y,bw-10,h); ctx.fillStyle='#24321a'; ctx.font='12px sans-serif'; ctx.fillText(labels[i], x, H-5); }
+                            };
+                            var c1=document.getElementById('kab-chart-bookings'); if(c1) drawLine(c1,d.labels,d.bookings_series);
+                            var c2=document.getElementById('kab-chart-topservices'); if(c2){ var ls=(d.top_services||[]).map(function(r){return r.name}); var vs=(d.top_services||[]).map(function(r){return parseInt(r.cnt)}); drawBars(c2,ls,vs); }
+                        })
+                        .catch(function(){});
+                    });
+                    </script>
+                </div>
+            </div>
 
-			<div class="kab-dashboard-widgets">
-				<div class="kab-card">
-					<div class="kab-card-header">
-						<h2 class="kab-card-title">
-							<span class="dashicons dashicons-clock"></span>
-							<?php echo esc_html__( 'Upcoming Appointments', 'kura-ai-booking-free' ); ?>
-						</h2>
-					</div>
-					<div class="kab-card-body">
-						<?php if ( ! empty( $upcoming_appointments ) ) : ?>
-							<ul>
-								<?php foreach ( $upcoming_appointments as $appointment ) : ?>
-									<li>
-										<?php
-										$booking_type = $appointment['booking_type'] === 'service' ? 'Service' : 'Event';
-										$item_id = $appointment['booking_type'] === 'service' ? $appointment['service_id'] : $appointment['event_id'];
-										// You would typically have a method to get the service/event name by its ID.
-										// For now, we'll just display the ID.
-										echo esc_html( $booking_type . ' #' . $item_id );
-										?>
-										- <?php echo esc_html( $appointment['booking_date'] . ' @ ' . $appointment['booking_time'] ); ?>
-									</li>
-								<?php endforeach; ?>
-							</ul>
-						<?php else : ?>
-							<p><?php echo esc_html__( 'You have no upcoming appointments.', 'kura-ai-booking-free' ); ?></p>
-						<?php endif; ?>
-					</div>
-				</div>
+            <div class="kab-dashboard-row">
+                <div class="kab-card">
+                    <div class="kab-card-header">
+                        <h2 class="kab-card-title">
+                            <span class="dashicons dashicons-clock"></span>
+                            <?php echo esc_html__( 'Upcoming Appointments', 'kura-ai-booking-free' ); ?>
+                        </h2>
+                    </div>
+                    <div class="kab-card-body">
+                        <?php if ( ! empty( $upcoming_appointments ) ) : ?>
+                            <table class="kab-table"><thead><tr><th><?php esc_html_e('Type','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Item','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Date','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Time','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Status','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Actions','kura-ai-booking-free'); ?></th></tr></thead><tbody>
+                            <?php global $wpdb; foreach ( $upcoming_appointments as $appointment ) : $is_service = ( $appointment['booking_type'] === 'service' ); $name = $is_service ? $wpdb->get_var( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}kab_services WHERE id=%d", $appointment['service_id'] ) ) : $wpdb->get_var( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}kab_events WHERE id=%d", $appointment['event_id'] ) ); $name = $name ? $name : ( $is_service ? sprintf( __('Service #%d','kura-ai-booking-free'), intval($appointment['service_id']) ) : sprintf( __('Event #%d','kura-ai-booking-free'), intval($appointment['event_id']) ) ); $view_url = $is_service ? admin_url( 'admin.php?page=kab-services&action=view&service_id=' . intval( $appointment['service_id'] ) ) : admin_url( 'admin.php?page=kab-events&action=view&event_id=' . intval( $appointment['event_id'] ) ); ?>
+                                <tr>
+                                    <td><?php echo esc_html( $is_service ? __( 'Service','kura-ai-booking-free' ) : __( 'Event','kura-ai-booking-free' ) ); ?></td>
+                                    <td><?php echo esc_html( $name ); ?></td>
+                                    <td><?php echo esc_html( $appointment['booking_date'] ); ?></td>
+                                    <td><?php echo esc_html( $appointment['booking_time'] ); ?></td>
+                                    <td><span class="kab-status-badge"><?php echo esc_html( ucfirst( $appointment['status'] ) ); ?></span></td>
+                                    <td><a class="kab-btn kab-btn-secondary kab-btn-sm" href="<?php echo esc_url( $view_url ); ?>"><?php esc_html_e('View','kura-ai-booking-free'); ?></a> <a class="kab-btn kab-btn-sm" href="<?php echo esc_url( admin_url('admin.php?page=kab-calendar') ); ?>"><?php esc_html_e('Calendar','kura-ai-booking-free'); ?></a></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody></table>
+                        <?php else : ?>
+                            <p><?php echo esc_html__( 'You have no upcoming appointments.', 'kura-ai-booking-free' ); ?></p>
+                        <?php endif; ?>
+                </div>
+                </div>
 
-				<div class="kab-card">
-					<div class="kab-card-header">
-						<h2 class="kab-card-title">
-							<span class="dashicons dashicons-calendar"></span>
-							<?php echo esc_html__( 'Recent Bookings', 'kura-ai-booking-free' ); ?>
-						</h2>
-					</div>
-					<div class="kab-card-body">
-						<?php if ( ! empty( $recent_bookings ) ) : ?>
-							<ul>
-								<?php foreach ( $recent_bookings as $booking ) : ?>
-									<li>
-										<?php
-										$booking_type = $booking['booking_type'] === 'service' ? 'Service' : 'Event';
-										$item_id = $booking['booking_type'] === 'service' ? $booking['service_id'] : $booking['event_id'];
-										// You would typically have a method to get the service/event name by its ID.
-										// For now, we'll just display the ID.
-										echo esc_html( $booking_type . ' #' . $item_id );
-										?>
-										- Booked on <?php echo esc_html( $booking['created_at'] ); ?>
-									</li>
-								<?php endforeach; ?>
-							</ul>
-						<?php else : ?>
-							<p><?php echo esc_html__( 'No recent bookings found.', 'kura-ai-booking-free' ); ?></p>
-						<?php endif; ?>
-					</div>
-				</div>
 
-				<div class="kab-card">
-					<div class="kab-card-header">
-						<h2 class="kab-card-title">
-							<span class="dashicons dashicons-plus-alt"></span>
-							<?php echo esc_html__( 'Quick Actions', 'kura-ai-booking-free' ); ?>
-						</h2>
-					</div>
-					<div class="kab-card-body">
-						<div class="kab-mb-2">
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services&action=add' ) ); ?>" class="kab-btn kab-btn-primary">
-								<span class="dashicons dashicons-plus"></span>
-								<?php echo esc_html__( 'Add New Service', 'kura-ai-booking-free' ); ?>
-							</a>
-						</div>
-						<div>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events&action=add' ) ); ?>" class="kab-btn kab-btn-primary">
-								<span class="dashicons dashicons-plus"></span>
-								<?php echo esc_html__( 'Add New Event', 'kura-ai-booking-free' ); ?>
-							</a>
-						</div>
-					</div>
-				</div>
+                <!-- Quick Actions placed before Recent Bookings to share row with Upcoming -->
+                <div class="kab-card">
+                    <div class="kab-card-header">
+                        <h2 class="kab-card-title">
+                            <span class="dashicons dashicons-plus-alt"></span>
+                            <?php echo esc_html__( 'Quick Actions', 'kura-ai-booking-free' ); ?>
+                        </h2>
+                    </div>
+                    <div class="kab-card-body">
+                        <div class="kab-mb-2">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services&action=add' ) ); ?>" class="kab-btn kab-btn-primary">
+                                <span class="dashicons dashicons-plus"></span>
+                                <?php echo esc_html__( 'Add New Service', 'kura-ai-booking-free' ); ?>
+                            </a>
+                        </div>
+                        <div>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events&action=add' ) ); ?>" class="kab-btn kab-btn-primary">
+                                <span class="dashicons dashicons-plus"></span>
+                                <?php echo esc_html__( 'Add New Event', 'kura-ai-booking-free' ); ?>
+                            </a>
+                        </div>
+                    </div>
+                </div>
 			</div>
 		</div>
 		<?php
@@ -374,6 +386,33 @@ class KAB_Admin {
                         ?>
                     </form>
                     <script>document.addEventListener('DOMContentLoaded',function(){var suc=new URLSearchParams(window.location.search).get('success');if(typeof Swal!=='undefined'&&suc){var map={'0':'<?php echo esc_js( __( 'Operation failed', 'kura-ai-booking-free' ) ); ?>','1':'<?php echo esc_js( __( 'Service created', 'kura-ai-booking-free' ) ); ?>','2':'<?php echo esc_js( __( 'Service updated', 'kura-ai-booking-free' ) ); ?>','3':'<?php echo esc_js( __( 'Service deleted', 'kura-ai-booking-free' ) ); ?>'};if(map[suc]){Swal.fire({title:map[suc],icon:suc==='0'?'error':'success'});}}document.querySelectorAll('.kab-delete-service').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var name=a.getAttribute('data-service-name');if(typeof Swal!=='undefined'){Swal.fire({title:'<?php echo esc_js( __( 'Delete service?', 'kura-ai-booking-free' ) ); ?>',text:name,icon:'warning',showCancelButton:true}).then(function(r){if(r.isConfirmed){window.location.href=a.href;}});}else{if(confirm('Delete '+name+'?'))window.location.href=a.href;}});});});</script>
+                </div>
+            </div>
+            <div class="kab-dashboard-widgets" style="margin-top:1.5rem;">
+                <div class="kab-card">
+                    <div class="kab-card-header">
+                        <h2 class="kab-card-title">
+                            <span class="dashicons dashicons-calendar"></span>
+                            <?php echo esc_html__( 'Recent Bookings', 'kura-ai-booking-free' ); ?>
+                        </h2>
+                    </div>
+                    <div class="kab-card-body">
+                        <?php if ( ! empty( $recent_bookings ) ) : ?>
+                            <table class="kab-table"><thead><tr><th><?php esc_html_e('Type','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Item','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Booked On','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Status','kura-ai-booking-free'); ?></th><th><?php esc_html_e('Actions','kura-ai-booking-free'); ?></th></tr></thead><tbody>
+                            <?php global $wpdb; foreach ( $recent_bookings as $booking ) : $is_service = ( $booking['booking_type'] === 'service' ); $name = $is_service ? $wpdb->get_var( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}kab_services WHERE id=%d", $booking['service_id'] ) ) : $wpdb->get_var( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}kab_events WHERE id=%d", $booking['event_id'] ) ); $name = $name ? $name : ( $is_service ? sprintf( __('Service #%d','kura-ai-booking-free'), intval($booking['service_id']) ) : sprintf( __('Event #%d','kura-ai-booking-free'), intval($booking['event_id']) ) ); $view_url = $is_service ? admin_url( 'admin.php?page=kab-services&action=view&service_id=' . intval( $booking['service_id'] ) ) : admin_url( 'admin.php?page=kab-events&action=view&event_id=' . intval( $booking['event_id'] ) ); $inv_status = $wpdb->get_var( $wpdb->prepare( "SELECT payment_status FROM {$wpdb->prefix}kab_invoices WHERE booking_id=%d ORDER BY id DESC LIMIT 1", $booking['id'] ) ); ?>
+                                <tr>
+                                    <td><?php echo esc_html( $is_service ? __( 'Service','kura-ai-booking-free' ) : __( 'Event','kura-ai-booking-free' ) ); ?></td>
+                                    <td><?php echo esc_html( $name ); ?></td>
+                                    <td><?php echo esc_html( $booking['created_at'] ); ?></td>
+                                    <td><span class="kab-status-badge"><?php echo esc_html( $inv_status ? ucfirst( $inv_status ) : ucfirst( $booking['status'] ) ); ?></span></td>
+                                    <td><a class="kab-btn kab-btn-secondary kab-btn-sm" href="<?php echo esc_url( $view_url ); ?>"><?php esc_html_e('View','kura-ai-booking-free'); ?></a></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody></table>
+                        <?php else : ?>
+                            <p><?php echo esc_html__( 'No recent bookings found.', 'kura-ai-booking-free' ); ?></p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>

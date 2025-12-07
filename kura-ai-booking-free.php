@@ -448,7 +448,7 @@ register_deactivation_hook( __FILE__, 'kab_free_deactivate_plugin' );
 /**
  * Plugin deactivation callback.
  *
- * Sets up the deactivation modal transient and runs deactivation tasks.
+ * Runs deactivation tasks.
  *
  * @since 1.0.0
  * @return void
@@ -456,9 +456,6 @@ register_deactivation_hook( __FILE__, 'kab_free_deactivate_plugin' );
 function kab_free_deactivate_plugin() {
 	// Run deactivation tasks.
 	KAB_Deactivator::deactivate();
-
-	// Show deactivation modal.
-	set_transient( 'kab_free_show_deactivation_modal', true, 60 );
 }
 
 // Enqueue SweetAlert2 in admin.
@@ -497,45 +494,71 @@ function kab_free_maybe_show_setup_wizard() {
 	}
 }
 
-// Deactivation modal logic.
-add_action( 'admin_notices', 'kab_free_maybe_show_deactivation_modal' );
+// Deactivation modal logic - intercept deactivate link on plugins page.
+add_action( 'admin_enqueue_scripts', 'kab_free_enqueue_deactivation_script' );
 
 /**
- * Maybe show deactivation modal.
+ * Enqueue deactivation modal script on plugins page.
  *
- * Shows SweetAlert2 modal on plugin deactivation.
+ * Shows SweetAlert2 modal when user clicks deactivate link.
  *
  * @since 1.0.0
  * @return void
  */
-function kab_free_maybe_show_deactivation_modal() {
-	if ( get_transient( 'kab_free_show_deactivation_modal' ) ) {
-		delete_transient( 'kab_free_show_deactivation_modal' );
-		
-		// Generate nonce for deactivation URLs.
-		$deactivate_nonce = wp_create_nonce( 'deactivate-plugin_kura-ai-booking-free/kura-ai-booking-free.php' );
-		$full_uninstall_url = admin_url( 'plugins.php?action=deactivate&plugin=kura-ai-booking-free/kura-ai-booking-free.php&delete_data=1&_wpnonce=' . $deactivate_nonce );
-		$temp_deactivate_url = admin_url( 'plugins.php?action=deactivate&plugin=kura-ai-booking-free/kura-ai-booking-free.php&_wpnonce=' . $deactivate_nonce );
-		
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo '<script type="text/javascript">jQuery(function($){
-		Swal.fire({
-			title: "Deactivate Kura-ai Booking System?",
-			text: "Would you like to temporarily deactivate or fully uninstall (delete all plugin data)?",
-			icon: "warning",
-			showCancelButton: true,
-			confirmButtonText: "Uninstall & Delete",
-			cancelButtonText: "Temporary Deactivate"
-		}).then(function(result){
-			if(result.isConfirmed){
-				window.location.href = "' . esc_url( $full_uninstall_url ) . '";
-			} else if (result.dismiss === Swal.DismissReason.cancel) {
-				// Temporary deactivation - proceed with normal deactivation
-				window.location.href = "' . esc_url( $temp_deactivate_url ) . '";
+function kab_free_enqueue_deactivation_script( $hook ) {
+	// Only load on plugins page
+	if ( 'plugins.php' !== $hook ) {
+		return;
+	}
+
+	// Get the correct plugin basename
+	$plugin_basename = plugin_basename( __FILE__ );
+	$plugin_selector = urlencode( $plugin_basename );
+
+	// Add inline script to intercept deactivate link
+	wp_add_inline_script( 'kab-free-admin', '
+		jQuery(document).ready(function($) {
+			// Find the deactivate link for our plugin using the plugin path
+			var deactivateLink = $(\'a[href*="plugin=' . esc_js( $plugin_selector ) . '"][href*="action=deactivate"]\');
+
+			if (deactivateLink.length) {
+				var originalUrl = deactivateLink.attr("href");
+
+				deactivateLink.on(\'click\', function(e) {
+					e.preventDefault();
+
+					Swal.fire({
+						title: "Deactivate Kura-ai Booking System?",
+						text: "Would you like to temporarily deactivate or fully uninstall (delete all plugin data)?",
+						icon: "warning",
+						iconColor: "#E67E22",
+						showCancelButton: true,
+						confirmButtonText: "Uninstall & Delete",
+						cancelButtonText: "Temporary Deactivate",
+						showCloseButton: true,
+						confirmButtonColor: "#E67E22",
+						cancelButtonColor: "#628141",
+						customClass: {
+							popup: "kab-deactivate-modal",
+							confirmButton: "kab-confirm-btn",
+							cancelButton: "kab-cancel-btn",
+							title: "kab-modal-title"
+						}
+					}).then(function(result) {
+						if (result.isConfirmed) {
+							// Full uninstall - add delete_data parameter to original URL
+							var uninstallUrl = originalUrl + "&delete_data=1";
+							window.location.href = uninstallUrl;
+						} else if (result.dismiss === Swal.DismissReason.cancel) {
+							// Temporary deactivation - use original URL
+							window.location.href = originalUrl;
+						}
+						// If dismissed (close button or outside click), do nothing
+					});
+				});
 			}
 		});
-		});</script>';
-	}
+	' );
 }
 
 // Load plugin text domain for translations.
@@ -595,9 +618,6 @@ function kab_free_init_plugin() {
 	// Load and instantiate the setup wizard.
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-setup-wizard.php';
 	$kab_setup_wizard_instance = new KAB_Setup_Wizard();
-
-	// Add the menu page.
-    add_action( 'admin_menu', 'kab_free_setup_wizard_menu' );
 }
 
 add_action( 'plugins_loaded', 'kab_free_enable_deprecation_trace', 1 );
@@ -605,13 +625,19 @@ function kab_free_enable_deprecation_trace() {
     if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
         set_error_handler( function( $errno, $errstr, $errfile, $errline ) {
             if ( $errno === E_DEPRECATED && ( strpos( $errstr, 'strpos(): Passing null' ) !== false || strpos( $errstr, 'str_replace(): Passing null' ) !== false ) ) {
-                error_log( 'KAB TRACE: ' . $errstr . ' at ' . $errfile . ':' . $errline );
-                $bt = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
-                foreach ( $bt as $frame ) {
-                    $fn   = isset( $frame['function'] ) ? $frame['function'] : '';
-                    $file = isset( $frame['file'] ) ? $frame['file'] : '';
-                    $line = isset( $frame['line'] ) ? $frame['line'] : 0;
-                    error_log( 'KAB TRACE: ' . $fn . ' ' . $file . ':' . $line );
+                // Only log if it's NOT from WordPress core (wp-includes or wp-admin)
+                if ( strpos( $errfile, 'wp-includes' ) === false && strpos( $errfile, 'wp-admin' ) === false ) {
+                    error_log( 'KAB TRACE: ' . $errstr . ' at ' . $errfile . ':' . $errline );
+                    $bt = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
+                    foreach ( $bt as $frame ) {
+                        $fn   = isset( $frame['function'] ) ? $frame['function'] : '';
+                        $file = isset( $frame['file'] ) ? $frame['file'] : '';
+                        $line = isset( $frame['line'] ) ? $frame['line'] : 0;
+                        // Only log plugin files, not WordPress core
+                        if ( strpos( $file, 'wp-includes' ) === false && strpos( $file, 'wp-admin' ) === false ) {
+                            error_log( 'KAB TRACE: ' . $fn . ' ' . $file . ':' . $line );
+                        }
+                    }
                 }
             }
         }, E_DEPRECATED );
@@ -636,36 +662,6 @@ function kab_free_sanitize_upload_dir( $paths ) {
     return $paths;
 }
 
-/**
- * Add setup wizard menu page.
- *
- * @since 1.0.0
- * @return void
- */
-function kab_free_setup_wizard_menu() {
-	add_menu_page(
-		__( 'Kura-ai Setup Wizard', 'kura-ai-booking-free' ),
-		__( 'Kura-ai Setup', 'kura-ai-booking-free' ),
-		'manage_options',
-		'kab-setup-wizard',
-		'kab_free_render_setup_wizard_page',
-		'dashicons-calendar-alt',
-		2
-	);
-}
-
-/**
- * Render the setup wizard page by calling the method on the global instance.
- *
- * @since 1.0.0
- * @return void
- */
-function kab_free_render_setup_wizard_page() {
-	global $kab_setup_wizard_instance;
-	if ( $kab_setup_wizard_instance ) {
-		$kab_setup_wizard_instance->render_setup_page();
-	}
-}
 function kab_free_load_includes() {
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-loader.php';
 	require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-activator.php';
@@ -1094,11 +1090,12 @@ add_action( 'admin_post_kab_hide_employee', function(){ if( ! current_user_can('
 add_action( 'admin_post_kab_duplicate_employee', function(){ if( ! current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_GET['employee_id']??0); $n=sanitize_text_field($_GET['_wpnonce']??''); if( ! $id || ! wp_verify_nonce($n,'kab_duplicate_employee_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-employees.php'; (new KAB_Employees())->duplicate_employee($id); wp_redirect(admin_url('admin.php?page=kab-employees&success=1')); exit; });
 add_action( 'admin_post_kab_delete_employee', function(){ if( ! current_user_can('manage_options')) wp_die(__('Insufficient permissions','kura-ai-booking-free')); $id=intval($_GET['employee_id']??0); $n=sanitize_text_field($_GET['_wpnonce']??''); if( ! $id || ! wp_verify_nonce($n,'kab_delete_employee_'.$id)) wp_die(__('Invalid request','kura-ai-booking-free')); require_once KAB_FREE_PLUGIN_DIR.'includes/class-kab-employees.php'; (new KAB_Employees())->delete_employee($id); wp_redirect(admin_url('admin.php?page=kab-employees&success=1')); exit; });
 add_action( 'rest_api_init', function() {
-    register_rest_route( 'kuraai/v1', '/webhook/stripe', array( 'methods' => 'POST', 'callback' => 'kab_webhook_stripe' ) );
-    register_rest_route( 'kuraai/v1', '/webhook/mollie', array( 'methods' => 'POST', 'callback' => 'kab_webhook_mollie' ) );
-    register_rest_route( 'kuraai/v1', '/webhook/razorpay', array( 'methods' => 'POST', 'callback' => 'kab_webhook_razorpay' ) );
-    register_rest_route( 'kuraai/v1', '/webhook/paystack', array( 'methods' => 'POST', 'callback' => 'kab_webhook_paystack' ) );
-    register_rest_route( 'kuraai/v1', '/webhook/flutterwave', array( 'methods' => 'POST', 'callback' => 'kab_webhook_flutterwave' ) );
+    register_rest_route( 'kuraai/v1', '/webhook/stripe', array( 'methods' => 'POST', 'callback' => 'kab_webhook_stripe', 'permission_callback' => '__return_true' ) );
+    register_rest_route( 'kuraai/v1', '/webhook/mollie', array( 'methods' => 'POST', 'callback' => 'kab_webhook_mollie', 'permission_callback' => '__return_true' ) );
+    register_rest_route( 'kuraai/v1', '/webhook/razorpay', array( 'methods' => 'POST', 'callback' => 'kab_webhook_razorpay', 'permission_callback' => '__return_true' ) );
+    register_rest_route( 'kuraai/v1', '/webhook/paystack', array( 'methods' => 'POST', 'callback' => 'kab_webhook_paystack', 'permission_callback' => '__return_true' ) );
+    register_rest_route( 'kuraai/v1', '/webhook/flutterwave', array( 'methods' => 'POST', 'callback' => 'kab_webhook_flutterwave', 'permission_callback' => '__return_true' ) );
+    register_rest_route( 'kuraai/v1', '/dashboard/metrics', array( 'methods' => 'GET', 'callback' => 'kab_dashboard_metrics', 'permission_callback' => function(){ return current_user_can('manage_options'); } ) );
 } );
 
 function kab_webhook_basic_ok() { return new WP_REST_Response( array( 'ok' => true ), 200 ); }
@@ -1107,3 +1104,27 @@ function kab_webhook_mollie( WP_REST_Request $req ) { return kab_webhook_basic_o
 function kab_webhook_razorpay( WP_REST_Request $req ) { return kab_webhook_basic_ok(); }
 function kab_webhook_paystack( WP_REST_Request $req ) { return kab_webhook_basic_ok(); }
 function kab_webhook_flutterwave( WP_REST_Request $req ) { return kab_webhook_basic_ok(); }
+
+function kab_dashboard_metrics( WP_REST_Request $req ) {
+    global $wpdb; $prefix = $wpdb->prefix;
+    $now = current_time( 'timestamp' ); $start = date( 'Y-m-d', strtotime( '-29 days', $now ) );
+    $bookings_last_30 = $wpdb->get_results( $wpdb->prepare( "SELECT booking_date, COUNT(*) AS cnt FROM {$prefix}kab_bookings WHERE booking_date >= %s GROUP BY booking_date ORDER BY booking_date", $start ), ARRAY_A );
+    $map = array(); foreach ( $bookings_last_30 as $r ) { $map[ $r['booking_date'] ] = intval( $r['cnt'] ); }
+    $labels = array(); $series = array(); for ( $i = 0; $i < 30; $i++ ) { $d = date( 'Y-m-d', strtotime( "+{$i} days", strtotime( $start ) ) ); $labels[] = $d; $series[] = isset( $map[$d] ) ? $map[$d] : 0; }
+    $revenue_last_30 = floatval( $wpdb->get_var( $wpdb->prepare( "SELECT SUM(total_amount) FROM {$prefix}kab_invoices WHERE invoice_date >= %s AND payment_status='paid'", date( 'Y-m-d H:i:s', strtotime( '-30 days', $now ) ) ) ) );
+    $upcoming = intval( $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}kab_bookings WHERE status='pending' AND booking_date >= CURDATE()" ) );
+    $total_bookings = intval( $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}kab_bookings" ) );
+    $customers = intval( $wpdb->get_var( "SELECT COUNT(DISTINCT user_id) FROM {$prefix}kab_bookings" ) );
+    $top_services = $wpdb->get_results( "SELECT s.name, COUNT(*) AS cnt FROM {$prefix}kab_bookings b JOIN {$prefix}kab_services s ON b.service_id=s.id WHERE b.booking_type='service' GROUP BY s.id, s.name ORDER BY cnt DESC LIMIT 5", ARRAY_A );
+    $top_events = $wpdb->get_results( "SELECT e.name, COUNT(*) AS cnt FROM {$prefix}kab_bookings b JOIN {$prefix}kab_events e ON b.event_id=e.id WHERE b.booking_type='event' GROUP BY e.id, e.name ORDER BY cnt DESC LIMIT 5", ARRAY_A );
+    return new WP_REST_Response( array(
+        'labels' => $labels,
+        'bookings_series' => $series,
+        'revenue_last_30' => round( $revenue_last_30, 2 ),
+        'upcoming' => $upcoming,
+        'total_bookings' => $total_bookings,
+        'customers' => $customers,
+        'top_services' => $top_services,
+        'top_events' => $top_events,
+    ), 200 );
+}
