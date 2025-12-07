@@ -13,10 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Get plugin settings
-$company_name = get_option( 'kab_company_name', get_bloginfo( 'name' ) );
-$company_logo = get_option( 'kab_company_logo', '' );
-$support_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
+// Get plugin settings from setup wizard
+$settings = get_option( 'kab_settings', array() );
+$company_name = isset( $settings['company_name'] ) ? $settings['company_name'] : get_bloginfo( 'name' );
+$company_logo = isset( $settings['company_logo'] ) ? $settings['company_logo'] : '';
+$support_email = isset( $settings['support_email'] ) ? $settings['support_email'] : get_option( 'admin_email' );
 ?>
 <!DOCTYPE html>
 <html>

@@ -99,6 +99,11 @@ class KAB_Admin {
 		}
 		wp_enqueue_style( 'kab-admin-styles', KAB_FREE_PLUGIN_URL . 'assets/css/admin.css', array(), KAB_VERSION );
 		wp_enqueue_script( 'kab-admin-scripts', KAB_FREE_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery' ), KAB_VERSION, true );
+
+		// Load Chart.js on dashboard page
+		if ( $hook === 'toplevel_page_kab-dashboard' ) {
+			wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', array(), '4.4.0', true );
+		}
 	}
 
 	/**
@@ -228,34 +233,187 @@ class KAB_Admin {
                     </div>
                     <script>
                     document.addEventListener('DOMContentLoaded',function(){
+                        if (typeof Chart === 'undefined') {
+                            console.error('Chart.js not loaded');
+                            return;
+                        }
+
+                        var bookingsChart = null;
+                        var topServicesChart = null;
+
                         fetch('<?php echo esc_url( rest_url('kuraai/v1/dashboard/metrics') ); ?>')
-                        .then(function(r){return r.json()})
-                        .then(function(d){
-                            var setText=function(id,val){var el=document.getElementById(id); if(el) el.textContent=val;};
-                            setText('kab-kpi-total', d.total_bookings);
-                            setText('kab-kpi-customers', d.customers);
-                            setText('kab-kpi-revenue', (d.revenue_last_30||0).toFixed(2));
-                            setText('kab-kpi-upcoming', d.upcoming);
-                            var drawLine=function(cv,labels,series){
-                                var ctx=cv.getContext('2d'); var W=cv.width, H=cv.height;
-                                ctx.clearRect(0,0,W,H);
-                                ctx.strokeStyle='#e0e0e0'; ctx.lineWidth=1;
-                                for(var i=0;i<=4;i++){ var y=H-20-(H-40)*i/4; ctx.beginPath(); ctx.moveTo(40,y); ctx.lineTo(W-10,y); ctx.stroke(); }
-                                var max=1; for(var j=0;j<series.length;j++){ if(series[j]>max) max=series[j]; }
-                                var scale=(H-40)/max; ctx.strokeStyle='#E67E22'; ctx.lineWidth=2; ctx.beginPath();
-                                for(var i=0;i<series.length;i++){ var x=40 + i*(W-60)/(series.length-1); var y=H-20 - series[i]*scale; if(i===0){ ctx.moveTo(x,y);} else { ctx.lineTo(x,y);} }
-                                ctx.stroke();
-                            };
-                            var drawBars=function(cv,labels,values){
-                                var ctx=cv.getContext('2d'); var W=cv.width, H=cv.height; ctx.clearRect(0,0,W,H);
-                                var max=1; for(var j=0;j<values.length;j++){ if(values[j]>max) max=values[j]; }
-                                var bw=(W-60)/labels.length;
-                                for(var i=0;i<labels.length;i++){ var val=values[i]; var h=(H-40)*(val/max); var x=40+i*bw; var y=H-20-h; ctx.fillStyle='#8BAE66'; ctx.fillRect(x,y,bw-10,h); ctx.fillStyle='#24321a'; ctx.font='12px sans-serif'; ctx.fillText(labels[i], x, H-5); }
-                            };
-                            var c1=document.getElementById('kab-chart-bookings'); if(c1) drawLine(c1,d.labels,d.bookings_series);
-                            var c2=document.getElementById('kab-chart-topservices'); if(c2){ var ls=(d.top_services||[]).map(function(r){return r.name}); var vs=(d.top_services||[]).map(function(r){return parseInt(r.cnt)}); drawBars(c2,ls,vs); }
+                        .then(function(r){
+                            if (!r.ok) throw new Error('Network response failed');
+                            return r.json();
                         })
-                        .catch(function(){});
+                        .then(function(d){
+                            // Update KPI values
+                            var setText=function(id,val){var el=document.getElementById(id); if(el) el.textContent=val;};
+                            setText('kab-kpi-total', d.total_bookings || 0);
+                            setText('kab-kpi-customers', d.customers || 0);
+                            setText('kab-kpi-revenue', '<?php echo esc_html( kab_currency_symbol('USD') ); ?>' + (d.revenue_last_30||0).toFixed(2));
+                            setText('kab-kpi-upcoming', d.upcoming || 0);
+
+                            // Bookings Line Chart
+                            var c1=document.getElementById('kab-chart-bookings');
+                            if(c1){
+                                if(bookingsChart) bookingsChart.destroy();
+                                var ctx1 = c1.getContext('2d');
+                                bookingsChart = new Chart(ctx1, {
+                                    type: 'line',
+                                    data: {
+                                        labels: d.labels || [],
+                                        datasets: [{
+                                            label: '<?php echo esc_js(__('Bookings','kura-ai-booking-free')); ?>',
+                                            data: d.bookings_series || [],
+                                            borderColor: '#E67E22',
+                                            backgroundColor: 'rgba(230, 126, 34, 0.1)',
+                                            borderWidth: 3,
+                                            fill: true,
+                                            tension: 0.4,
+                                            pointBackgroundColor: '#E67E22',
+                                            pointBorderColor: '#fff',
+                                            pointBorderWidth: 2,
+                                            pointRadius: 4,
+                                            pointHoverRadius: 6
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                display: false
+                                            },
+                                            tooltip: {
+                                                backgroundColor: '#24321a',
+                                                titleColor: '#fff',
+                                                bodyColor: '#fff',
+                                                borderColor: '#E67E22',
+                                                borderWidth: 1,
+                                                padding: 12,
+                                                displayColors: false,
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        return '<?php echo esc_js(__('Bookings','kura-ai-booking-free')); ?>: ' + context.parsed.y;
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    precision: 0,
+                                                    color: '#666'
+                                                },
+                                                grid: {
+                                                    color: 'rgba(0, 0, 0, 0.05)'
+                                                }
+                                            },
+                                            x: {
+                                                ticks: {
+                                                    color: '#666'
+                                                },
+                                                grid: {
+                                                    display: false
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // Top Services Bar Chart
+                            var c2=document.getElementById('kab-chart-topservices');
+                            if(c2){
+                                if(topServicesChart) topServicesChart.destroy();
+                                var topServices = d.top_services || [];
+                                var serviceLabels = topServices.map(function(r){return r.name || 'Unknown'});
+                                var serviceValues = topServices.map(function(r){return parseInt(r.cnt) || 0});
+
+                                var ctx2 = c2.getContext('2d');
+                                topServicesChart = new Chart(ctx2, {
+                                    type: 'bar',
+                                    data: {
+                                        labels: serviceLabels,
+                                        datasets: [{
+                                            label: '<?php echo esc_js(__('Bookings','kura-ai-booking-free')); ?>',
+                                            data: serviceValues,
+                                            backgroundColor: [
+                                                '#8BAE66',
+                                                '#628141',
+                                                '#E67E22',
+                                                '#EBD5AB',
+                                                '#24321a'
+                                            ],
+                                            borderColor: [
+                                                '#628141',
+                                                '#24321a',
+                                                '#c66a1a',
+                                                '#d4be8f',
+                                                '#000'
+                                            ],
+                                            borderWidth: 2,
+                                            borderRadius: 6
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                display: false
+                                            },
+                                            tooltip: {
+                                                backgroundColor: '#24321a',
+                                                titleColor: '#fff',
+                                                bodyColor: '#fff',
+                                                borderColor: '#8BAE66',
+                                                borderWidth: 1,
+                                                padding: 12,
+                                                displayColors: false,
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        return '<?php echo esc_js(__('Bookings','kura-ai-booking-free')); ?>: ' + context.parsed.y;
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    precision: 0,
+                                                    color: '#666'
+                                                },
+                                                grid: {
+                                                    color: 'rgba(0, 0, 0, 0.05)'
+                                                }
+                                            },
+                                            x: {
+                                                ticks: {
+                                                    color: '#666',
+                                                    maxRotation: 45,
+                                                    minRotation: 0
+                                                },
+                                                grid: {
+                                                    display: false
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        })
+                        .catch(function(err){
+                            console.error('Failed to load dashboard metrics:', err);
+                            var setText=function(id,val){var el=document.getElementById(id); if(el) el.textContent=val;};
+                            setText('kab-kpi-total', 'Error');
+                            setText('kab-kpi-customers', 'Error');
+                            setText('kab-kpi-revenue', 'Error');
+                            setText('kab-kpi-upcoming', 'Error');
+                        });
                     });
                     </script>
                 </div>

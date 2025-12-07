@@ -11,10 +11,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$company_name  = get_option( 'kab_company_name', 'Kura-ai Booking' );
-$company_email = get_option( 'kab_support_email', get_option( 'admin_email' ) );
-$company_phone = get_option( 'kab_company_phone', '' );
-$company_address = get_option( 'kab_company_address', '' );
+// Get plugin settings from setup wizard
+$settings = get_option( 'kab_settings', array() );
+$company_name = isset( $settings['company_name'] ) ? $settings['company_name'] : get_bloginfo( 'name' );
+$company_logo = isset( $settings['company_logo'] ) ? $settings['company_logo'] : '';
+$support_email = isset( $settings['support_email'] ) ? $settings['support_email'] : get_option( 'admin_email' );
+$company_phone = isset( $settings['company_phone'] ) ? $settings['company_phone'] : '';
+$company_address = isset( $settings['company_address'] ) ? $settings['company_address'] : '';
+$primary_color = isset( $settings['primary_color'] ) ? $settings['primary_color'] : '#E67E22';
+$secondary_color = isset( $settings['secondary_color'] ) ? $settings['secondary_color'] : '#628141';
+$company_email = $support_email;
 ?>
 <!DOCTYPE html>
 <html>
@@ -44,10 +50,14 @@ $company_address = get_option( 'kab_company_address', '' );
 			text-align: center;
 			margin-bottom: 30px;
 			padding-bottom: 20px;
-			border-bottom: 2px solid #e63946;
+			border-bottom: 2px solid <?php echo esc_attr( $primary_color ); ?>;
+		}
+		.header img {
+			max-width: 150px;
+			margin-bottom: 10px;
 		}
 		.brand-color {
-			color: #e63946;
+			color: <?php echo esc_attr( $primary_color ); ?>;
 		}
 		.invoice-details {
 			margin-bottom: 30px;
@@ -66,12 +76,12 @@ $company_address = get_option( 'kab_company_address', '' );
 			padding: 15px;
 			border-radius: 6px;
 			margin-top: 20px;
-			border-left: 4px solid #e63946;
+			border-left: 4px solid <?php echo esc_attr( $primary_color ); ?>;
 		}
 		.total-amount {
 			font-size: 18px;
 			font-weight: bold;
-			color: #e63946;
+			color: <?php echo esc_attr( $primary_color ); ?>;
 		}
 		.footer {
 			text-align: center;
@@ -86,7 +96,7 @@ $company_address = get_option( 'kab_company_address', '' );
 			padding: 15px;
 			border-radius: 6px;
 			margin-top: 20px;
-			border-left: 4px solid #2196f3;
+			border-left: 4px solid <?php echo esc_attr( $secondary_color ); ?>;
 		}
 		@media (max-width: 480px) {
 			.email-container {
@@ -101,6 +111,9 @@ $company_address = get_option( 'kab_company_address', '' );
 <body>
 	<div class="email-container">
 		<div class="header">
+			<?php if ( $company_logo ) : ?>
+				<img src="<?php echo esc_url( $company_logo ); ?>" alt="<?php echo esc_attr( $company_name ); ?>" />
+			<?php endif; ?>
 			<h1 class="brand-color"><?php echo esc_html( $company_name ); ?></h1>
 			<?php if ( $company_address ) : ?>
 				<p><?php echo esc_html( $company_address ); ?></p>
@@ -172,8 +185,8 @@ $company_address = get_option( 'kab_company_address', '' );
 		<div class="footer">
 			<p><?php echo esc_html__( 'Thank you for your business!', 'kura-ai-booking-free' ); ?></p>
 			<p><?php echo esc_html__( 'If you have any questions about this invoice, please contact us at:', 'kura-ai-booking-free' ); ?></p>
-			<p><a href="mailto:<?php echo esc_attr( $company_email ); ?>" style="color: #e63946;"><?php echo esc_html( $company_email ); ?></a></p>
-			
+			<p><a href="mailto:<?php echo esc_attr( $company_email ); ?>" style="color: <?php echo esc_attr( $primary_color ); ?>;"><?php echo esc_html( $company_email ); ?></a></p>
+
 			<p style="margin-top: 20px; font-size: 12px; color: #999;">
 				<?php echo esc_html__( 'This is an automated message, please do not reply to this email.', 'kura-ai-booking-free' ); ?>
 			</p>

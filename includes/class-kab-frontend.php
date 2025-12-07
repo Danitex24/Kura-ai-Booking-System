@@ -59,7 +59,58 @@ class KAB_Frontend {
 	public function enqueue_scripts() {
 		wp_enqueue_style( 'kab-frontend', KAB_FREE_PLUGIN_URL . 'assets/css/frontend.css', array(), KAB_VERSION );
 		wp_enqueue_script( 'kab-frontend', KAB_FREE_PLUGIN_URL . 'assets/js/frontend.js', array( 'jquery' ), KAB_VERSION, true );
-		
+
+		// Get brand colors from setup wizard settings
+		$settings = get_option( 'kab_settings', array() );
+		$primary_color = isset( $settings['primary_color'] ) ? $settings['primary_color'] : '#E67E22';
+		$secondary_color = isset( $settings['secondary_color'] ) ? $settings['secondary_color'] : '#628141';
+		$accent_color = isset( $settings['accent_color'] ) ? $settings['accent_color'] : '#8BAE66';
+
+		// Inject dynamic brand colors as inline CSS
+		$custom_css = "
+			:root {
+				--kab-primary: {$primary_color};
+				--kab-secondary: {$secondary_color};
+				--kab-accent: {$accent_color};
+			}
+			.kab-booking-form .kab-submit-btn,
+			.kab-booking-form button[type='submit'] {
+				background-color: {$primary_color} !important;
+				border-color: {$primary_color} !important;
+			}
+			.kab-booking-form .kab-submit-btn:hover,
+			.kab-booking-form button[type='submit']:hover {
+				background-color: {$secondary_color} !important;
+				border-color: {$secondary_color} !important;
+			}
+			.kab-event-card:hover,
+			.kab-service-card:hover {
+				border-color: {$primary_color} !important;
+			}
+			.kab-event-card .kab-book-btn,
+			.kab-service-card .kab-book-btn {
+				background-color: {$primary_color} !important;
+			}
+			.kab-event-card .kab-book-btn:hover,
+			.kab-service-card .kab-book-btn:hover {
+				background-color: {$secondary_color} !important;
+			}
+			.kab-ticket-qr,
+			.kab-booking-success {
+				border-color: {$accent_color} !important;
+			}
+			.kab-customer-dashboard .kab-booking-active {
+				background-color: {$accent_color} !important;
+			}
+			.kab-form-group input:focus,
+			.kab-form-group select:focus,
+			.kab-form-group textarea:focus {
+				border-color: {$primary_color} !important;
+				box-shadow: 0 0 0 0.2rem rgba(" . $this->hex_to_rgb($primary_color) . ", 0.25) !important;
+			}
+		";
+		wp_add_inline_style( 'kab-frontend', $custom_css );
+
 		wp_localize_script( 'kab-frontend', 'kab_frontend', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce' => wp_create_nonce( 'kab_booking_nonce' ),
@@ -69,6 +120,23 @@ class KAB_Frontend {
 				'cancel_confirm' => __( 'Are you sure you want to cancel this booking?', 'kura-ai-booking-free' )
 			)
 		));
+	}
+
+	/**
+	 * Convert hex color to RGB
+	 */
+	private function hex_to_rgb( $hex ) {
+		$hex = str_replace( '#', '', $hex );
+		if ( strlen( $hex ) == 3 ) {
+			$r = hexdec( substr( $hex, 0, 1 ) . substr( $hex, 0, 1 ) );
+			$g = hexdec( substr( $hex, 1, 1 ) . substr( $hex, 1, 1 ) );
+			$b = hexdec( substr( $hex, 2, 1 ) . substr( $hex, 2, 1 ) );
+		} else {
+			$r = hexdec( substr( $hex, 0, 2 ) );
+			$g = hexdec( substr( $hex, 2, 2 ) );
+			$b = hexdec( substr( $hex, 4, 2 ) );
+		}
+		return "$r, $g, $b";
 	}
 	
 	/**

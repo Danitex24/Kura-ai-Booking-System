@@ -23,47 +23,110 @@ class KAB_Invoice_PDF {
     public static function create_pdf( $invoice_id ) {
 		global $wpdb;
 
-		// Get invoice details
-		$invoice = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_invoices WHERE id = %d", $invoice_id ), ARRAY_A );
+		try {
+			// Validate invoice ID
+			if ( empty( $invoice_id ) || ! is_numeric( $invoice_id ) ) {
+				error_log( 'KAB PDF Error: Invalid invoice ID provided' );
+				return false;
+			}
 
-		if ( ! $invoice ) {
-			return false;
-		}
+			// Get invoice details
+			$invoice = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_invoices WHERE id = %d", $invoice_id ), ARRAY_A );
 
-		// Get booking details
-		$booking = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_bookings WHERE id = %d", $invoice['booking_id'] ), ARRAY_A );
+			if ( ! $invoice ) {
+				error_log( "KAB PDF Error: Invoice #{$invoice_id} not found in database" );
+				return false;
+			}
 
-		// Prepare upload directory
-		$upload_dir = wp_upload_dir();
-		if ( ! empty( $upload_dir['error'] ) || empty( $upload_dir['basedir'] ) || empty( $upload_dir['baseurl'] ) ) {
-			return false;
-		}
-		$invoice_dir = trailingslashit( $upload_dir['basedir'] ) . 'kuraai/invoices/';
+			// Get booking details
+			$booking = null;
+			if ( ! empty( $invoice['booking_id'] ) ) {
+				$booking = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}kab_bookings WHERE id = %d", $invoice['booking_id'] ), ARRAY_A );
+			}
 
-		if ( ! file_exists( $invoice_dir ) ) {
-			wp_mkdir_p( $invoice_dir );
-		}
+			// Prepare upload directory
+			$upload_dir = wp_upload_dir();
+			if ( ! empty( $upload_dir['error'] ) ) {
+				error_log( 'KAB PDF Error: WordPress upload directory error - ' . $upload_dir['error'] );
+				return false;
+			}
 
-        $safe_number  = preg_replace( '/[^A-Za-z0-9_.-]/', '', str_replace( '#', '', (string) $invoice['invoice_number'] ) );
-        $pdf_filename = 'invoice-' . $safe_number . '.pdf';
-        $pdf_path      = $invoice_dir . $pdf_filename;
-        $pdf_url       = trailingslashit( $upload_dir['baseurl'] ) . 'kuraai/invoices/' . $pdf_filename;
+			if ( empty( $upload_dir['basedir'] ) || empty( $upload_dir['baseurl'] ) ) {
+				error_log( 'KAB PDF Error: Upload directory paths not available' );
+				return false;
+			}
 
-        // Prefer mPDF if available, then TCPDF, else fallback
-        if ( self::use_mpdf() ) {
-            $result = self::generate_with_mpdf( $invoice, $booking, $pdf_path );
-        } elseif ( self::use_tcpdf() ) {
-            $result = self::generate_with_tcpdf( $invoice, $booking, $pdf_path );
-        } else {
-            // Fallback to HTML to PDF conversion
-            $result = self::generate_with_html( $invoice, $booking, $pdf_path );
-        }
+			$invoice_dir = trailingslashit( $upload_dir['basedir'] ) . 'kuraai/invoices/';
 
-		if ( $result ) {
+			// Create directory if it doesn't exist
+			if ( ! file_exists( $invoice_dir ) ) {
+				if ( ! wp_mkdir_p( $invoice_dir ) ) {
+					error_log( 'KAB PDF Error: Failed to create invoice directory at ' . $invoice_dir );
+					return false;
+				}
+			}
+
+			// Verify directory is writable
+			if ( ! is_writable( $invoice_dir ) ) {
+				error_log( 'KAB PDF Error: Invoice directory is not writable - ' . $invoice_dir );
+				return false;
+			}
+
+			$safe_number  = preg_replace( '/[^A-Za-z0-9_.-]/', '', str_replace( '#', '', (string) $invoice['invoice_number'] ) );
+			$pdf_filename = 'invoice-' . $safe_number . '.pdf';
+			$pdf_path     = $invoice_dir . $pdf_filename;
+			$pdf_url      = trailingslashit( $upload_dir['baseurl'] ) . 'kuraai/invoices/' . $pdf_filename;
+
+			// Try PDF generation with multiple methods
+			$result = false;
+			$errors = array();
+
+			// Prefer mPDF if available
+			if ( self::use_mpdf() ) {
+				$result = self::generate_with_mpdf( $invoice, $booking, $pdf_path );
+				if ( ! $result ) {
+					$errors[] = 'mPDF generation failed';
+				}
+			}
+
+			// Fallback to TCPDF if mPDF failed or unavailable
+			if ( ! $result && self::use_tcpdf() ) {
+				$result = self::generate_with_tcpdf( $invoice, $booking, $pdf_path );
+				if ( ! $result ) {
+					$errors[] = 'TCPDF generation failed';
+				}
+			}
+
+			// Final fallback to basic PDF
+			if ( ! $result ) {
+				$result = self::generate_with_html( $invoice, $booking, $pdf_path );
+				if ( ! $result ) {
+					$errors[] = 'HTML fallback generation failed';
+				}
+			}
+
+			if ( ! $result ) {
+				error_log( 'KAB PDF Error: All PDF generation methods failed for invoice #' . $invoice_id . ' - ' . implode( ', ', $errors ) );
+				return false;
+			}
+
+			// Verify the generated file exists and has content
+			if ( ! file_exists( $pdf_path ) ) {
+				error_log( 'KAB PDF Error: PDF file was not created at ' . $pdf_path );
+				return false;
+			}
+
+			if ( filesize( $pdf_path ) < 100 ) {
+				error_log( 'KAB PDF Error: Generated PDF file is too small (corrupted) - ' . filesize( $pdf_path ) . ' bytes' );
+				return false;
+			}
+
 			return $pdf_url;
-		}
 
-		return false;
+		} catch ( Exception $e ) {
+			error_log( 'KAB PDF Error: Unexpected exception in create_pdf() - ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+			return false;
+		}
 	}
 
 	/**
@@ -143,54 +206,78 @@ class KAB_Invoice_PDF {
 	 * @return bool True on success, false on failure
 	 */
     private static function generate_with_html( $invoice, $booking, $pdf_path ) {
-        $lines = array(
-            'Invoice',
-            'Number: ' . (string) $invoice['invoice_number'],
-            'Date: ' . date_i18n( get_option( 'date_format' ), strtotime( $invoice['invoice_date'] ) ),
-            'Customer: ' . (string) $invoice['customer_name'],
-            'Email: ' . (string) $invoice['customer_email'],
-            'Item: ' . (string) $invoice['item_name'],
-            'Subtotal: ' . kab_format_currency( (float) $invoice['subtotal'], kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ) ),
-            'Tax: ' . kab_format_currency( (float) $invoice['tax_amount'], kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ) ),
-            'Total: ' . kab_format_currency( (float) $invoice['total_amount'], kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ) ),
-            'Status: ' . ucfirst( (string) $invoice['payment_status'] ),
-        );
-
-        $content = "BT\n/F1 12 Tf\n14 TL\n72 760 Td\n";
-        foreach ( $lines as $idx => $text ) {
-            $safe = str_replace( array('\\', '(', ')'), array('\\\\', '\\(', '\\)'), $text );
-            if ( $idx === 0 ) {
-                $content .= "(" . $safe . ") Tj\n";
-            } else {
-                $content .= "T*\n(" . $safe . ") Tj\n";
+        try {
+            // Validate invoice data
+            if ( empty( $invoice ) || ! is_array( $invoice ) ) {
+                error_log( 'KAB PDF Error: Invalid invoice data provided to generate_with_html()' );
+                return false;
             }
+
+            $lines = array(
+                'Invoice',
+                'Number: ' . (string) $invoice['invoice_number'],
+                'Date: ' . date_i18n( get_option( 'date_format' ), strtotime( $invoice['invoice_date'] ) ),
+                'Customer: ' . (string) $invoice['customer_name'],
+                'Email: ' . (string) $invoice['customer_email'],
+                'Item: ' . (string) $invoice['item_name'],
+                'Subtotal: ' . kab_format_currency( (float) $invoice['subtotal'], kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ) ),
+                'Tax: ' . kab_format_currency( (float) $invoice['tax_amount'], kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ) ),
+                'Total: ' . kab_format_currency( (float) $invoice['total_amount'], kab_currency_symbol( isset( $invoice['currency'] ) ? $invoice['currency'] : 'USD' ) ),
+                'Status: ' . ucfirst( (string) $invoice['payment_status'] ),
+            );
+
+            $content = "BT\n/F1 12 Tf\n14 TL\n72 760 Td\n";
+            foreach ( $lines as $idx => $text ) {
+                $safe = str_replace( array('\\', '(', ')'), array('\\\\', '\\(', '\\)'), $text );
+                if ( $idx === 0 ) {
+                    $content .= "(" . $safe . ") Tj\n";
+                } else {
+                    $content .= "T*\n(" . $safe . ") Tj\n";
+                }
+            }
+            $content .= "ET\n";
+
+            $pdf = "%PDF-1.4\n";
+            $offsets = array();
+            $obj = function( $num, $body ) use ( &$pdf, &$offsets ) {
+                $offsets[$num] = strlen( $pdf );
+                $pdf .= $num . " 0 obj\n" . $body . "\nendobj\n";
+            };
+
+            $obj( 1, "<< /Type /Catalog /Pages 2 0 R >>" );
+            $obj( 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>" );
+            $obj( 4, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>" );
+            $len = strlen( $content );
+            $obj( 5, "<< /Length " . $len . " >>\nstream\n" . $content . "endstream" );
+            $obj( 3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>" );
+
+            $xref_offset = strlen( $pdf );
+            $pdf .= "xref\n0 6\n";
+            $pdf .= "0000000000 65535 f \n";
+            for ( $i = 1; $i <= 5; $i++ ) {
+                $pdf .= sprintf( "%010d 00000 n \n", $offsets[$i] );
+            }
+            $pdf .= "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" . $xref_offset . "\n%%EOF";
+
+            // Attempt to write file
+            $bytes_written = @file_put_contents( $pdf_path, $pdf );
+
+            if ( $bytes_written === false ) {
+                error_log( 'KAB PDF Error: Failed to write PDF file to ' . $pdf_path );
+                return false;
+            }
+
+            if ( $bytes_written < 100 ) {
+                error_log( 'KAB PDF Error: Insufficient bytes written to PDF file - ' . $bytes_written . ' bytes' );
+                return false;
+            }
+
+            return true;
+
+        } catch ( Exception $e ) {
+            error_log( 'KAB PDF Error: Exception in generate_with_html() - ' . $e->getMessage() );
+            return false;
         }
-        $content .= "ET\n";
-
-        $pdf = "%PDF-1.4\n";
-        $offsets = array();
-        $obj = function( $num, $body ) use ( &$pdf, &$offsets ) {
-            $offsets[$num] = strlen( $pdf );
-            $pdf .= $num . " 0 obj\n" . $body . "\nendobj\n";
-        };
-
-        $obj( 1, "<< /Type /Catalog /Pages 2 0 R >>" );
-        $obj( 2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>" );
-        $obj( 4, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>" );
-        $len = strlen( $content );
-        $obj( 5, "<< /Length " . $len . " >>\nstream\n" . $content . "endstream" );
-        $obj( 3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>" );
-
-        $xref_offset = strlen( $pdf );
-        $pdf .= "xref\n0 6\n";
-        $pdf .= "0000000000 65535 f \n";
-        for ( $i = 1; $i <= 5; $i++ ) {
-            $pdf .= sprintf( "%010d 00000 n \n", $offsets[$i] );
-        }
-        $pdf .= "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" . $xref_offset . "\n%%EOF";
-
-        file_put_contents( $pdf_path, $pdf );
-        return true;
     }
 
     /**
@@ -198,13 +285,67 @@ class KAB_Invoice_PDF {
      */
     private static function generate_with_mpdf( $invoice, $booking, $pdf_path ) {
         try {
-            $mpdf = new \Mpdf\Mpdf([ 'tempDir' => wp_upload_dir()['basedir'] . '/kuraai/tmp' ]);
+            // Validate invoice data
+            if ( empty( $invoice ) || ! is_array( $invoice ) ) {
+                error_log( 'KAB PDF Error: Invalid invoice data provided to generate_with_mpdf()' );
+                return false;
+            }
+
+            // Create temp directory for mPDF
+            $upload_dir = wp_upload_dir();
+            $temp_dir = $upload_dir['basedir'] . '/kuraai/tmp';
+
+            if ( ! file_exists( $temp_dir ) ) {
+                if ( ! wp_mkdir_p( $temp_dir ) ) {
+                    error_log( 'KAB PDF Error: Failed to create mPDF temp directory at ' . $temp_dir );
+                    // Try to use system temp directory instead
+                    $temp_dir = sys_get_temp_dir();
+                }
+            }
+
+            // Initialize mPDF with error handling
+            $mpdf = new \Mpdf\Mpdf([
+                'tempDir' => $temp_dir,
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'margin_left' => 15,
+                'margin_right' => 15,
+                'margin_top' => 15,
+                'margin_bottom' => 15,
+            ]);
+
+            // Set document metadata
+            $mpdf->SetCreator( 'Kura-ai Booking System' );
+            $mpdf->SetAuthor( isset( $invoice['customer_name'] ) ? $invoice['customer_name'] : 'Kura-ai Booking' );
+            $mpdf->SetTitle( 'Invoice ' . ( isset( $invoice['invoice_number'] ) ? $invoice['invoice_number'] : '' ) );
+
+            // Generate HTML content
             $html = self::get_invoice_html_content( $invoice, $booking );
+
+            if ( empty( $html ) ) {
+                error_log( 'KAB PDF Error: Empty HTML content generated for invoice' );
+                return false;
+            }
+
+            // Write HTML to PDF
             $mpdf->WriteHTML( $html );
+
+            // Output to file
             $mpdf->Output( $pdf_path, 'F' );
+
+            // Verify file was created
+            if ( ! file_exists( $pdf_path ) ) {
+                error_log( 'KAB PDF Error: mPDF Output() succeeded but file does not exist at ' . $pdf_path );
+                return false;
+            }
+
             return true;
+
+        } catch ( \Mpdf\MpdfException $e ) {
+            error_log( 'KAB PDF Error (mPDF): ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+            return false;
         } catch ( \Exception $e ) {
-            error_log( 'mPDF Error: ' . $e->getMessage() );
+            error_log( 'KAB PDF Error (mPDF Exception): ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
             return false;
         }
     }
