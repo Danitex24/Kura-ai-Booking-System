@@ -30,7 +30,7 @@ class KAB_Frontend_Forms {
 		$primary_color = isset( $settings['primary_color'] ) ? $settings['primary_color'] : '#E67E22';
 		$secondary_color = isset( $settings['secondary_color'] ) ? $settings['secondary_color'] : '#628141';
 
-		wp_enqueue_style( 'kab-frontend-forms', KAB_FREE_PLUGIN_URL . 'assets/css/frontend-forms.css', array(), KAB_FREE_VERSION );
+		wp_enqueue_style( 'kab-frontend-forms', KAB_FREE_PLUGIN_URL . 'assets/css/frontend-forms.css', array(), KAB_VERSION );
 
 		// Add inline CSS for brand colors
 		$custom_css = "
@@ -51,7 +51,7 @@ class KAB_Frontend_Forms {
 		";
 		wp_add_inline_style( 'kab-frontend-forms', $custom_css );
 
-		wp_enqueue_script( 'kab-frontend-forms', KAB_FREE_PLUGIN_URL . 'assets/js/frontend-forms.js', array( 'jquery' ), KAB_FREE_VERSION, true );
+		wp_enqueue_script( 'kab-frontend-forms', KAB_FREE_PLUGIN_URL . 'assets/js/frontend-forms.js', array( 'jquery' ), KAB_VERSION, true );
 		wp_localize_script( 'kab-frontend-forms', 'kabForms', array(
 			'ajaxurl' => admin_url( 'admin-ajax.php' ),
 			'nonce' => wp_create_nonce( 'kab_frontend_forms' ),

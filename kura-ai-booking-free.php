@@ -438,8 +438,10 @@ function kab_free_activate_plugin() {
 	// Run activation tasks.
 	KAB_Activator::activate();
 
-	// Show setup wizard.
-	set_transient( 'kab_free_show_setup_wizard', true, 60 );
+	// Show setup wizard only if not already completed
+	if ( ! get_option( 'kab_setup_completed' ) ) {
+		set_transient( 'kab_free_show_setup_wizard', true, 60 );
+	}
 }
 
 // Deactivation hook.
@@ -619,6 +621,7 @@ function kab_free_init_plugin() {
 	// Load admin menu handler for new features
 	if ( is_admin() ) {
 		require_once KAB_FREE_PLUGIN_DIR . 'includes/admin/class-kab-admin-menu.php';
+		require_once KAB_FREE_PLUGIN_DIR . 'includes/admin/class-kab-shortcodes-page.php';
 	}
 
 	// Instantiate the admin class to register menus.
@@ -1110,7 +1113,28 @@ add_action( 'rest_api_init', function() {
     register_rest_route( 'kuraai/v1', '/webhook/razorpay', array( 'methods' => 'POST', 'callback' => 'kab_webhook_razorpay', 'permission_callback' => '__return_true' ) );
     register_rest_route( 'kuraai/v1', '/webhook/paystack', array( 'methods' => 'POST', 'callback' => 'kab_webhook_paystack', 'permission_callback' => '__return_true' ) );
     register_rest_route( 'kuraai/v1', '/webhook/flutterwave', array( 'methods' => 'POST', 'callback' => 'kab_webhook_flutterwave', 'permission_callback' => '__return_true' ) );
-    register_rest_route( 'kuraai/v1', '/dashboard/metrics', array( 'methods' => 'GET', 'callback' => 'kab_dashboard_metrics', 'permission_callback' => function(){ return current_user_can('manage_options'); } ) );
+
+    // Dashboard metrics endpoint
+    register_rest_route( 'kuraai/v1', '/dashboard/metrics', array(
+        'methods' => 'GET',
+        'callback' => 'kab_dashboard_metrics',
+        'permission_callback' => '__return_true'
+    ) );
+
+    // Finance metrics endpoint
+    register_rest_route( 'kuraai/v1', '/finance/metrics', array(
+        'methods' => 'GET',
+        'callback' => 'kab_finance_metrics',
+        'permission_callback' => '__return_true'
+    ) );
+} );
+
+// Flush rewrite rules on admin init to ensure REST routes work
+add_action( 'admin_init', function() {
+    if ( ! get_option( 'kab_rest_routes_flushed_v2' ) ) {
+        flush_rewrite_rules();
+        update_option( 'kab_rest_routes_flushed_v2', true );
+    }
 } );
 
 function kab_webhook_basic_ok() { return new WP_REST_Response( array( 'ok' => true ), 200 ); }
@@ -1121,17 +1145,134 @@ function kab_webhook_paystack( WP_REST_Request $req ) { return kab_webhook_basic
 function kab_webhook_flutterwave( WP_REST_Request $req ) { return kab_webhook_basic_ok(); }
 
 function kab_dashboard_metrics( WP_REST_Request $req ) {
-    global $wpdb; $prefix = $wpdb->prefix;
-    $now = current_time( 'timestamp' ); $start = date( 'Y-m-d', strtotime( '-29 days', $now ) );
-    $bookings_last_30 = $wpdb->get_results( $wpdb->prepare( "SELECT booking_date, COUNT(*) AS cnt FROM {$prefix}kab_bookings WHERE booking_date >= %s GROUP BY booking_date ORDER BY booking_date", $start ), ARRAY_A );
-    $map = array(); foreach ( $bookings_last_30 as $r ) { $map[ $r['booking_date'] ] = intval( $r['cnt'] ); }
-    $labels = array(); $series = array(); for ( $i = 0; $i < 30; $i++ ) { $d = date( 'Y-m-d', strtotime( "+{$i} days", strtotime( $start ) ) ); $labels[] = $d; $series[] = isset( $map[$d] ) ? $map[$d] : 0; }
-    $revenue_last_30 = floatval( $wpdb->get_var( $wpdb->prepare( "SELECT SUM(total_amount) FROM {$prefix}kab_invoices WHERE invoice_date >= %s AND payment_status='paid'", date( 'Y-m-d H:i:s', strtotime( '-30 days', $now ) ) ) ) );
-    $upcoming = intval( $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}kab_bookings WHERE status='pending' AND booking_date >= CURDATE()" ) );
-    $total_bookings = intval( $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}kab_bookings" ) );
-    $customers = intval( $wpdb->get_var( "SELECT COUNT(DISTINCT user_id) FROM {$prefix}kab_bookings" ) );
-    $top_services = $wpdb->get_results( "SELECT s.name, COUNT(*) AS cnt FROM {$prefix}kab_bookings b JOIN {$prefix}kab_services s ON b.service_id=s.id WHERE b.booking_type='service' GROUP BY s.id, s.name ORDER BY cnt DESC LIMIT 5", ARRAY_A );
-    $top_events = $wpdb->get_results( "SELECT e.name, COUNT(*) AS cnt FROM {$prefix}kab_bookings b JOIN {$prefix}kab_events e ON b.event_id=e.id WHERE b.booking_type='event' GROUP BY e.id, e.name ORDER BY cnt DESC LIMIT 5", ARRAY_A );
+    global $wpdb;
+    $prefix = $wpdb->prefix;
+
+    // Check if tables exist first
+    $bookings_table = $prefix . 'kab_bookings';
+    $invoices_table = $prefix . 'kab_invoices';
+    $services_table = $prefix . 'kab_services';
+    $events_table = $prefix . 'kab_events';
+
+    $now = current_time( 'timestamp' );
+    $start = date( 'Y-m-d', strtotime( '-29 days', $now ) );
+
+    // Initialize default values
+    $labels = array();
+    $series = array();
+    for ( $i = 0; $i < 30; $i++ ) {
+        $d = date( 'Y-m-d', strtotime( "+{$i} days", strtotime( $start ) ) );
+        $labels[] = $d;
+        $series[] = 0;
+    }
+
+    // Bookings last 30 days for line chart
+    $bookings_last_30 = $wpdb->get_results( $wpdb->prepare( "SELECT booking_date, COUNT(*) AS cnt FROM {$bookings_table} WHERE booking_date >= %s GROUP BY booking_date ORDER BY booking_date", $start ), ARRAY_A );
+
+    if ( $wpdb->last_error ) {
+        error_log( 'KAB Dashboard - Bookings query error: ' . $wpdb->last_error );
+    }
+
+    if ( is_array( $bookings_last_30 ) && ! empty( $bookings_last_30 ) ) {
+        $map = array();
+        foreach ( $bookings_last_30 as $r ) {
+            $map[ $r['booking_date'] ] = intval( $r['cnt'] );
+        }
+        // Update series with actual data
+        for ( $i = 0; $i < 30; $i++ ) {
+            $d = date( 'Y-m-d', strtotime( "+{$i} days", strtotime( $start ) ) );
+            $series[$i] = isset( $map[$d] ) ? $map[$d] : 0;
+        }
+    }
+
+    // Revenue calculations
+    $revenue_last_30 = 0;
+    $revenue_result = $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(total_amount), 0) FROM {$invoices_table} WHERE invoice_date >= %s AND payment_status='paid'", date( 'Y-m-d H:i:s', strtotime( '-30 days', $now ) ) ) );
+    if ( $wpdb->last_error ) {
+        error_log( 'KAB Dashboard - Revenue query error: ' . $wpdb->last_error );
+    } else {
+        $revenue_last_30 = floatval( $revenue_result );
+    }
+
+    // KPI metrics
+    $upcoming = intval( $wpdb->get_var( "SELECT COUNT(*) FROM {$bookings_table} WHERE status='pending' AND booking_date >= CURDATE()" ) );
+    $total_bookings = intval( $wpdb->get_var( "SELECT COUNT(*) FROM {$bookings_table}" ) );
+    $customers = intval( $wpdb->get_var( "SELECT COUNT(DISTINCT user_id) FROM {$bookings_table} WHERE user_id > 0" ) );
+
+    // Top services
+    $top_services = array();
+    $services_result = $wpdb->get_results( "SELECT s.name, COUNT(*) AS cnt FROM {$bookings_table} b JOIN {$services_table} s ON b.service_id=s.id WHERE b.booking_type='service' GROUP BY s.id, s.name ORDER BY cnt DESC LIMIT 5", ARRAY_A );
+    if ( ! $wpdb->last_error && is_array( $services_result ) ) {
+        $top_services = $services_result;
+    }
+
+    // Top events
+    $top_events = array();
+    $events_result = $wpdb->get_results( "SELECT e.name, COUNT(*) AS cnt FROM {$bookings_table} b JOIN {$events_table} e ON b.event_id=e.id WHERE b.booking_type='event' GROUP BY e.id, e.name ORDER BY cnt DESC LIMIT 5", ARRAY_A );
+    if ( ! $wpdb->last_error && is_array( $events_result ) ) {
+        $top_events = $events_result;
+    }
+
+    // Booking status distribution for pie chart
+    $pie_labels = array();
+    $pie_values = array();
+    $status_distribution = $wpdb->get_results( "SELECT status, COUNT(*) AS cnt FROM {$bookings_table} GROUP BY status", ARRAY_A );
+    if ( ! $wpdb->last_error && is_array( $status_distribution ) && ! empty( $status_distribution ) ) {
+        foreach ( $status_distribution as $row ) {
+            $pie_labels[] = ucfirst( $row['status'] );
+            $pie_values[] = intval( $row['cnt'] );
+        }
+    } else {
+        // Default data if no bookings
+        $pie_labels = array( 'No Data' );
+        $pie_values = array( 1 );
+    }
+
+    // Monthly revenue trend for additional line chart (last 6 months)
+    $revenue_labels = array();
+    $revenue_values = array();
+    $revenue_trend = $wpdb->get_results(
+        "SELECT DATE_FORMAT(invoice_date, '%Y-%m') AS month, SUM(total_amount) AS revenue
+        FROM {$invoices_table}
+        WHERE payment_status='paid' AND invoice_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        GROUP BY month
+        ORDER BY month",
+        ARRAY_A
+    );
+    if ( ! $wpdb->last_error && is_array( $revenue_trend ) && ! empty( $revenue_trend ) ) {
+        foreach ( $revenue_trend as $row ) {
+            $revenue_labels[] = $row['month'];
+            $revenue_values[] = round( floatval( $row['revenue'] ), 2 );
+        }
+    } else {
+        // Default data for last 6 months
+        for ( $i = 5; $i >= 0; $i-- ) {
+            $revenue_labels[] = date( 'Y-m', strtotime( "-{$i} months" ) );
+            $revenue_values[] = 0;
+        }
+    }
+
+    // Service performance metrics for radar chart
+    $radar_data = array( 0, 0, 0, 0 );
+    $service_metrics = $wpdb->get_results(
+        "SELECT
+            COUNT(CASE WHEN status='confirmed' THEN 1 END) as confirmed,
+            COUNT(CASE WHEN status='completed' THEN 1 END) as completed,
+            COUNT(CASE WHEN status='cancelled' THEN 1 END) as cancelled,
+            COUNT(CASE WHEN status='pending' THEN 1 END) as pending
+        FROM {$bookings_table}",
+        ARRAY_A
+    );
+    if ( ! $wpdb->last_error && is_array( $service_metrics ) && ! empty( $service_metrics[0] ) ) {
+        $metrics = $service_metrics[0];
+        $radar_data = array(
+            intval( $metrics['confirmed'] ),
+            intval( $metrics['completed'] ),
+            intval( $metrics['cancelled'] ),
+            intval( $metrics['pending'] )
+        );
+    }
+
     return new WP_REST_Response( array(
         'labels' => $labels,
         'bookings_series' => $series,
@@ -1141,5 +1282,133 @@ function kab_dashboard_metrics( WP_REST_Request $req ) {
         'customers' => $customers,
         'top_services' => $top_services,
         'top_events' => $top_events,
+        'pie_labels' => $pie_labels,
+        'pie_values' => $pie_values,
+        'revenue_labels' => $revenue_labels,
+        'revenue_values' => $revenue_values,
+        'radar_labels' => array( 'Confirmed', 'Completed', 'Cancelled', 'Pending' ),
+        'radar_data' => $radar_data,
     ), 200 );
+}
+
+function kab_finance_metrics( WP_REST_Request $req ) {
+    global $wpdb;
+    $prefix = $wpdb->prefix;
+
+    // Monthly revenue (last 12 months)
+    $revenue_months = array();
+    $revenue_values = array();
+    for ($i = 11; $i >= 0; $i--) {
+        $month = date('Y-m', strtotime("-{$i} months"));
+        $revenue_months[] = $month;
+        $amount = floatval($wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(SUM(total_amount), 0) FROM {$prefix}kab_invoices
+            WHERE payment_status='paid' AND DATE_FORMAT(invoice_date, '%%Y-%%m') = %s",
+            $month
+        )));
+        $revenue_values[] = round($amount, 2);
+    }
+
+    // Payment methods distribution
+    $payment_methods = $wpdb->get_results(
+        "SELECT payment_method, COUNT(*) as cnt FROM {$prefix}kab_invoices
+        WHERE payment_status='paid' GROUP BY payment_method",
+        ARRAY_A
+    );
+    $payment_method_labels = array();
+    $payment_method_values = array();
+    if (is_array($payment_methods) && !empty($payment_methods)) {
+        foreach ($payment_methods as $pm) {
+            $payment_method_labels[] = ucfirst($pm['payment_method'] ?: 'Unknown');
+            $payment_method_values[] = intval($pm['cnt']);
+        }
+    } else {
+        $payment_method_labels = array('No Data');
+        $payment_method_values = array(1);
+    }
+
+    // Invoice status distribution
+    $statuses = $wpdb->get_results(
+        "SELECT payment_status, COUNT(*) as cnt FROM {$prefix}kab_invoices GROUP BY payment_status",
+        ARRAY_A
+    );
+    $status_labels = array();
+    $status_values = array();
+    if (is_array($statuses) && !empty($statuses)) {
+        foreach ($statuses as $status) {
+            $status_labels[] = ucfirst($status['payment_status']);
+            $status_values[] = intval($status['cnt']);
+        }
+    } else {
+        $status_labels = array('No Data');
+        $status_values = array(1);
+    }
+
+    // Revenue by booking type (services vs events)
+    $service_revenue = floatval($wpdb->get_var(
+        "SELECT COALESCE(SUM(i.total_amount), 0) FROM {$prefix}kab_invoices i
+        JOIN {$prefix}kab_bookings b ON i.booking_id = b.id
+        WHERE i.payment_status='paid' AND b.booking_type='service'"
+    ));
+    $event_revenue = floatval($wpdb->get_var(
+        "SELECT COALESCE(SUM(i.total_amount), 0) FROM {$prefix}kab_invoices i
+        JOIN {$prefix}kab_bookings b ON i.booking_id = b.id
+        WHERE i.payment_status='paid' AND b.booking_type='event'"
+    ));
+
+    $type_labels = array();
+    $type_values = array();
+    if ($service_revenue > 0 || $event_revenue > 0) {
+        if ($service_revenue > 0) {
+            $type_labels[] = 'Services';
+            $type_values[] = round($service_revenue, 2);
+        }
+        if ($event_revenue > 0) {
+            $type_labels[] = 'Events';
+            $type_values[] = round($event_revenue, 2);
+        }
+    } else {
+        $type_labels = array('No Data');
+        $type_values = array(1);
+    }
+
+    // Weekly comparison (this week vs last week)
+    $days = array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun');
+    $weekly_labels = $days;
+    $weekly_this = array();
+    $weekly_last = array();
+
+    for ($i = 0; $i < 7; $i++) {
+        // This week
+        $this_day = date('Y-m-d', strtotime('monday this week +' . $i . ' days'));
+        $this_amount = floatval($wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(SUM(total_amount), 0) FROM {$prefix}kab_invoices
+            WHERE payment_status='paid' AND DATE(invoice_date) = %s",
+            $this_day
+        )));
+        $weekly_this[] = round($this_amount, 2);
+
+        // Last week
+        $last_day = date('Y-m-d', strtotime('monday last week +' . $i . ' days'));
+        $last_amount = floatval($wpdb->get_var($wpdb->prepare(
+            "SELECT COALESCE(SUM(total_amount), 0) FROM {$prefix}kab_invoices
+            WHERE payment_status='paid' AND DATE(invoice_date) = %s",
+            $last_day
+        )));
+        $weekly_last[] = round($last_amount, 2);
+    }
+
+    return new WP_REST_Response(array(
+        'revenue_months' => $revenue_months,
+        'revenue_values' => $revenue_values,
+        'payment_method_labels' => $payment_method_labels,
+        'payment_method_values' => $payment_method_values,
+        'status_labels' => $status_labels,
+        'status_values' => $status_values,
+        'type_labels' => $type_labels,
+        'type_values' => $type_values,
+        'weekly_labels' => $weekly_labels,
+        'weekly_this' => $weekly_this,
+        'weekly_last' => $weekly_last,
+    ), 200);
 }

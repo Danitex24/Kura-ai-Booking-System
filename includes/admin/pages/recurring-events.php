@@ -191,7 +191,7 @@ $events = $wpdb->get_results( "SELECT id, name FROM {$wpdb->prefix}kab_events WH
 							<tr>
 								<td><?php echo esc_html( $recurrence->event_name ); ?></td>
 								<td><?php echo esc_html( ucfirst( $recurrence->frequency ) ); ?></td>
-								<td><?php echo esc_html( $recurrence->interval ); ?></td>
+								<td><?php echo esc_html( $recurrence->recurrence_interval ); ?></td>
 								<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $recurrence->start_date ) ) ); ?></td>
 								<td><?php echo $recurrence->end_date ? esc_html( date_i18n( get_option( 'date_format' ), strtotime( $recurrence->end_date ) ) ) : '&mdash;'; ?></td>
 								<td><?php echo esc_html( $instance_count ); ?></td>

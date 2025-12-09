@@ -201,7 +201,7 @@ class KAB_Database {
 			id INT NOT NULL AUTO_INCREMENT,
 			event_id INT NOT NULL,
 			frequency VARCHAR(20) NOT NULL,
-			interval INT NOT NULL DEFAULT 1,
+			recurrence_interval INT NOT NULL DEFAULT 1,
 			start_date DATE NOT NULL,
 			end_date DATE NULL,
 			occurrences INT NULL,

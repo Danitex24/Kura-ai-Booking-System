@@ -18,7 +18,7 @@ class KAB_Admin_Menu {
 	public static function register_menus() {
 		// Add submenu items for new features
 		add_submenu_page(
-			'kura-ai-booking',
+			'kab-dashboard',
 			__( 'Recurring Events', 'kura-ai-booking-free' ),
 			__( 'Recurring Events', 'kura-ai-booking-free' ),
 			'manage_options',
@@ -27,7 +27,7 @@ class KAB_Admin_Menu {
 		);
 
 		add_submenu_page(
-			'kura-ai-booking',
+			'kab-dashboard',
 			__( 'Email Reminders', 'kura-ai-booking-free' ),
 			__( 'Email Reminders', 'kura-ai-booking-free' ),
 			'manage_options',
@@ -36,7 +36,7 @@ class KAB_Admin_Menu {
 		);
 
 		add_submenu_page(
-			'kura-ai-booking',
+			'kab-dashboard',
 			__( 'Waitlist', 'kura-ai-booking-free' ),
 			__( 'Waitlist', 'kura-ai-booking-free' ),
 			'manage_options',
@@ -45,7 +45,7 @@ class KAB_Admin_Menu {
 		);
 
 		add_submenu_page(
-			'kura-ai-booking',
+			'kab-dashboard',
 			__( 'Cancellations & Refunds', 'kura-ai-booking-free' ),
 			__( 'Cancellations', 'kura-ai-booking-free' ),
 			'manage_options',
@@ -54,7 +54,7 @@ class KAB_Admin_Menu {
 		);
 
 		add_submenu_page(
-			'kura-ai-booking',
+			'kab-dashboard',
 			__( 'Reviews & Ratings', 'kura-ai-booking-free' ),
 			__( 'Reviews', 'kura-ai-booking-free' ),
 			'manage_options',
@@ -63,7 +63,7 @@ class KAB_Admin_Menu {
 		);
 
 		add_submenu_page(
-			'kura-ai-booking',
+			'kab-dashboard',
 			__( 'Event Categories', 'kura-ai-booking-free' ),
 			__( 'Event Categories', 'kura-ai-booking-free' ),
 			'manage_options',

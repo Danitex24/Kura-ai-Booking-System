@@ -34,14 +34,14 @@ class KAB_Recurring_Events {
 			$result = $wpdb->insert(
 				$wpdb->prefix . 'kab_event_recurrence',
 				array(
-					'event_id'     => intval( $event_id ),
-					'frequency'    => sanitize_text_field( $recurrence_data['frequency'] ), // daily, weekly, monthly
-					'interval'     => isset( $recurrence_data['interval'] ) ? intval( $recurrence_data['interval'] ) : 1,
-					'start_date'   => sanitize_text_field( $recurrence_data['start_date'] ),
-					'end_date'     => isset( $recurrence_data['end_date'] ) ? sanitize_text_field( $recurrence_data['end_date'] ) : null,
-					'occurrences'  => isset( $recurrence_data['occurrences'] ) ? intval( $recurrence_data['occurrences'] ) : null,
-					'days_of_week' => isset( $recurrence_data['days_of_week'] ) ? sanitize_text_field( $recurrence_data['days_of_week'] ) : null,
-					'day_of_month' => isset( $recurrence_data['day_of_month'] ) ? intval( $recurrence_data['day_of_month'] ) : null,
+					'event_id'            => intval( $event_id ),
+					'frequency'           => sanitize_text_field( $recurrence_data['frequency'] ), // daily, weekly, monthly
+					'recurrence_interval' => isset( $recurrence_data['interval'] ) ? intval( $recurrence_data['interval'] ) : 1,
+					'start_date'          => sanitize_text_field( $recurrence_data['start_date'] ),
+					'end_date'            => isset( $recurrence_data['end_date'] ) ? sanitize_text_field( $recurrence_data['end_date'] ) : null,
+					'occurrences'         => isset( $recurrence_data['occurrences'] ) ? intval( $recurrence_data['occurrences'] ) : null,
+					'days_of_week'        => isset( $recurrence_data['days_of_week'] ) ? sanitize_text_field( $recurrence_data['days_of_week'] ) : null,
+					'day_of_month'        => isset( $recurrence_data['day_of_month'] ) ? intval( $recurrence_data['day_of_month'] ) : null,
 				),
 				array( '%d', '%s', '%d', '%s', '%s', '%d', '%s', '%d' )
 			);
@@ -186,7 +186,7 @@ class KAB_Recurring_Events {
 	 */
 	private static function get_next_date( $current_date, $pattern ) {
 		$next_date = clone $current_date;
-		$interval = intval( $pattern['interval'] );
+		$interval = intval( $pattern['recurrence_interval'] );
 
 		switch ( $pattern['frequency'] ) {
 			case 'daily':

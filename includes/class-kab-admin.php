@@ -50,34 +50,46 @@ class KAB_Admin {
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'services' ? 'active' : ''; ?>"><?php echo esc_html__( 'Services', 'kura-ai-booking-free' ); ?></a>
 
                     <div class="kab-nav-group">
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('events','calendar','appointments'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Events', 'kura-ai-booking-free' ); ?></a>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('events','calendar','appointments','recurring-events','event-categories'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Events', 'kura-ai-booking-free' ); ?></a>
                         <div class="kab-dropdown">
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'events' ? 'active' : ''; ?>"><?php echo esc_html__( 'Manage Events', 'kura-ai-booking-free' ); ?></a>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-calendar' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'calendar' ? 'active' : ''; ?>"><?php echo esc_html__( 'Calendar', 'kura-ai-booking-free' ); ?></a>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-appointments' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'appointments' ? 'active' : ''; ?>"><?php echo esc_html__( 'Appointments', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-recurring-events' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'recurring-events' ? 'active' : ''; ?>"><?php echo esc_html__( 'Recurring Events', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-event-categories' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'event-categories' ? 'active' : ''; ?>"><?php echo esc_html__( 'Event Categories', 'kura-ai-booking-free' ); ?></a>
                         </div>
                     </div>
 
-                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-employees' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'employees' ? 'active' : ''; ?>"><?php echo esc_html__( 'Employees', 'kura-ai-booking-free' ); ?></a>
-                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-locations' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'locations' ? 'active' : ''; ?>"><?php echo esc_html__( 'Locations', 'kura-ai-booking-free' ); ?></a>
+                    <div class="kab-nav-group">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customers' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('customers','waitlist','reviews','invoices','create-invoice','invoice-details'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Customers', 'kura-ai-booking-free' ); ?></a>
+                        <div class="kab-dropdown">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customers' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'customers' ? 'active' : ''; ?>"><?php echo esc_html__( 'All Customers', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-invoices' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'invoices' ? 'active' : ''; ?>"><?php echo esc_html__( 'Invoices', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-create-invoice' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'create-invoice' ? 'active' : ''; ?>"><?php echo esc_html__( 'Create Invoice', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-waitlist' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'waitlist' ? 'active' : ''; ?>"><?php echo esc_html__( 'Waitlist', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-reviews' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'reviews' ? 'active' : ''; ?>"><?php echo esc_html__( 'Reviews & Ratings', 'kura-ai-booking-free' ); ?></a>
+                        </div>
+                    </div>
 
                     <div class="kab-nav-group">
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-finance' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('finance','invoices','customers'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Finance', 'kura-ai-booking-free' ); ?></a>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-finance' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('finance','cancellations'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Finance', 'kura-ai-booking-free' ); ?></a>
                         <div class="kab-dropdown">
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-finance' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'finance' ? 'active' : ''; ?>"><?php echo esc_html__( 'Overview', 'kura-ai-booking-free' ); ?></a>
-                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-invoices' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'invoices' ? 'active' : ''; ?>"><?php echo esc_html__( 'Invoices', 'kura-ai-booking-free' ); ?></a>
-                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customers' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'customers' ? 'active' : ''; ?>"><?php echo esc_html__( 'Customers', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-cancellations' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'cancellations' ? 'active' : ''; ?>"><?php echo esc_html__( 'Cancellations & Refunds', 'kura-ai-booking-free' ); ?></a>
                         </div>
                     </div>
 
                     <div class="kab-nav-group">
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('settings','notifications','customize','custom-fields','validation'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Settings', 'kura-ai-booking-free' ); ?></a>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('settings','notifications','customize','custom-fields','validation','reminders','employees','locations'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Settings', 'kura-ai-booking-free' ); ?></a>
                         <div class="kab-dropdown">
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'settings' ? 'active' : ''; ?>"><?php echo esc_html__( 'General', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-employees' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'employees' ? 'active' : ''; ?>"><?php echo esc_html__( 'Employees', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-locations' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'locations' ? 'active' : ''; ?>"><?php echo esc_html__( 'Locations', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-reminders' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'reminders' ? 'active' : ''; ?>"><?php echo esc_html__( 'Email Reminders', 'kura-ai-booking-free' ); ?></a>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-notifications' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'notifications' ? 'active' : ''; ?>"><?php echo esc_html__( 'Notifications', 'kura-ai-booking-free' ); ?></a>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-customize' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'customize' ? 'active' : ''; ?>"><?php echo esc_html__( 'Customize', 'kura-ai-booking-free' ); ?></a>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-custom-fields' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'custom-fields' ? 'active' : ''; ?>"><?php echo esc_html__( 'Custom Fields', 'kura-ai-booking-free' ); ?></a>
-                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-validation' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'validation' ? 'active' : ''; ?>"><?php echo esc_html__( 'Validation', 'kura-ai-booking-free' ); ?></a>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-validation' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'validation' ? 'active' : ''; ?>"><?php echo esc_html__( 'Ticket Validation', 'kura-ai-booking-free' ); ?></a>
                         </div>
                     </div>
                 </nav>
@@ -100,8 +112,8 @@ class KAB_Admin {
 		wp_enqueue_style( 'kab-admin-styles', KAB_FREE_PLUGIN_URL . 'assets/css/admin.css', array(), KAB_VERSION );
 		wp_enqueue_script( 'kab-admin-scripts', KAB_FREE_PLUGIN_URL . 'assets/js/admin.js', array( 'jquery' ), KAB_VERSION, true );
 
-		// Load Chart.js on dashboard page
-		if ( $hook === 'toplevel_page_kab-dashboard' ) {
+		// Load Chart.js on dashboard and finance pages
+		if ( $hook === 'toplevel_page_kab-dashboard' || $hook === 'kura-ai-booking_page_kab-finance' ) {
 			wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', array(), '4.4.0', true );
 		}
 	}
@@ -110,6 +122,7 @@ class KAB_Admin {
 	 * Add admin menus
 	 */
 	public function add_admin_menus() {
+		// Main menu page
 		add_menu_page(
 			__( 'Kura-ai Booking', 'kura-ai-booking-free' ),
 			__( 'Kura-ai Booking', 'kura-ai-booking-free' ),
@@ -120,16 +133,17 @@ class KAB_Admin {
 			25
 		);
 
-        // Finance submenu under Kura-ai Booking
-        add_submenu_page(
-            'kab-dashboard',
-            __( 'Finance', 'kura-ai-booking-free' ),
-            __( 'Finance', 'kura-ai-booking-free' ),
-            'manage_options',
-            'kab-finance',
-            array( $this, 'render_finance_page' )
-        );
+		// Rename first submenu to Dashboard
+		add_submenu_page(
+			'kab-dashboard',
+			__( 'Dashboard', 'kura-ai-booking-free' ),
+			__( 'Dashboard', 'kura-ai-booking-free' ),
+			'manage_options',
+			'kab-dashboard',
+			array( $this, 'render_dashboard_page' )
+		);
 
+		// Core menu items (visible in sidebar)
 		add_submenu_page(
 			'kab-dashboard',
 			__( 'Services', 'kura-ai-booking-free' ),
@@ -150,11 +164,38 @@ class KAB_Admin {
 
 		add_submenu_page(
 			'kab-dashboard',
+			__( 'Calendar', 'kura-ai-booking-free' ),
+			__( 'Calendar', 'kura-ai-booking-free' ),
+			'manage_options',
+			'kab-calendar',
+			array( $this, 'render_calendar_page' )
+		);
+
+		add_submenu_page(
+			'kab-dashboard',
 			__( 'Customers', 'kura-ai-booking-free' ),
 			__( 'Customers', 'kura-ai-booking-free' ),
 			'manage_options',
 			'kab-customers',
 			array( $this, 'render_customers_page' )
+		);
+
+		add_submenu_page(
+			'kab-dashboard',
+			__( 'Employees', 'kura-ai-booking-free' ),
+			__( 'Employees', 'kura-ai-booking-free' ),
+			'manage_options',
+			'kab-employees',
+			array( $this, 'render_employees_page' )
+		);
+
+		add_submenu_page(
+			'kab-dashboard',
+			__( 'Finance', 'kura-ai-booking-free' ),
+			__( 'Finance', 'kura-ai-booking-free' ),
+			'manage_options',
+			'kab-finance',
+			array( $this, 'render_finance_page' )
 		);
 
 		add_submenu_page(
@@ -166,24 +207,13 @@ class KAB_Admin {
 			array( $this, 'render_settings_page' )
 		);
 
-        // Ticket Validation under Kura-ai Booking
-        add_submenu_page(
-            'kab-dashboard',
-            __( 'Ticket Validation', 'kura-ai-booking-free' ),
-            __( 'Ticket Validation', 'kura-ai-booking-free' ),
-            'manage_options',
-            'kab-validation',
-            array( $this, 'render_validation_page' )
-        );
-
-        // Additional menus
-        add_submenu_page( 'kab-dashboard', __( 'Calendar', 'kura-ai-booking-free' ), __( 'Calendar', 'kura-ai-booking-free' ), 'manage_options', 'kab-calendar', array( $this, 'render_calendar_page' ) );
-        add_submenu_page( 'kab-dashboard', __( 'Appointments', 'kura-ai-booking-free' ), __( 'Appointments', 'kura-ai-booking-free' ), 'manage_options', 'kab-appointments', array( $this, 'render_appointments_page' ) );
-        add_submenu_page( 'kab-dashboard', __( 'Employees', 'kura-ai-booking-free' ), __( 'Employees', 'kura-ai-booking-free' ), 'manage_options', 'kab-employees', array( $this, 'render_employees_page' ) );
-        add_submenu_page( 'kab-dashboard', __( 'Locations', 'kura-ai-booking-free' ), __( 'Locations', 'kura-ai-booking-free' ), 'manage_options', 'kab-locations', array( $this, 'render_locations_page' ) );
-        add_submenu_page( 'kab-dashboard', __( 'Notifications', 'kura-ai-booking-free' ), __( 'Notifications', 'kura-ai-booking-free' ), 'manage_options', 'kab-notifications', array( $this, 'render_notifications_page' ) );
-        add_submenu_page( 'kab-dashboard', __( 'Customize', 'kura-ai-booking-free' ), __( 'Customize', 'kura-ai-booking-free' ), 'manage_options', 'kab-customize', array( $this, 'render_customize_page' ) );
-        add_submenu_page( 'kab-dashboard', __( 'Custom Fields', 'kura-ai-booking-free' ), __( 'Custom Fields', 'kura-ai-booking-free' ), 'manage_options', 'kab-custom-fields', array( $this, 'render_custom_fields_page' ) );
+		// Hidden pages (accessible via top nav dropdowns only)
+		add_submenu_page( null, __( 'Ticket Validation', 'kura-ai-booking-free' ), __( 'Ticket Validation', 'kura-ai-booking-free' ), 'manage_options', 'kab-validation', array( $this, 'render_validation_page' ) );
+		add_submenu_page( null, __( 'Appointments', 'kura-ai-booking-free' ), __( 'Appointments', 'kura-ai-booking-free' ), 'manage_options', 'kab-appointments', array( $this, 'render_appointments_page' ) );
+		add_submenu_page( null, __( 'Locations', 'kura-ai-booking-free' ), __( 'Locations', 'kura-ai-booking-free' ), 'manage_options', 'kab-locations', array( $this, 'render_locations_page' ) );
+		add_submenu_page( null, __( 'Notifications', 'kura-ai-booking-free' ), __( 'Notifications', 'kura-ai-booking-free' ), 'manage_options', 'kab-notifications', array( $this, 'render_notifications_page' ) );
+		add_submenu_page( null, __( 'Customize', 'kura-ai-booking-free' ), __( 'Customize', 'kura-ai-booking-free' ), 'manage_options', 'kab-customize', array( $this, 'render_customize_page' ) );
+		add_submenu_page( null, __( 'Custom Fields', 'kura-ai-booking-free' ), __( 'Custom Fields', 'kura-ai-booking-free' ), 'manage_options', 'kab-custom-fields', array( $this, 'render_custom_fields_page' ) );
 	}
 
 	/**
@@ -213,23 +243,49 @@ class KAB_Admin {
 			</div>
 
 			<!-- Page Content -->
-			<div class="kab-card">
-				<div class="kab-card-header">
-					<h1 class="kab-card-title">
-						<span class="dashicons dashicons-dashboard"></span>
+			<div class="kab-card" style="border-top:4px solid #E67E22;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+				<div class="kab-card-header" style="background:linear-gradient(135deg, #E67E22 0%, #d06918 100%);padding:20px 24px;">
+					<h1 class="kab-card-title" style="color:#fff;font-size:24px;margin:0;">
+						<span class="dashicons dashicons-dashboard" style="color:#fff;"></span>
 						<?php echo esc_html__( 'Dashboard Overview', 'kura-ai-booking-free' ); ?>
 					</h1>
 				</div>
-                <div class="kab-card-body">
-                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
-                        <div class="kab-widget"><h2><span class="dashicons dashicons-calendar"></span><?php esc_html_e('Total Bookings','kura-ai-booking-free'); ?></h2><div id="kab-kpi-total">—</div></div>
-                        <div class="kab-widget"><h2><span class="dashicons dashicons-groups"></span><?php esc_html_e('Customers','kura-ai-booking-free'); ?></h2><div id="kab-kpi-customers">—</div></div>
-                        <div class="kab-widget"><h2><span class="dashicons dashicons-money"></span><?php esc_html_e('Revenue (30d)','kura-ai-booking-free'); ?></h2><div id="kab-kpi-revenue">—</div></div>
-                        <div class="kab-widget"><h2><span class="dashicons dashicons-clock"></span><?php esc_html_e('Upcoming','kura-ai-booking-free'); ?></h2><div id="kab-kpi-upcoming">—</div></div>
+                <div class="kab-card-body" style="padding:24px;">
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;">
+                        <div class="kab-widget" style="background:linear-gradient(135deg, #E67E22 0%, #c66a1a 100%);color:#fff;border:none;box-shadow:0 4px 12px rgba(230,126,34,0.25);">
+                            <h2 style="color:rgba(255,255,255,0.9);"><span class="dashicons dashicons-calendar"></span><?php esc_html_e('Total Bookings','kura-ai-booking-free'); ?></h2>
+                            <div id="kab-kpi-total" style="color:#fff;font-size:32px;font-weight:700;">—</div>
+                        </div>
+                        <div class="kab-widget" style="background:linear-gradient(135deg, #628141 0%, #4a6131 100%);color:#fff;border:none;box-shadow:0 4px 12px rgba(98,129,65,0.25);">
+                            <h2 style="color:rgba(255,255,255,0.9);"><span class="dashicons dashicons-groups"></span><?php esc_html_e('Customers','kura-ai-booking-free'); ?></h2>
+                            <div id="kab-kpi-customers" style="color:#fff;font-size:32px;font-weight:700;">—</div>
+                        </div>
+                        <div class="kab-widget" style="background:linear-gradient(135deg, #8BAE66 0%, #6d8e4e 100%);color:#fff;border:none;box-shadow:0 4px 12px rgba(139,174,102,0.25);">
+                            <h2 style="color:rgba(255,255,255,0.9);"><span class="dashicons dashicons-money"></span><?php esc_html_e('Revenue (30d)','kura-ai-booking-free'); ?></h2>
+                            <div id="kab-kpi-revenue" style="color:#fff;font-size:32px;font-weight:700;">—</div>
+                        </div>
+                        <div class="kab-widget" style="background:linear-gradient(135deg, #EBD5AB 0%, #d4be8f 100%);color:#333;border:none;box-shadow:0 4px 12px rgba(235,213,171,0.35);">
+                            <h2 style="color:rgba(0,0,0,0.7);"><span class="dashicons dashicons-clock"></span><?php esc_html_e('Upcoming','kura-ai-booking-free'); ?></h2>
+                            <div id="kab-kpi-upcoming" style="color:#333;font-size:32px;font-weight:700;">—</div>
+                        </div>
                     </div>
-                    <div class="kab-mt-2" style="display:grid;grid-template-columns:2fr 1fr;gap:12px;align-items:start;">
-                        <div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-chart-line"></span><?php esc_html_e('Bookings (last 30 days)','kura-ai-booking-free'); ?></h2></div><div class="kab-card-body"><canvas id="kab-chart-bookings" width="600" height="200" style="max-width:100%"></canvas></div></div>
-                        <div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title"><span class="dashicons dashicons-chart-bar"></span><?php esc_html_e('Top Services','kura-ai-booking-free'); ?></h2></div><div class="kab-card-body"><canvas id="kab-chart-topservices" width="300" height="200" style="max-width:100%"></canvas></div></div>
+                    <div class="kab-mt-2" style="display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;">
+                        <div class="kab-card" style="border-top:4px solid #E67E22;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                            <div class="kab-card-header" style="background:linear-gradient(to right, #fff 0%, #fef5f0 100%);">
+                                <h2 class="kab-card-title" style="color:#E67E22;"><span class="dashicons dashicons-chart-line"></span><?php esc_html_e('Bookings (last 30 days)','kura-ai-booking-free'); ?></h2>
+                            </div>
+                            <div class="kab-card-body" style="padding:20px;">
+                                <canvas id="kab-chart-bookings" width="600" height="200" style="max-width:100%"></canvas>
+                            </div>
+                        </div>
+                        <div class="kab-card" style="border-top:4px solid #8BAE66;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                            <div class="kab-card-header" style="background:linear-gradient(to right, #fff 0%, #f5f9f2 100%);">
+                                <h2 class="kab-card-title" style="color:#628141;"><span class="dashicons dashicons-chart-bar"></span><?php esc_html_e('Top Services','kura-ai-booking-free'); ?></h2>
+                            </div>
+                            <div class="kab-card-body" style="padding:20px;">
+                                <canvas id="kab-chart-topservices" width="300" height="200" style="max-width:100%"></canvas>
+                            </div>
+                        </div>
                     </div>
                     <script>
                     document.addEventListener('DOMContentLoaded',function(){
@@ -241,12 +297,29 @@ class KAB_Admin {
                         var bookingsChart = null;
                         var topServicesChart = null;
 
-                        fetch('<?php echo esc_url( rest_url('kuraai/v1/dashboard/metrics') ); ?>')
+                        console.log('Fetching dashboard metrics from: <?php echo esc_url( rest_url('kuraai/v1/dashboard/metrics') ); ?>');
+
+                        fetch('<?php echo esc_url( rest_url('kuraai/v1/dashboard/metrics') ); ?>', {
+                            method: 'GET',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-WP-Nonce': '<?php echo wp_create_nonce('wp_rest'); ?>'
+                            }
+                        })
                         .then(function(r){
-                            if (!r.ok) throw new Error('Network response failed');
+                            console.log('Response status:', r.status);
+                            if (!r.ok) {
+                                return r.text().then(function(text) {
+                                    console.error('Response error:', text);
+                                    throw new Error('Network response failed: ' + r.status);
+                                });
+                            }
                             return r.json();
                         })
                         .then(function(d){
+                            console.log('Dashboard data received:', d);
+
                             // Update KPI values
                             var setText=function(id,val){var el=document.getElementById(id); if(el) el.textContent=val;};
                             setText('kab-kpi-total', d.total_bookings || 0);
@@ -405,6 +478,197 @@ class KAB_Admin {
                                     }
                                 });
                             }
+
+                            // Pie Chart: Booking Status Distribution
+                            var c3=document.getElementById('kab-chart-pie');
+                            if(c3 && d.pie_labels && d.pie_values){
+                                var ctx3 = c3.getContext('2d');
+                                new Chart(ctx3, {
+                                    type: 'pie',
+                                    data: {
+                                        labels: d.pie_labels,
+                                        datasets: [{
+                                            data: d.pie_values,
+                                            backgroundColor: [
+                                                '#E67E22',
+                                                '#8BAE66',
+                                                '#628141',
+                                                '#EBD5AB',
+                                                '#24321a',
+                                                '#3498db',
+                                                '#e74c3c'
+                                            ],
+                                            borderColor: '#ffffff',
+                                            borderWidth: 2
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: true,
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                labels: {
+                                                    padding: 15,
+                                                    font: {
+                                                        size: 12
+                                                    }
+                                                }
+                                            },
+                                            tooltip: {
+                                                backgroundColor: '#24321a',
+                                                titleColor: '#fff',
+                                                bodyColor: '#fff',
+                                                borderColor: '#E67E22',
+                                                borderWidth: 1,
+                                                padding: 12,
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        var label = context.label || '';
+                                                        var value = context.parsed || 0;
+                                                        var total = context.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                                        var percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                                        return label + ': ' + value + ' (' + percentage + '%)';
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // Radar Chart: Performance Metrics
+                            var c4=document.getElementById('kab-chart-radar');
+                            if(c4 && d.radar_labels && d.radar_data){
+                                var ctx4 = c4.getContext('2d');
+                                new Chart(ctx4, {
+                                    type: 'radar',
+                                    data: {
+                                        labels: d.radar_labels,
+                                        datasets: [{
+                                            label: '<?php echo esc_js(__('Booking Metrics','kura-ai-booking-free')); ?>',
+                                            data: d.radar_data,
+                                            backgroundColor: 'rgba(230, 126, 34, 0.2)',
+                                            borderColor: '#E67E22',
+                                            borderWidth: 2,
+                                            pointBackgroundColor: '#E67E22',
+                                            pointBorderColor: '#fff',
+                                            pointBorderWidth: 2,
+                                            pointRadius: 4,
+                                            pointHoverRadius: 6,
+                                            pointHoverBackgroundColor: '#fff',
+                                            pointHoverBorderColor: '#E67E22'
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: true,
+                                        plugins: {
+                                            legend: {
+                                                display: false
+                                            },
+                                            tooltip: {
+                                                backgroundColor: '#24321a',
+                                                titleColor: '#fff',
+                                                bodyColor: '#fff',
+                                                borderColor: '#E67E22',
+                                                borderWidth: 1,
+                                                padding: 12
+                                            }
+                                        },
+                                        scales: {
+                                            r: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    precision: 0,
+                                                    color: '#666'
+                                                },
+                                                grid: {
+                                                    color: 'rgba(0, 0, 0, 0.1)'
+                                                },
+                                                pointLabels: {
+                                                    color: '#666',
+                                                    font: {
+                                                        size: 12
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // Line Chart: Revenue Trend (6 Months)
+                            var c5=document.getElementById('kab-chart-revenue');
+                            if(c5 && d.revenue_labels && d.revenue_values){
+                                var ctx5 = c5.getContext('2d');
+                                new Chart(ctx5, {
+                                    type: 'line',
+                                    data: {
+                                        labels: d.revenue_labels,
+                                        datasets: [{
+                                            label: '<?php echo esc_js(__('Revenue','kura-ai-booking-free')); ?>',
+                                            data: d.revenue_values,
+                                            borderColor: '#8BAE66',
+                                            backgroundColor: 'rgba(139, 174, 102, 0.1)',
+                                            borderWidth: 3,
+                                            fill: true,
+                                            tension: 0.4,
+                                            pointBackgroundColor: '#8BAE66',
+                                            pointBorderColor: '#fff',
+                                            pointBorderWidth: 2,
+                                            pointRadius: 5,
+                                            pointHoverRadius: 7
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                display: false
+                                            },
+                                            tooltip: {
+                                                backgroundColor: '#24321a',
+                                                titleColor: '#fff',
+                                                bodyColor: '#fff',
+                                                borderColor: '#8BAE66',
+                                                borderWidth: 1,
+                                                padding: 12,
+                                                displayColors: false,
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        return '<?php echo esc_js(__('Revenue','kura-ai-booking-free')); ?>: <?php echo esc_js(kab_currency_symbol('USD')); ?>' + context.parsed.y.toFixed(2);
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    precision: 2,
+                                                    color: '#666',
+                                                    callback: function(value) {
+                                                        return '<?php echo esc_js(kab_currency_symbol('USD')); ?>' + value.toFixed(2);
+                                                    }
+                                                },
+                                                grid: {
+                                                    color: 'rgba(0, 0, 0, 0.05)'
+                                                }
+                                            },
+                                            x: {
+                                                ticks: {
+                                                    color: '#666'
+                                                },
+                                                grid: {
+                                                    display: false
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
                         })
                         .catch(function(err){
                             console.error('Failed to load dashboard metrics:', err);
@@ -419,10 +683,10 @@ class KAB_Admin {
                 </div>
             </div>
 
-            <div class="kab-dashboard-row">
-                <div class="kab-card">
-                    <div class="kab-card-header">
-                        <h2 class="kab-card-title">
+            <div class="kab-dashboard-row" style="margin-top:20px;">
+                <div class="kab-card" style="border-top:4px solid #628141;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                    <div class="kab-card-header" style="background:linear-gradient(to right, #fff 0%, #f5f9f2 100%);">
+                        <h2 class="kab-card-title" style="color:#628141;">
                             <span class="dashicons dashicons-clock"></span>
                             <?php echo esc_html__( 'Upcoming Appointments', 'kura-ai-booking-free' ); ?>
                         </h2>
@@ -449,22 +713,22 @@ class KAB_Admin {
 
 
                 <!-- Quick Actions placed before Recent Bookings to share row with Upcoming -->
-                <div class="kab-card">
-                    <div class="kab-card-header">
-                        <h2 class="kab-card-title">
+                <div class="kab-card" style="border-top:4px solid #EBD5AB;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                    <div class="kab-card-header" style="background:linear-gradient(to right, #fff 0%, #fdfbf7 100%);">
+                        <h2 class="kab-card-title" style="color:#c6a566;">
                             <span class="dashicons dashicons-plus-alt"></span>
                             <?php echo esc_html__( 'Quick Actions', 'kura-ai-booking-free' ); ?>
                         </h2>
                     </div>
                     <div class="kab-card-body">
                         <div class="kab-mb-2">
-                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services&action=add' ) ); ?>" class="kab-btn kab-btn-primary">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-services&action=add' ) ); ?>" class="kab-btn kab-btn-primary" style="background:linear-gradient(135deg, #E67E22 0%, #d06918 100%);border:none;padding:12px 24px;font-weight:600;box-shadow:0 2px 6px rgba(230,126,34,0.3);transition:all 0.3s ease;">
                                 <span class="dashicons dashicons-plus"></span>
                                 <?php echo esc_html__( 'Add New Service', 'kura-ai-booking-free' ); ?>
                             </a>
                         </div>
                         <div>
-                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events&action=add' ) ); ?>" class="kab-btn kab-btn-primary">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-events&action=add' ) ); ?>" class="kab-btn kab-btn-primary" style="background:linear-gradient(135deg, #8BAE66 0%, #779854 100%);border:none;padding:12px 24px;font-weight:600;box-shadow:0 2px 6px rgba(139,174,102,0.3);transition:all 0.3s ease;">
                                 <span class="dashicons dashicons-plus"></span>
                                 <?php echo esc_html__( 'Add New Event', 'kura-ai-booking-free' ); ?>
                             </a>
@@ -472,6 +736,91 @@ class KAB_Admin {
                     </div>
                 </div>
 			</div>
+
+            <!-- Advanced Analytics Section -->
+            <div class="kab-card" style="margin-top:20px;border-top:4px solid #8BAE66;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                <div class="kab-card-header" style="background:linear-gradient(to right, #fff 0%, #f5f9f2 100%);">
+                    <h2 class="kab-card-title" style="color:#628141;">
+                        <span class="dashicons dashicons-chart-area"></span>
+                        <?php echo esc_html__( 'Advanced Analytics', 'kura-ai-booking-free' ); ?>
+                    </h2>
+                </div>
+                <div class="kab-card-body" style="padding:24px;">
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:start;">
+                        <!-- Pie Chart: Booking Status Distribution -->
+                        <div class="kab-card" style="border-left:3px solid #E67E22;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                            <div class="kab-card-header" style="background:#fef5f0;">
+                                <h3 class="kab-card-title" style="font-size:15px;color:#E67E22;">
+                                    <span class="dashicons dashicons-chart-pie"></span>
+                                    <?php esc_html_e('Booking Status', 'kura-ai-booking-free'); ?>
+                                </h3>
+                            </div>
+                            <div class="kab-card-body">
+                                <canvas id="kab-chart-pie" width="300" height="300" style="max-width:100%"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Radar Chart: Performance Metrics -->
+                        <div class="kab-card" style="border-left:3px solid #628141;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                            <div class="kab-card-header" style="background:#f5f9f2;">
+                                <h3 class="kab-card-title" style="font-size:15px;color:#628141;">
+                                    <span class="dashicons dashicons-performance"></span>
+                                    <?php esc_html_e('Performance Metrics', 'kura-ai-booking-free'); ?>
+                                </h3>
+                            </div>
+                            <div class="kab-card-body">
+                                <canvas id="kab-chart-radar" width="300" height="300" style="max-width:100%"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Line Chart: Revenue Trend -->
+                        <div class="kab-card" style="border-left:3px solid #8BAE66;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                            <div class="kab-card-header" style="background:#f9fcf7;">
+                                <h3 class="kab-card-title" style="font-size:15px;color:#8BAE66;">
+                                    <span class="dashicons dashicons-chart-line"></span>
+                                    <?php esc_html_e('Revenue Trend (6 Months)', 'kura-ai-booking-free'); ?>
+                                </h3>
+                            </div>
+                            <div class="kab-card-body">
+                                <canvas id="kab-chart-revenue" width="300" height="200" style="max-width:100%"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+			<style>
+				/* Enhanced Dashboard Styles */
+				.kab-widget {
+					transition: transform 0.3s ease, box-shadow 0.3s ease;
+				}
+				.kab-widget:hover {
+					transform: translateY(-4px);
+					box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+				}
+				.kab-card {
+					transition: transform 0.2s ease, box-shadow 0.2s ease;
+				}
+				.kab-card:hover {
+					box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+				}
+				.kab-btn {
+					transition: all 0.3s ease;
+				}
+				.kab-btn:hover {
+					transform: translateY(-2px);
+					box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+				}
+				.kab-status-badge {
+					padding: 4px 12px;
+					border-radius: 12px;
+					font-size: 12px;
+					font-weight: 600;
+					background: linear-gradient(135deg, #8BAE66 0%, #6d8e4e 100%);
+					color: #fff;
+					display: inline-block;
+				}
+			</style>
 		</div>
 		<?php
 	}
@@ -581,27 +930,301 @@ class KAB_Admin {
 	 * Render Finance overview page
 	 */
 	public function render_finance_page() {
+		global $wpdb;
+		$prefix = $wpdb->prefix;
+
+		// Calculate financial metrics
+		$total_revenue = floatval( $wpdb->get_var( "SELECT COALESCE(SUM(total_amount), 0) FROM {$prefix}kab_invoices WHERE payment_status='paid'" ) );
+		$pending_revenue = floatval( $wpdb->get_var( "SELECT COALESCE(SUM(total_amount), 0) FROM {$prefix}kab_invoices WHERE payment_status='pending'" ) );
+		$total_invoices = intval( $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}kab_invoices" ) );
+		$paid_invoices = intval( $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}kab_invoices WHERE payment_status='paid'" ) );
+		$refunds_total = floatval( $wpdb->get_var( "SELECT COALESCE(SUM(refund_amount), 0) FROM {$prefix}kab_cancellations WHERE refund_status='completed'" ) );
+		$refunds_count = intval( $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}kab_cancellations WHERE refund_status='completed'" ) );
+
+		// Revenue this month
+		$month_revenue = floatval( $wpdb->get_var( "SELECT COALESCE(SUM(total_amount), 0) FROM {$prefix}kab_invoices WHERE payment_status='paid' AND MONTH(invoice_date) = MONTH(CURDATE()) AND YEAR(invoice_date) = YEAR(CURDATE())" ) );
+
+		// Average transaction value
+		$avg_transaction = $paid_invoices > 0 ? ($total_revenue / $paid_invoices) : 0;
+
 		?>
 		<div class="wrap kab-admin-wrapper">
 			<?php $this->render_static_header( 'finance' ); ?>
+
+			<!-- Financial KPIs -->
 			<div class="kab-card">
 				<div class="kab-card-header">
-					<h2><?php echo esc_html__( 'Finance', 'kura-ai-booking-free' ); ?></h2>
+					<h1 class="kab-card-title">
+						<span class="dashicons dashicons-money-alt"></span>
+						<?php echo esc_html__( 'Financial Overview', 'kura-ai-booking-free' ); ?>
+					</h1>
 				</div>
 				<div class="kab-card-body">
-					<p><?php echo esc_html__( 'Access invoices and ticket validation tools.', 'kura-ai-booking-free' ); ?></p>
-					<div class="kab-invoice-actions">
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-invoices' ) ); ?>" class="kab-btn kab-btn-primary">
+					<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+						<div class="kab-widget">
+							<h2><span class="dashicons dashicons-chart-line"></span><?php esc_html_e('Total Revenue','kura-ai-booking-free'); ?></h2>
+							<div style="font-size:28px;font-weight:bold;color:#8BAE66;"><?php echo esc_html( kab_currency_symbol('USD') . number_format($total_revenue, 2) ); ?></div>
+						</div>
+						<div class="kab-widget">
+							<h2><span class="dashicons dashicons-money"></span><?php esc_html_e('This Month','kura-ai-booking-free'); ?></h2>
+							<div style="font-size:28px;font-weight:bold;color:#E67E22;"><?php echo esc_html( kab_currency_symbol('USD') . number_format($month_revenue, 2) ); ?></div>
+						</div>
+						<div class="kab-widget">
+							<h2><span class="dashicons dashicons-clock"></span><?php esc_html_e('Pending','kura-ai-booking-free'); ?></h2>
+							<div style="font-size:28px;font-weight:bold;color:#f39c12;"><?php echo esc_html( kab_currency_symbol('USD') . number_format($pending_revenue, 2) ); ?></div>
+						</div>
+						<div class="kab-widget">
+							<h2><span class="dashicons dashicons-undo"></span><?php esc_html_e('Refunds','kura-ai-booking-free'); ?></h2>
+							<div style="font-size:28px;font-weight:bold;color:#e74c3c;"><?php echo esc_html( kab_currency_symbol('USD') . number_format($refunds_total, 2) ); ?></div>
+						</div>
+					</div>
+
+					<!-- Secondary Metrics -->
+					<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+						<div class="kab-widget" style="background:#f8f9fa;">
+							<h2><?php esc_html_e('Total Invoices','kura-ai-booking-free'); ?></h2>
+							<div style="font-size:24px;font-weight:600;"><?php echo esc_html($total_invoices); ?></div>
+						</div>
+						<div class="kab-widget" style="background:#f8f9fa;">
+							<h2><?php esc_html_e('Paid Invoices','kura-ai-booking-free'); ?></h2>
+							<div style="font-size:24px;font-weight:600;color:#27ae60;"><?php echo esc_html($paid_invoices); ?></div>
+						</div>
+						<div class="kab-widget" style="background:#f8f9fa;">
+							<h2><?php esc_html_e('Avg Transaction','kura-ai-booking-free'); ?></h2>
+							<div style="font-size:24px;font-weight:600;"><?php echo esc_html( kab_currency_symbol('USD') . number_format($avg_transaction, 2) ); ?></div>
+						</div>
+						<div class="kab-widget" style="background:#f8f9fa;">
+							<h2><?php esc_html_e('Refund Count','kura-ai-booking-free'); ?></h2>
+							<div style="font-size:24px;font-weight:600;color:#e74c3c;"><?php echo esc_html($refunds_count); ?></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Charts Section -->
+			<div class="kab-card" style="margin-top:20px;">
+				<div class="kab-card-header">
+					<h2 class="kab-card-title">
+						<span class="dashicons dashicons-chart-area"></span>
+						<?php echo esc_html__( 'Financial Analytics', 'kura-ai-booking-free' ); ?>
+					</h2>
+				</div>
+				<div class="kab-card-body">
+					<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:20px;">
+						<!-- Revenue Trend (12 Months) -->
+						<div class="kab-card">
+							<div class="kab-card-header">
+								<h3 class="kab-card-title" style="font-size:16px;">
+									<span class="dashicons dashicons-chart-line"></span>
+									<?php esc_html_e('Monthly Revenue (12 Months)', 'kura-ai-booking-free'); ?>
+								</h3>
+							</div>
+							<div class="kab-card-body">
+								<canvas id="kab-finance-revenue-chart" width="400" height="250" style="max-width:100%"></canvas>
+							</div>
+						</div>
+
+						<!-- Payment Methods -->
+						<div class="kab-card">
+							<div class="kab-card-header">
+								<h3 class="kab-card-title" style="font-size:16px;">
+									<span class="dashicons dashicons-cart"></span>
+									<?php esc_html_e('Payment Methods', 'kura-ai-booking-free'); ?>
+								</h3>
+							</div>
+							<div class="kab-card-body">
+								<canvas id="kab-finance-payment-methods" width="400" height="250" style="max-width:100%"></canvas>
+							</div>
+						</div>
+					</div>
+
+					<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+						<!-- Invoice Status Distribution -->
+						<div class="kab-card">
+							<div class="kab-card-header">
+								<h3 class="kab-card-title" style="font-size:16px;">
+									<span class="dashicons dashicons-chart-pie"></span>
+									<?php esc_html_e('Invoice Status', 'kura-ai-booking-free'); ?>
+								</h3>
+							</div>
+							<div class="kab-card-body">
+								<canvas id="kab-finance-invoice-status" width="300" height="300" style="max-width:100%"></canvas>
+							</div>
+						</div>
+
+						<!-- Top Revenue Sources -->
+						<div class="kab-card">
+							<div class="kab-card-header">
+								<h3 class="kab-card-title" style="font-size:16px;">
+									<span class="dashicons dashicons-star-filled"></span>
+									<?php esc_html_e('Revenue by Type', 'kura-ai-booking-free'); ?>
+								</h3>
+							</div>
+							<div class="kab-card-body">
+								<canvas id="kab-finance-revenue-type" width="300" height="300" style="max-width:100%"></canvas>
+							</div>
+						</div>
+
+						<!-- Weekly Revenue Comparison -->
+						<div class="kab-card">
+							<div class="kab-card-header">
+								<h3 class="kab-card-title" style="font-size:16px;">
+									<span class="dashicons dashicons-calendar-alt"></span>
+									<?php esc_html_e('Weekly Comparison', 'kura-ai-booking-free'); ?>
+								</h3>
+							</div>
+							<div class="kab-card-body">
+								<canvas id="kab-finance-weekly" width="300" height="300" style="max-width:100%"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Quick Actions -->
+			<div class="kab-card" style="margin-top:20px;">
+				<div class="kab-card-header">
+					<h2 class="kab-card-title">
+						<span class="dashicons dashicons-admin-tools"></span>
+						<?php echo esc_html__( 'Quick Actions', 'kura-ai-booking-free' ); ?>
+					</h2>
+				</div>
+				<div class="kab-card-body">
+					<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-invoices' ) ); ?>" class="kab-btn kab-btn-primary" style="text-align:center;">
 							<span class="dashicons dashicons-media-spreadsheet"></span>
-							<?php echo esc_html__( 'Manage Invoices', 'kura-ai-booking-free' ); ?>
+							<?php echo esc_html__( 'View All Invoices', 'kura-ai-booking-free' ); ?>
 						</a>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-validation' ) ); ?>" class="kab-btn kab-btn-secondary">
-							<span class="dashicons dashicons-yes"></span>
-							<?php echo esc_html__( 'Ticket Validation', 'kura-ai-booking-free' ); ?>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-create-invoice' ) ); ?>" class="kab-btn kab-btn-secondary" style="text-align:center;">
+							<span class="dashicons dashicons-plus-alt"></span>
+							<?php echo esc_html__( 'Create Invoice', 'kura-ai-booking-free' ); ?>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-cancellations' ) ); ?>" class="kab-btn kab-btn-secondary" style="text-align:center;">
+							<span class="dashicons dashicons-undo"></span>
+							<?php echo esc_html__( 'Refunds', 'kura-ai-booking-free' ); ?>
+						</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-btn kab-btn-secondary" style="text-align:center;">
+							<span class="dashicons dashicons-admin-settings"></span>
+							<?php echo esc_html__( 'Payment Settings', 'kura-ai-booking-free' ); ?>
 						</a>
 					</div>
 				</div>
 			</div>
+
+			<script>
+			document.addEventListener('DOMContentLoaded', function(){
+				if (typeof Chart === 'undefined') {
+					console.error('Chart.js not loaded on finance page');
+					return;
+				}
+
+				fetch('<?php echo esc_url( rest_url('kuraai/v1/finance/metrics') ); ?>')
+				.then(r => r.json())
+				.then(d => {
+					console.log('Finance data:', d);
+
+					// Monthly Revenue Chart
+					new Chart(document.getElementById('kab-finance-revenue-chart').getContext('2d'), {
+						type: 'line',
+						data: {
+							labels: d.revenue_months || [],
+							datasets: [{
+								label: 'Revenue',
+								data: d.revenue_values || [],
+								borderColor: '#8BAE66',
+								backgroundColor: 'rgba(139, 174, 102, 0.1)',
+								borderWidth: 3,
+								fill: true,
+								tension: 0.4
+							}]
+						},
+						options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							plugins: { legend: { display: false } },
+							scales: {
+								y: { beginAtZero: true, ticks: { callback: v => '<?php echo esc_js(kab_currency_symbol('USD')); ?>' + v.toFixed(2) } }
+							}
+						}
+					});
+
+					// Payment Methods
+					new Chart(document.getElementById('kab-finance-payment-methods').getContext('2d'), {
+						type: 'doughnut',
+						data: {
+							labels: d.payment_method_labels || ['No Data'],
+							datasets: [{
+								data: d.payment_method_values || [1],
+								backgroundColor: ['#E67E22', '#8BAE66', '#628141', '#EBD5AB', '#3498db', '#e74c3c']
+							}]
+						},
+						options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							plugins: { legend: { position: 'bottom' } }
+						}
+					});
+
+					// Invoice Status
+					new Chart(document.getElementById('kab-finance-invoice-status').getContext('2d'), {
+						type: 'pie',
+						data: {
+							labels: d.status_labels || ['No Data'],
+							datasets: [{
+								data: d.status_values || [1],
+								backgroundColor: ['#27ae60', '#f39c12', '#e74c3c', '#95a5a6']
+							}]
+						},
+						options: {
+							responsive: true,
+							maintainAspectRatio: true,
+							plugins: { legend: { position: 'bottom' } }
+						}
+					});
+
+					// Revenue by Type
+					new Chart(document.getElementById('kab-finance-revenue-type').getContext('2d'), {
+						type: 'doughnut',
+						data: {
+							labels: d.type_labels || ['No Data'],
+							datasets: [{
+								data: d.type_values || [1],
+								backgroundColor: ['#E67E22', '#8BAE66', '#628141']
+							}]
+						},
+						options: {
+							responsive: true,
+							maintainAspectRatio: true,
+							plugins: { legend: { position: 'bottom' } }
+						}
+					});
+
+					// Weekly Comparison
+					new Chart(document.getElementById('kab-finance-weekly').getContext('2d'), {
+						type: 'bar',
+						data: {
+							labels: d.weekly_labels || [],
+							datasets: [{
+								label: 'This Week',
+								data: d.weekly_this || [],
+								backgroundColor: '#8BAE66'
+							}, {
+								label: 'Last Week',
+								data: d.weekly_last || [],
+								backgroundColor: '#E67E22'
+							}]
+						},
+						options: {
+							responsive: true,
+							maintainAspectRatio: true,
+							plugins: { legend: { position: 'bottom' } },
+							scales: { y: { beginAtZero: true } }
+						}
+					});
+				})
+				.catch(err => console.error('Finance metrics error:', err));
+			});
+			</script>
 		</div>
 		<?php
 	}
@@ -2068,6 +2691,20 @@ class KAB_Admin {
                             <div class="kab-card-body">
                                 <?php $this->render_company_name_field(); ?>
                                 <?php $this->render_support_email_field(); ?>
+
+                                <div class="kab-field-group" style="margin-top: 30px; padding: 20px; background: #f0f6fc; border-left: 4px solid #0073aa; border-radius: 4px;">
+                                    <h3 style="margin-top: 0; color: #0073aa;">
+                                        <span class="dashicons dashicons-admin-tools" style="font-size: 20px;"></span>
+                                        <?php echo esc_html__( 'Setup Wizard', 'kura-ai-booking-free' ); ?>
+                                    </h3>
+                                    <p style="margin-bottom: 15px;">
+                                        <?php echo esc_html__( 'Run the setup wizard to configure your booking system settings, company information, and brand colors.', 'kura-ai-booking-free' ); ?>
+                                    </p>
+                                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-setup-wizard' ) ); ?>" class="kab-btn kab-btn-secondary">
+                                        <span class="dashicons dashicons-controls-play"></span>
+                                        <?php echo esc_html__( 'Launch Setup Wizard', 'kura-ai-booking-free' ); ?>
+                                    </a>
+                                </div>
                             </div>
                             <div class="kab-card-footer"><button type="submit" class="kab-btn kab-btn-primary"><span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Save Settings', 'kura-ai-booking-free' ); ?></button></div>
                         </form>

@@ -18,8 +18,9 @@ class KAB_Invoice_Admin extends KAB_Admin {
     }
 
     public function add_admin_menu() {
+        // Hide from sidebar - accessible via top nav Customers dropdown only
         add_submenu_page(
-            'kab-dashboard',
+            null,
             __( 'Invoices', 'kura-ai-booking-free' ),
             __( 'Invoices', 'kura-ai-booking-free' ),
             'manage_options',
@@ -28,7 +29,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
         );
 
         add_submenu_page(
-            'kab-dashboard',
+            null,
             __( 'Create Invoice', 'kura-ai-booking-free' ),
             __( 'Create Invoice', 'kura-ai-booking-free' ),
             'manage_options',
@@ -37,7 +38,7 @@ class KAB_Invoice_Admin extends KAB_Admin {
         );
 
         add_submenu_page(
-            'kab-dashboard',
+            null,
             __( 'Invoice Details', 'kura-ai-booking-free' ),
             __( 'Invoice Details', 'kura-ai-booking-free' ),
             'read',
