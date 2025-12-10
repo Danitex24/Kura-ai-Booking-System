@@ -208,6 +208,15 @@ class KAB_Admin {
 			array( $this, 'render_settings_page' )
 		);
 
+		add_submenu_page(
+			'kab-dashboard',
+			__( 'Shortcodes', 'kura-ai-booking-free' ),
+			__( 'Shortcodes', 'kura-ai-booking-free' ),
+			'manage_options',
+			'kab-shortcodes',
+			array( $this, 'render_shortcodes_page' )
+		);
+
 		// Hidden pages (accessible via top nav dropdowns only)
 		add_submenu_page( null, __( 'Ticket Validation', 'kura-ai-booking-free' ), __( 'Ticket Validation', 'kura-ai-booking-free' ), 'manage_options', 'kab-validation', array( $this, 'render_validation_page' ) );
 		add_submenu_page( null, __( 'Appointments', 'kura-ai-booking-free' ), __( 'Appointments', 'kura-ai-booking-free' ), 'manage_options', 'kab-appointments', array( $this, 'render_appointments_page' ) );
@@ -3246,6 +3255,14 @@ var add=function(btnId,tbodyId,html){var b=document.getElementById(btnId);if(b){
         require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-custom-fields.php'; $model = new KAB_Custom_Fields();
         if($action==='add' || $action==='edit'){ $f = $field_id ? $model->get_field($field_id) : null; $title = $field_id?__('Edit Field','kura-ai-booking-free'):__('Add Field','kura-ai-booking-free'); $act = $field_id?'kab_update_field':'kab_create_field'; $nonce = $field_id?('kab_update_field_'.$field_id):'kab_create_field'; $this->render_static_header('custom-fields'); echo '<div class="kab-card"><div class="kab-card-header"><h2 class="kab-card-title">'.$title.'</h2></div><div class="kab-card-body">'; echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">'; echo '<input type="hidden" name="action" value="'.$act.'"/>'; if($field_id){ echo '<input type="hidden" name="field_id" value="'.esc_attr($field_id).'"/>'; } wp_nonce_field($nonce); echo '<div class="kab-form-grid"><div class="kab-col">'; echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Name','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="name" value="'.esc_attr($f['name']??'').'" '.($field_id?'readonly':'').' required/></div>'; echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Label','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="label" value="'.esc_attr($f['label']??'').'" required/></div>'; echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Type','kura-ai-booking-free').'</label><select class="kab-form-control" name="type">'; foreach(['text','number','textarea','select','checkbox','date'] as $t){ echo '<option value="'.$t.'" '.selected($f['type']??'text',$t,false).'>'.$t.'</option>'; } echo '</select></div>'; echo '<div class="kab-form-group"><label class="kab-form-label">'.esc_html__('Options (comma separated for select)','kura-ai-booking-free').'</label><input class="kab-form-control" type="text" name="options" value="'.esc_attr($f['options']??'').'"/></div>'; echo '<div class="kab-form-group"><label class="kab-form-label"><input type="checkbox" name="required" '.checked(intval($f['required']??0),1,false).'/> '.esc_html__('Required','kura-ai-booking-free').'</label></div>'; echo '</div></div><div class="kab-form-group"><button class="kab-btn kab-btn-primary" type="submit">'.esc_html__('Save','kura-ai-booking-free').'</button> <a class="kab-btn" href="'.esc_url(admin_url('admin.php?page=kab-custom-fields')).'">'.esc_html__('Cancel','kura-ai-booking-free').'</a></div>'; echo '</form></div></div>'; } else { $this->render_static_header('custom-fields'); $rows = $model->get_fields(); echo '<div class="kab-card"><div class="kab-card-header" style="display:flex;justify-content:space-between;align-items:center;"><h2 class="kab-card-title">'.esc_html__('Custom Fields','kura-ai-booking-free').'</h2><a class="kab-btn kab-btn-primary" href="'.esc_url(admin_url('admin.php?page=kab-custom-fields&action=add')).'"><span class="dashicons dashicons-plus"></span> '.esc_html__('Add Field','kura-ai-booking-free').'</a></div><div class="kab-card-body">'; echo '<table class="kab-table"><thead><tr><th>'.esc_html__('Name','kura-ai-booking-free').'</th><th>'.esc_html__('Label','kura-ai-booking-free').'</th><th>'.esc_html__('Type','kura-ai-booking-free').'</th><th>'.esc_html__('Required','kura-ai-booking-free').'</th><th>'.esc_html__('Actions','kura-ai-booking-free').'</th></tr></thead><tbody>'; foreach($rows as $r){ $del = wp_nonce_url(admin_url('admin-post.php?action=kab_delete_field&field_id='.$r['id']),'kab_delete_field_'.$r['id']); echo '<tr><td>'.esc_html($r['name']).'</td><td>'.esc_html($r['label']).'</td><td>'.esc_html($r['type']).'</td><td>'.(intval($r['required'])?esc_html__('Yes','kura-ai-booking-free'):esc_html__('No','kura-ai-booking-free')).'</td><td><a class="kab-btn kab-btn-secondary kab-btn-sm" href="'.esc_url(admin_url('admin.php?page=kab-custom-fields&action=edit&field_id='.$r['id'])).'">'.esc_html__('Edit','kura-ai-booking-free').'</a> <a class="kab-btn kab-btn-danger kab-btn-sm" href="'.esc_url($del).'">'.esc_html__('Delete','kura-ai-booking-free').'</a></td></tr>'; } echo '</tbody></table></div></div>'; }
     }
+
+	/**
+	 * Render shortcodes page
+	 */
+	public function render_shortcodes_page() {
+		require_once KAB_FREE_PLUGIN_DIR . 'includes/admin/class-kab-shortcodes-page.php';
+		KAB_Shortcodes_Page::render_page();
+	}
 
     private function render_placeholder_page( $active, $title ) {
         ?>
