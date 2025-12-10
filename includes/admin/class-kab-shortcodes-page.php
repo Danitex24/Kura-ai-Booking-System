@@ -18,7 +18,7 @@ class KAB_Shortcodes_Page {
 
 	public static function register_page() {
 		add_submenu_page(
-			'kura-ai-booking',
+			'kab-dashboard',
 			__( 'Shortcodes', 'kura-ai-booking-free' ),
 			__( 'Shortcodes', 'kura-ai-booking-free' ),
 			'manage_options',
