@@ -169,4 +169,88 @@
 		});
 	});
 
+	// Booking Form Type Toggle
+	$('#booking_type').on('change', function() {
+		var type = $(this).val();
+		var $serviceSelect = $('.kab-service-select');
+		var $eventSelect = $('.kab-event-select');
+
+		if (type === 'service') {
+			$serviceSelect.show();
+			$eventSelect.hide();
+			$('#service_id').prop('required', true);
+			$('#event_id').prop('required', false);
+		} else if (type === 'event') {
+			$serviceSelect.hide();
+			$eventSelect.show();
+			$('#service_id').prop('required', false);
+			$('#event_id').prop('required', true);
+		} else {
+			$serviceSelect.hide();
+			$eventSelect.hide();
+			$('#service_id').prop('required', false);
+			$('#event_id').prop('required', false);
+		}
+	});
+
+	// Booking Form Submission
+	$('.kab-booking-submission').on('submit', function(e) {
+		e.preventDefault();
+
+		var $form = $(this);
+		var $message = $form.find('.kab-form-message');
+		var $submitBtn = $form.find('button[type="submit"]');
+
+		// Validate booking type
+		var bookingType = $form.find('#booking_type').val();
+		if (!bookingType) {
+			$message.addClass('error').text('Please select a booking type.').show();
+			return;
+		}
+
+		// Validate service or event selection
+		if (bookingType === 'service' && !$form.find('#service_id').val()) {
+			$message.addClass('error').text('Please select a service.').show();
+			return;
+		}
+
+		if (bookingType === 'event' && !$form.find('#event_id').val()) {
+			$message.addClass('error').text('Please select an event.').show();
+			return;
+		}
+
+		// Disable submit button
+		$submitBtn.prop('disabled', true).text('Processing...');
+		$message.removeClass('success error').hide();
+
+		var formData = {
+			action: 'kab_submit_booking',
+			nonce: kabForms.nonce,
+			booking_type: bookingType,
+			service_id: $form.find('#service_id').val(),
+			event_id: $form.find('#event_id').val(),
+			booking_date: $form.find('#booking_date').val(),
+			booking_time: $form.find('#booking_time').val(),
+			customer_name: $form.find('#customer_name').val(),
+			customer_email: $form.find('#customer_email').val(),
+			customer_phone: $form.find('#customer_phone').val(),
+			notes: $form.find('#notes').val()
+		};
+
+		$.post(kabForms.ajaxurl, formData, function(response) {
+			if (response.success) {
+				$message.addClass('success').text(response.data.message).show();
+				$form[0].reset();
+				// Reset visibility
+				$('.kab-service-select, .kab-event-select').hide();
+			} else {
+				$message.addClass('error').text(response.data.message).show();
+			}
+		}).fail(function() {
+			$message.addClass('error').text('An error occurred. Please try again.').show();
+		}).always(function() {
+			$submitBtn.prop('disabled', false).text('Book Now');
+		});
+	});
+
 })(jQuery);

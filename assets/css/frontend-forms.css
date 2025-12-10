@@ -194,6 +194,412 @@
 	100% { transform: rotate(360deg); }
 }
 
+/* Services Grid */
+.kab-services-container {
+	max-width: 1200px;
+	margin: 30px auto;
+	padding: 0 15px;
+}
+
+.kab-services-grid {
+	display: grid;
+	gap: 25px;
+	margin-top: 30px;
+}
+
+.kab-services-grid.kab-columns-1 {
+	grid-template-columns: 1fr;
+}
+
+.kab-services-grid.kab-columns-2 {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.kab-services-grid.kab-columns-3 {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.kab-services-grid.kab-columns-4 {
+	grid-template-columns: repeat(4, 1fr);
+}
+
+.kab-service-card {
+	background: #ffffff;
+	border: 2px solid #e0e0e0;
+	border-radius: 8px;
+	padding: 25px;
+	transition: all 0.3s ease;
+	display: flex;
+	flex-direction: column;
+}
+
+.kab-service-card:hover {
+	border-color: #E67E22;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	transform: translateY(-2px);
+}
+
+.kab-service-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 15px;
+}
+
+.kab-service-title {
+	margin: 0;
+	font-size: 20px;
+	color: #333;
+	flex: 1;
+}
+
+.kab-service-price {
+	font-size: 20px;
+	font-weight: bold;
+	color: #E67E22;
+	white-space: nowrap;
+	margin-left: 15px;
+}
+
+.kab-service-description {
+	color: #646970;
+	line-height: 1.6;
+	margin-bottom: 15px;
+	flex-grow: 1;
+}
+
+.kab-service-meta {
+	display: flex;
+	gap: 20px;
+	flex-wrap: wrap;
+	margin-bottom: 20px;
+	padding: 15px 0;
+	border-top: 1px solid #e0e0e0;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.kab-service-meta span {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	color: #646970;
+	font-size: 14px;
+}
+
+.kab-service-meta .dashicons {
+	font-size: 18px;
+}
+
+.kab-service-actions {
+	margin-top: auto;
+}
+
+.kab-service-actions .kab-btn {
+	width: 100%;
+}
+
+/* Events Calendar */
+.kab-events-calendar {
+	max-width: 1200px;
+	margin: 30px auto;
+	padding: 0 15px;
+}
+
+.kab-events-header {
+	margin-bottom: 30px;
+}
+
+.kab-events-header h3 {
+	margin: 0;
+	font-size: 28px;
+	color: #333;
+}
+
+.kab-events-list {
+	display: flex;
+	flex-direction: column;
+	gap: 25px;
+}
+
+.kab-event-card {
+	background: #ffffff;
+	border: 2px solid #e0e0e0;
+	border-radius: 8px;
+	padding: 25px;
+	display: flex;
+	gap: 25px;
+	transition: all 0.3s ease;
+}
+
+.kab-event-card:hover {
+	border-color: #E67E22;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.kab-event-card.kab-event-past {
+	opacity: 0.6;
+}
+
+.kab-event-card.kab-event-full {
+	border-color: #d63638;
+}
+
+.kab-event-date-badge {
+	flex-shrink: 0;
+	width: 80px;
+	height: 80px;
+	background: linear-gradient(135deg, #E67E22, #D35400);
+	color: #ffffff;
+	border-radius: 8px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+.kab-event-day {
+	font-size: 32px;
+	font-weight: bold;
+	line-height: 1;
+}
+
+.kab-event-month {
+	font-size: 14px;
+	text-transform: uppercase;
+	margin-top: 5px;
+}
+
+.kab-event-details {
+	flex: 1;
+}
+
+.kab-event-title {
+	margin: 0 0 10px 0;
+	font-size: 22px;
+	color: #333;
+}
+
+.kab-event-description {
+	color: #646970;
+	line-height: 1.6;
+	margin-bottom: 15px;
+}
+
+.kab-event-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 20px;
+	margin-top: 15px;
+}
+
+.kab-event-meta span {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	color: #646970;
+	font-size: 14px;
+}
+
+.kab-event-meta .dashicons {
+	font-size: 18px;
+}
+
+.kab-event-actions {
+	display: flex;
+	align-items: center;
+}
+
+.kab-event-status {
+	padding: 8px 16px;
+	background: #f0f0f0;
+	border-radius: 4px;
+	color: #646970;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+/* My Bookings */
+.kab-my-bookings-container {
+	max-width: 1000px;
+	margin: 30px auto;
+	padding: 0 15px;
+}
+
+.kab-my-bookings-header {
+	margin-bottom: 30px;
+}
+
+.kab-my-bookings-header h3 {
+	margin: 0;
+	font-size: 28px;
+	color: #333;
+}
+
+.kab-login-required {
+	text-align: center;
+	padding: 60px 20px;
+	background: #f9f9f9;
+	border-radius: 8px;
+}
+
+.kab-login-required p {
+	font-size: 18px;
+	color: #646970;
+	margin-bottom: 20px;
+}
+
+.kab-no-bookings {
+	text-align: center;
+	padding: 60px 20px;
+	background: #f9f9f9;
+	border-radius: 8px;
+}
+
+.kab-no-bookings p {
+	font-size: 18px;
+	color: #646970;
+	margin: 0;
+}
+
+.kab-bookings-list {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.kab-booking-card {
+	background: #ffffff;
+	border: 2px solid #e0e0e0;
+	border-radius: 8px;
+	padding: 25px;
+	transition: all 0.3s ease;
+}
+
+.kab-booking-card:hover {
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.kab-booking-card.kab-status-pending {
+	border-left: 4px solid #F59E0B;
+}
+
+.kab-booking-card.kab-status-confirmed {
+	border-left: 4px solid #10B981;
+}
+
+.kab-booking-card.kab-status-cancelled {
+	border-left: 4px solid #EF4444;
+}
+
+.kab-booking-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+	padding-bottom: 15px;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.kab-booking-type-badge {
+	padding: 6px 12px;
+	background: #E67E22;
+	color: #ffffff;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.kab-booking-status {
+	padding: 6px 12px;
+	background: #f0f0f0;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.kab-booking-body h4 {
+	margin: 0 0 15px 0;
+	font-size: 20px;
+	color: #333;
+}
+
+.kab-booking-details {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	gap: 15px;
+	margin-bottom: 20px;
+}
+
+.kab-booking-detail {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: #646970;
+	font-size: 14px;
+}
+
+.kab-booking-detail .dashicons {
+	font-size: 18px;
+	color: #E67E22;
+}
+
+.kab-booking-detail strong {
+	color: #333;
+	margin-right: 5px;
+}
+
+.kab-booking-actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	padding-top: 15px;
+	border-top: 1px solid #e0e0e0;
+}
+
+.kab-booking-actions .kab-btn {
+	padding: 10px 20px;
+	font-size: 14px;
+}
+
+.kab-btn-secondary {
+	background-color: #646970;
+	color: #ffffff;
+}
+
+.kab-btn-secondary:hover {
+	background-color: #50565c;
+}
+
+/* Booking Form Select Visibility */
+.kab-booking-form select {
+	width: 100%;
+	padding: 10px 15px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	font-size: 15px;
+	transition: border-color 0.3s ease;
+	box-sizing: border-box;
+}
+
+.kab-booking-form select:focus {
+	outline: none;
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+}
+
+.kab-booking-form input[type="time"] {
+	width: 100%;
+	padding: 10px 15px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	font-size: 15px;
+	transition: border-color 0.3s ease;
+	box-sizing: border-box;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
 	.kab-form-container {
@@ -207,5 +613,31 @@
 
 	.kab-star-rating {
 		font-size: 28px;
+	}
+
+	.kab-services-grid.kab-columns-2,
+	.kab-services-grid.kab-columns-3,
+	.kab-services-grid.kab-columns-4 {
+		grid-template-columns: 1fr;
+	}
+
+	.kab-event-card {
+		flex-direction: column;
+	}
+
+	.kab-event-date-badge {
+		align-self: flex-start;
+	}
+
+	.kab-booking-details {
+		grid-template-columns: 1fr;
+	}
+
+	.kab-booking-actions {
+		flex-direction: column;
+	}
+
+	.kab-booking-actions .kab-btn {
+		width: 100%;
 	}
 }
