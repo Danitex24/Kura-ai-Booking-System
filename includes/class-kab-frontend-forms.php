@@ -443,6 +443,10 @@ class KAB_Frontend_Forms {
 			'id' => 0,
 		), $atts );
 
+		// Load required classes
+		require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-services.php';
+		require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-events.php';
+
 		$services_model = new KAB_Services();
 		$events_model = new KAB_Events();
 
@@ -545,6 +549,9 @@ class KAB_Frontend_Forms {
 			'show_price' => 'true',
 		), $atts );
 
+		// Load required class
+		require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-services.php';
+
 		$services_model = new KAB_Services();
 		$services = $services_model->get_services();
 
@@ -613,6 +620,9 @@ class KAB_Frontend_Forms {
 			'view' => 'month',
 			'category' => '',
 		), $atts );
+
+		// Load required class
+		require_once KAB_FREE_PLUGIN_DIR . 'includes/class-kab-events.php';
 
 		$events_model = new KAB_Events();
 		$events = $events_model->get_events( array( 'number' => 100 ) );
