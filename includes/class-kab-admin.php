@@ -150,16 +150,7 @@ class KAB_Admin {
 			array( $this, 'render_dashboard_page' )
 		);
 
-		// Core menu items (visible in sidebar)
-		add_submenu_page(
-			'kab-dashboard',
-			__( 'Services', 'kura-ai-booking-free' ),
-			__( 'Services', 'kura-ai-booking-free' ),
-			'manage_options',
-			'kab-services',
-			array( $this, 'render_services_page' )
-		);
-
+		// Core sidebar menu items (only these appear in sidebar)
 		add_submenu_page(
 			'kab-dashboard',
 			__( 'Events', 'kura-ai-booking-free' ),
@@ -171,20 +162,11 @@ class KAB_Admin {
 
 		add_submenu_page(
 			'kab-dashboard',
-			__( 'Calendar', 'kura-ai-booking-free' ),
-			__( 'Calendar', 'kura-ai-booking-free' ),
+			__( 'Finance', 'kura-ai-booking-free' ),
+			__( 'Finance', 'kura-ai-booking-free' ),
 			'manage_options',
-			'kab-calendar',
-			array( $this, 'render_calendar_page' )
-		);
-
-		add_submenu_page(
-			'kab-dashboard',
-			__( 'Customers', 'kura-ai-booking-free' ),
-			__( 'Customers', 'kura-ai-booking-free' ),
-			'manage_options',
-			'kab-customers',
-			array( $this, 'render_customers_page' )
+			'kab-finance',
+			array( $this, 'render_finance_page' )
 		);
 
 		add_submenu_page(
@@ -198,11 +180,11 @@ class KAB_Admin {
 
 		add_submenu_page(
 			'kab-dashboard',
-			__( 'Finance', 'kura-ai-booking-free' ),
-			__( 'Finance', 'kura-ai-booking-free' ),
+			__( 'Customers', 'kura-ai-booking-free' ),
+			__( 'Customers', 'kura-ai-booking-free' ),
 			'manage_options',
-			'kab-finance',
-			array( $this, 'render_finance_page' )
+			'kab-customers',
+			array( $this, 'render_customers_page' )
 		);
 
 		add_submenu_page(
@@ -223,13 +205,23 @@ class KAB_Admin {
 			array( $this, 'render_shortcodes_page' )
 		);
 
-		// Hidden pages (accessible via top nav dropdowns only)
-		add_submenu_page( null, __( 'Ticket Validation', 'kura-ai-booking-free' ), __( 'Ticket Validation', 'kura-ai-booking-free' ), 'manage_options', 'kab-validation', array( $this, 'render_validation_page' ) );
+		// Hidden pages (accessible via top nav dropdowns only, not in sidebar)
+		add_submenu_page( null, __( 'Services', 'kura-ai-booking-free' ), __( 'Services', 'kura-ai-booking-free' ), 'manage_options', 'kab-services', array( $this, 'render_services_page' ) );
+		add_submenu_page( null, __( 'Calendar', 'kura-ai-booking-free' ), __( 'Calendar', 'kura-ai-booking-free' ), 'manage_options', 'kab-calendar', array( $this, 'render_calendar_page' ) );
 		add_submenu_page( null, __( 'Appointments', 'kura-ai-booking-free' ), __( 'Appointments', 'kura-ai-booking-free' ), 'manage_options', 'kab-appointments', array( $this, 'render_appointments_page' ) );
+		add_submenu_page( null, __( 'Recurring Events', 'kura-ai-booking-free' ), __( 'Recurring Events', 'kura-ai-booking-free' ), 'manage_options', 'kab-recurring-events', array( $this, 'render_recurring_events_page' ) );
+		add_submenu_page( null, __( 'Event Categories', 'kura-ai-booking-free' ), __( 'Event Categories', 'kura-ai-booking-free' ), 'manage_options', 'kab-event-categories', array( $this, 'render_event_categories_page' ) );
+		add_submenu_page( null, __( 'Invoices', 'kura-ai-booking-free' ), __( 'Invoices', 'kura-ai-booking-free' ), 'manage_options', 'kab-invoices', array( $this, 'render_invoices_page' ) );
+		add_submenu_page( null, __( 'Create Invoice', 'kura-ai-booking-free' ), __( 'Create Invoice', 'kura-ai-booking-free' ), 'manage_options', 'kab-create-invoice', array( $this, 'render_create_invoice_page' ) );
+		add_submenu_page( null, __( 'Waitlist', 'kura-ai-booking-free' ), __( 'Waitlist', 'kura-ai-booking-free' ), 'manage_options', 'kab-waitlist', array( $this, 'render_waitlist_page' ) );
+		add_submenu_page( null, __( 'Reviews & Ratings', 'kura-ai-booking-free' ), __( 'Reviews & Ratings', 'kura-ai-booking-free' ), 'manage_options', 'kab-reviews', array( $this, 'render_reviews_page' ) );
+		add_submenu_page( null, __( 'Cancellations & Refunds', 'kura-ai-booking-free' ), __( 'Cancellations & Refunds', 'kura-ai-booking-free' ), 'manage_options', 'kab-cancellations', array( $this, 'render_cancellations_page' ) );
 		add_submenu_page( null, __( 'Locations', 'kura-ai-booking-free' ), __( 'Locations', 'kura-ai-booking-free' ), 'manage_options', 'kab-locations', array( $this, 'render_locations_page' ) );
+		add_submenu_page( null, __( 'Email Reminders', 'kura-ai-booking-free' ), __( 'Email Reminders', 'kura-ai-booking-free' ), 'manage_options', 'kab-reminders', array( $this, 'render_reminders_page' ) );
 		add_submenu_page( null, __( 'Notifications', 'kura-ai-booking-free' ), __( 'Notifications', 'kura-ai-booking-free' ), 'manage_options', 'kab-notifications', array( $this, 'render_notifications_page' ) );
 		add_submenu_page( null, __( 'Customize', 'kura-ai-booking-free' ), __( 'Customize', 'kura-ai-booking-free' ), 'manage_options', 'kab-customize', array( $this, 'render_customize_page' ) );
 		add_submenu_page( null, __( 'Custom Fields', 'kura-ai-booking-free' ), __( 'Custom Fields', 'kura-ai-booking-free' ), 'manage_options', 'kab-custom-fields', array( $this, 'render_custom_fields_page' ) );
+		add_submenu_page( null, __( 'Ticket Validation', 'kura-ai-booking-free' ), __( 'Ticket Validation', 'kura-ai-booking-free' ), 'manage_options', 'kab-validation', array( $this, 'render_validation_page' ) );
 	}
 
 	/**
