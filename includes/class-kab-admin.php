@@ -80,10 +80,16 @@ class KAB_Admin {
                     </div>
 
                     <div class="kab-nav-group">
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('settings','notifications','customize','custom-fields','validation','reminders','employees','locations','shortcodes'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Settings', 'kura-ai-booking-free' ); ?></a>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-employees' ) ); ?>" class="kab-nav-link <?php echo $active_page === 'employees' ? 'active' : ''; ?>"><?php echo esc_html__( 'Employees', 'kura-ai-booking-free' ); ?></a>
+                        <div class="kab-dropdown">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-employees' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'employees' ? 'active' : ''; ?>"><?php echo esc_html__( 'All Employees', 'kura-ai-booking-free' ); ?></a>
+                        </div>
+                    </div>
+
+                    <div class="kab-nav-group">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-nav-link <?php echo in_array( $active_page, array('settings','notifications','customize','custom-fields','validation','reminders','locations','shortcodes'), true ) ? 'active' : ''; ?>"><?php echo esc_html__( 'Settings', 'kura-ai-booking-free' ); ?></a>
                         <div class="kab-dropdown">
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-settings' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'settings' ? 'active' : ''; ?>"><?php echo esc_html__( 'General', 'kura-ai-booking-free' ); ?></a>
-                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-employees' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'employees' ? 'active' : ''; ?>"><?php echo esc_html__( 'Employees', 'kura-ai-booking-free' ); ?></a>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-locations' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'locations' ? 'active' : ''; ?>"><?php echo esc_html__( 'Locations', 'kura-ai-booking-free' ); ?></a>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-reminders' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'reminders' ? 'active' : ''; ?>"><?php echo esc_html__( 'Email Reminders', 'kura-ai-booking-free' ); ?></a>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=kab-notifications' ) ); ?>" class="kab-dropdown-link <?php echo $active_page === 'notifications' ? 'active' : ''; ?>"><?php echo esc_html__( 'Notifications', 'kura-ai-booking-free' ); ?></a>
@@ -2926,12 +2932,15 @@ class KAB_Admin {
         // Fetch events in range
         $events = $wpdb->get_results( $wpdb->prepare("SELECT * FROM {$wpdb->prefix}kab_events WHERE status='active' AND event_date BETWEEN %s AND %s ORDER BY event_date, event_time", $start, $end ), ARRAY_A );
         // Fetch service appointments in range
-        $appointments = $wpdb->get_results( $wpdb->prepare("SELECT * FROM {$wpdb->prefix}kab_bookings WHERE booking_type='service' AND booking_date BETWEEN %s AND %s ORDER BY booking_date, booking_time", $start, $end ), ARRAY_A );
+        $appointments = $wpdb->get_results( $wpdb->prepare("SELECT b.*, s.name as service_name, u.display_name as customer_name FROM {$wpdb->prefix}kab_bookings b LEFT JOIN {$wpdb->prefix}kab_services s ON b.service_id = s.id LEFT JOIN {$wpdb->prefix}users u ON b.user_id = u.ID WHERE b.booking_type='service' AND b.booking_date BETWEEN %s AND %s ORDER BY b.booking_date, b.booking_time", $start, $end ), ARRAY_A );
+        // Fetch event bookings in range
+        $event_bookings = $wpdb->get_results( $wpdb->prepare("SELECT b.*, e.name as event_name, u.display_name as customer_name FROM {$wpdb->prefix}kab_bookings b LEFT JOIN {$wpdb->prefix}kab_events e ON b.event_id = e.id LEFT JOIN {$wpdb->prefix}users u ON b.user_id = u.ID WHERE b.booking_type='event' AND b.booking_date BETWEEN %s AND %s ORDER BY b.booking_date, b.booking_time", $start, $end ), ARRAY_A );
 
         // Group by date
         $by_date = array();
         foreach ( $events as $e ) { $d = $e['event_date']; $by_date[$d]['events'][] = $e; }
         foreach ( $appointments as $a ) { $d = $a['booking_date']; $by_date[$d]['appointments'][] = $a; }
+        foreach ( $event_bookings as $eb ) { $d = $eb['booking_date']; $by_date[$d]['event_bookings'][] = $eb; }
 
         // Header controls
         $base = admin_url('admin.php?page=kab-calendar');
@@ -2979,12 +2988,29 @@ class KAB_Admin {
 
     private function render_calendar_list( $by_date ) {
         ksort( $by_date );
-        echo '<table class="kab-table"><thead><tr><th>'.esc_html__('Date','kura-ai-booking-free').'</th><th>'.esc_html__('Items','kura-ai-booking-free').'</th></tr></thead><tbody>';
+        echo '<table class="kab-table"><thead><tr><th>'.esc_html__('Date','kura-ai-booking-free').'</th><th>'.esc_html__('Type','kura-ai-booking-free').'</th><th>'.esc_html__('Details','kura-ai-booking-free').'</th><th>'.esc_html__('Time','kura-ai-booking-free').'</th></tr></thead><tbody>';
         foreach ( $by_date as $date => $data ) {
-            $items = array();
-            foreach ( (array)($data['events'] ?? array()) as $e ) { $items[] = '<span class="kab-cal-tag kab-cal-event">'.esc_html($e['event_time']).' • '.esc_html($e['name']).'</span>'; }
-            foreach ( (array)($data['appointments'] ?? array()) as $a ) { $items[] = '<span class="kab-cal-tag kab-cal-service">'.esc_html($a['booking_time']).' • '.esc_html__('Appointment','kura-ai-booking-free').'</span>'; }
-            echo '<tr><td>'.esc_html( date_i18n( get_option('date_format'), strtotime($date) ) ).'</td><td>'.implode('<br>', $items).'</td></tr>';
+            // Events
+            foreach ( (array)($data['events'] ?? array()) as $e ) {
+                $capacity_info = '';
+                if ( ! empty( $e['max_attendees'] ) && $e['max_attendees'] > 0 ) {
+                    $booked = isset( $e['booked_count'] ) ? intval( $e['booked_count'] ) : 0;
+                    $capacity_info = ' (' . $booked . '/' . $e['max_attendees'] . ')';
+                }
+                echo '<tr><td>'.esc_html( date_i18n( get_option('date_format'), strtotime($date) ) ).'</td><td><span class="kab-cal-tag kab-cal-event">'.esc_html__('Event','kura-ai-booking-free').'</span></td><td>'.esc_html($e['name']).$capacity_info.'</td><td>'.esc_html( $e['event_time'] . ( !empty($e['event_end_time']) ? ' - '.$e['event_end_time'] : '' ) ).'</td></tr>';
+            }
+            // Service appointments
+            foreach ( (array)($data['appointments'] ?? array()) as $a ) {
+                $service_name = ! empty( $a['service_name'] ) ? $a['service_name'] : esc_html__( 'Service', 'kura-ai-booking-free' );
+                $customer_info = ! empty( $a['customer_name'] ) ? ' - ' . $a['customer_name'] : '';
+                echo '<tr><td>'.esc_html( date_i18n( get_option('date_format'), strtotime($date) ) ).'</td><td><span class="kab-cal-tag kab-cal-service">'.esc_html__('Appointment','kura-ai-booking-free').'</span></td><td>'.esc_html($service_name).$customer_info.'</td><td>'.esc_html($a['booking_time']).'</td></tr>';
+            }
+            // Event bookings
+            foreach ( (array)($data['event_bookings'] ?? array()) as $eb ) {
+                $event_name = ! empty( $eb['event_name'] ) ? $eb['event_name'] : esc_html__( 'Event Booking', 'kura-ai-booking-free' );
+                $customer_info = ! empty( $eb['customer_name'] ) ? ' - ' . $eb['customer_name'] : '';
+                echo '<tr><td>'.esc_html( date_i18n( get_option('date_format'), strtotime($date) ) ).'</td><td><span class="kab-cal-tag kab-cal-booking">'.esc_html__('Booking','kura-ai-booking-free').'</span></td><td>'.esc_html($event_name).$customer_info.'</td><td>'.esc_html($eb['booking_time']).'</td></tr>';
+            }
         }
         echo '</tbody></table>';
     }
@@ -3017,11 +3043,26 @@ class KAB_Admin {
         echo '<div class="kab-cal-cell">';
         echo '<div class="kab-cal-date">'.esc_html($label).'</div>';
         if ( $date && isset( $by_date[$date] ) ) {
+            // Display events
             foreach ( (array)($by_date[$date]['events'] ?? array()) as $e ) {
-                echo '<div class="kab-cal-item kab-cal-event"><div class="kab-cal-item-title">'.esc_html( $e['name'] ).'</div><div class="kab-cal-item-time">'.esc_html( $e['event_time'] . ( !empty($e['event_end_time']) ? ' - '.$e['event_end_time'] : '' ) ).'</div></div>';
+                $capacity_info = '';
+                if ( ! empty( $e['max_attendees'] ) && $e['max_attendees'] > 0 ) {
+                    $booked = isset( $e['booked_count'] ) ? intval( $e['booked_count'] ) : 0;
+                    $capacity_info = ' (' . $booked . '/' . $e['max_attendees'] . ')';
+                }
+                echo '<div class="kab-cal-item kab-cal-event"><div class="kab-cal-item-title">'.esc_html( $e['name'] ).$capacity_info.'</div><div class="kab-cal-item-time">'.esc_html( $e['event_time'] . ( !empty($e['event_end_time']) ? ' - '.$e['event_end_time'] : '' ) ).'</div></div>';
             }
+            // Display service appointments
             foreach ( (array)($by_date[$date]['appointments'] ?? array()) as $a ) {
-                echo '<div class="kab-cal-item kab-cal-service"><div class="kab-cal-item-title">'.esc_html__( 'Appointment', 'kura-ai-booking-free' ).'</div><div class="kab-cal-item-time">'.esc_html( $a['booking_time'] ).'</div></div>';
+                $service_name = ! empty( $a['service_name'] ) ? $a['service_name'] : esc_html__( 'Service', 'kura-ai-booking-free' );
+                $customer_info = ! empty( $a['customer_name'] ) ? ' - ' . $a['customer_name'] : '';
+                echo '<div class="kab-cal-item kab-cal-service"><div class="kab-cal-item-title">'.esc_html( $service_name ).$customer_info.'</div><div class="kab-cal-item-time">'.esc_html( $a['booking_time'] ).'</div></div>';
+            }
+            // Display event bookings
+            foreach ( (array)($by_date[$date]['event_bookings'] ?? array()) as $eb ) {
+                $event_name = ! empty( $eb['event_name'] ) ? $eb['event_name'] : esc_html__( 'Event Booking', 'kura-ai-booking-free' );
+                $customer_info = ! empty( $eb['customer_name'] ) ? ' - ' . $eb['customer_name'] : '';
+                echo '<div class="kab-cal-item kab-cal-booking"><div class="kab-cal-item-title">'.esc_html( $event_name ).$customer_info.'</div><div class="kab-cal-item-time">'.esc_html( $eb['booking_time'] ).'</div></div>';
             }
         }
         echo '</div>';

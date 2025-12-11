@@ -197,8 +197,10 @@
 .kab-cal-item { margin-top: 18px; padding: 6px; border-radius: 6px; color: #24321a; font-size: 12px; }
 .kab-cal-event { background: #EBD5AB; border-left: 4px solid #E67E22; }
 .kab-cal-service { background: #C9DFB0; border-left: 4px solid #8BAE66; }
+.kab-cal-booking { background: #D1E7F9; border-left: 4px solid #2271B1; }
 .kab-cal-item-title { font-weight: 600; }
 .kab-cal-item-time { font-size: 11px; opacity: 0.8; }
+.kab-cal-tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
 
 /* ===== Dashboard Widgets ===== */
 .kab-dashboard-widgets {
