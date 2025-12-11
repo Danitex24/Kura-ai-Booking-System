@@ -17,12 +17,14 @@ class KAB_Shortcodes_Page {
 	}
 
 	public static function register_page() {
+		// Hidden from sidebar - registered in class-kab-admin.php instead
+		// This just provides the render callback
 		add_submenu_page(
-			'kab-dashboard',
+			null,
 			__( 'Shortcodes', 'kura-ai-booking-free' ),
 			__( 'Shortcodes', 'kura-ai-booking-free' ),
 			'manage_options',
-			'kab-shortcodes',
+			'kab-shortcodes-hidden',
 			array( __CLASS__, 'render_page' )
 		);
 	}
